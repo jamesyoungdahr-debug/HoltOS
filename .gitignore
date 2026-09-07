@@ -1,0 +1,14 @@
+# archiso build output and local VM test scratch — regenerable, large binaries
+out/
+vm/
+local-repo/
+
+# Local copy of upstream Arch releng's archiso profile, kept only for diffing
+# against during development — not part of the build (mkarchiso is pointed at
+# archiso/ directly) and contains real Unix symlinks Windows git can't index.
+releng-reference/
+
+# Never commit filled-in secrets — only the .example templates
+secrets/
+**/*.env
+!**/*.env.example
