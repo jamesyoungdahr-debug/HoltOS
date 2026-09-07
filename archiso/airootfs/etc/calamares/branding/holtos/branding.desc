@@ -1,0 +1,34 @@
+# HoltOS Calamares branding — replaces Calamares' own bundled "default"
+# placeholder branding (which is where the "Arch Linux Installer" window
+# title and "Fancy GNU/Linux ... Venomous Vole" welcome text came from).
+---
+componentName: holtos
+
+welcomeStyleCalamares: true
+welcomeExpandingLogo: true
+
+strings:
+    productName:         HoltOS
+    shortProductName:    HoltOS
+    version:              1.0
+    shortVersion:         1.0
+    versionedName:        HoltOS 1.0
+    shortVersionedName:   HoltOS 1.0
+    bootloaderEntryName:  HoltOS
+    productUrl:           https://github.com/jamesyoungdahr-debug/HoltOS
+    supportUrl:           https://github.com/jamesyoungdahr-debug/HoltOS/issues
+    knownIssuesUrl:       https://github.com/jamesyoungdahr-debug/HoltOS/issues
+    releaseNotesUrl:      https://github.com/jamesyoungdahr-debug/HoltOS
+
+images:
+    productLogo:          "logo.svg"
+    productIcon:          "logo.svg"
+    productWelcome:       "logo.svg"
+
+slideshow: "show.qml"
+
+style:
+   SidebarBackground:    "#292F34"
+   SidebarText:          "#FFFFFF"
+   SidebarTextSelect:    "#FFFFFF"
+   SidebarTextHighlight: "#3878C4"
