@@ -14,6 +14,34 @@ All notable changes to HoltOS are logged here. Format loosely follows
   from the GitHub Release body for that tag, via the GitHub API — falls
   back to the generic message if the tag has no Release object). Added
   `jq` to parse it.
+- Integrated two separately-maintained companion repos, updatable through
+  the same picker as everything else: **The Den**
+  (`jamesyoungdahr-debug/the-den`, a native systemd service — movie/TV
+  library manager) and **The Den Client**
+  (`jamesyoungdahr-debug/the-den-client`, its PySide6/Kirigami desktop
+  app). Both are gated on tagged releases only, same as `config` — never
+  raw commits. Neither is baked into the ISO image (neither has a tagged
+  release yet, so there's nothing to vendor at build time); picking
+  either in the updater installs it fresh if it's not present, or updates
+  it in place if it is, using the same `holtos-update-apply` mechanism.
+  `update_the_den` mirrors that repo's own PKGBUILD/`the-den.install`
+  step for step (sysusers, tmpfiles, systemd service, venv, alembic
+  migrations) but runs it directly instead of through a rebuilt pacman
+  package, so the installed system doesn't need a build toolchain for
+  what's really just "copy files + venv + pip install." Added `python`,
+  `pyside6`, `kirigami`, `qqc2-desktop-style` to the package list.
+- Added `holtos-first-boot-apps.service`: on the installed system's first
+  boot, automatically installs The Den / The Den Client if either repo
+  has a tagged release yet (does nothing, quietly, for whichever doesn't
+  — same as picking it manually in the tray before a release exists). A
+  marker file makes this run exactly once; the tray's picker still works
+  normally afterward for real updates.
+- Fixed a real bug in `holtos-update-apply`: picking multiple items in
+  the tray where one had no release yet (e.g. Sonarr + The Den, before
+  The Den had a tag) silently skipped every item *after* the failing one
+  — `set -e` was aborting the whole batch on the first failure. Each
+  item is now attempted independently; failures are collected and
+  reported at the end instead of stopping the batch.
 
 ## [0.0.1-alpha] - 2026-09-08
 

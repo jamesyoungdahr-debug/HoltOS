@@ -4,11 +4,16 @@
 # picking several items only prompts for a password once). Each arg is one
 # of: a podman service name matching a .container unit under
 # /usr/share/containers/systemd/, "authentik" (server+worker together),
-# "config" (Podman Quadlet units + homelab-*.sh scripts, gated on the
-# latest *tagged* HoltOS release — see holtos-update-check), "rollback"
-# (re-applies the config release before the currently-deployed one), or
-# "system" (plain `pacman -Syu`, for the kernel/OS packages the git repo
-# has nothing to do with).
+# "config" (Podman Quadlet units + homelab-*.sh scripts), "the-den" /
+# "the-den-client" (companion apps, separately-maintained repos — see
+# below), "rollback" (re-applies the config release before the
+# currently-deployed one), or "system" (plain `pacman -Syu`, for the
+# kernel/OS packages no git repo has anything to do with).
+#
+# config/the-den/the-den-client are all gated on the latest *tagged*
+# release of their own repo, downloaded as a GitHub release tarball (no
+# `git clone`, no history) — never raw commits, so in-progress upstream
+# work never lands on a running system.
 #
 # Every applied item is appended to /var/lib/holtos/history.log (world-
 # readable — see holtos-update-history) as a small audit trail, and it's
@@ -21,6 +26,32 @@ log_history() {
     mkdir -p "$(dirname "$HISTORY")"
     printf '%s\t%s\t%s\t%s\n' "$(date -u +%FT%TZ)" "$1" "$2" "$3" >> "$HISTORY"
     chmod 644 "$HISTORY"
+}
+
+# resolve_release <owner/repo> [target_tag] — prints "<commit>\t<tag>" for
+# either the latest v* tag (no target_tag given) or that exact tag
+# (verifying it actually exists on the remote). Returns 1 if nothing found.
+resolve_release() {
+    local repo="$1" target_tag="${2:-}" line
+    if [ -z "$target_tag" ]; then
+        line="$(git ls-remote --tags --refs --sort=-v:refname "https://github.com/$repo.git" 'v*' | head -1)"
+        [ -n "$line" ] || return 1
+        printf '%s\t%s\n' "$(cut -f1 <<< "$line")" "$(cut -f2 <<< "$line" | sed 's#refs/tags/##')"
+    else
+        line="$(git ls-remote --tags --refs "https://github.com/$repo.git" "refs/tags/$target_tag" | head -1)"
+        [ -n "$line" ] || return 1
+        printf '%s\t%s\n' "$(cut -f1 <<< "$line")" "$target_tag"
+    fi
+}
+
+# download_release <owner/repo> <tag> <dest_dir> — extracts the tag's
+# source tarball into dest_dir (must already exist).
+download_release() {
+    local repo="$1" tag="$2" dest="$3" tmp_tar
+    tmp_tar="$(mktemp)"
+    curl -fsSL "https://github.com/$repo/archive/refs/tags/${tag}.tar.gz" -o "$tmp_tar"
+    tar -xzf "$tmp_tar" -C "$dest" --strip-components=1
+    rm -f "$tmp_tar"
 }
 
 update_service() {
@@ -45,34 +76,18 @@ update_config() {
     local target_tag="${1:-}"
     local repo="jamesyoungdahr-debug/HoltOS"
     local state="/var/lib/holtos/deployed-commit"
-    local line new_commit latest_tag tmp_tar src_dir
+    local new_commit latest_tag src_dir
     mkdir -p "$(dirname "$state")"
 
-    if [ -z "$target_tag" ]; then
-        echo "==> Looking up the latest release..."
-        line="$(git ls-remote --tags --refs --sort=-v:refname "https://github.com/$repo.git" 'v*' | head -1)"
-        if [ -z "$line" ]; then
-            echo "No tagged HoltOS release found." >&2
-            return 1
-        fi
-        new_commit="$(cut -f1 <<< "$line")"
-        latest_tag="$(cut -f2 <<< "$line" | sed 's#refs/tags/##')"
-    else
-        latest_tag="$target_tag"
-        line="$(git ls-remote --tags --refs "https://github.com/$repo.git" "refs/tags/$target_tag" | head -1)"
-        if [ -z "$line" ]; then
-            echo "Tag $target_tag not found on remote." >&2
-            return 1
-        fi
-        new_commit="$(cut -f1 <<< "$line")"
+    echo "==> Looking up the release..."
+    if ! IFS=$'\t' read -r new_commit latest_tag < <(resolve_release "$repo" "$target_tag"); then
+        echo "No tagged HoltOS release found${target_tag:+ ($target_tag)}." >&2
+        return 1
     fi
 
     echo "==> Downloading $latest_tag..."
-    tmp_tar="$(mktemp)"
     src_dir="$(mktemp -d)"
-    curl -fsSL "https://github.com/$repo/archive/refs/tags/${latest_tag}.tar.gz" -o "$tmp_tar"
-    tar -xzf "$tmp_tar" -C "$src_dir" --strip-components=1
-    rm -f "$tmp_tar"
+    download_release "$repo" "$latest_tag" "$src_dir"
 
     echo "==> Syncing Podman Quadlet units..."
     rsync -a --delete \
@@ -107,6 +122,141 @@ rollback_config() {
     update_config "$prev_tag"
 }
 
+# update_the_den [target_tag] — installs The Den (jamesyoungdahr-debug/
+# the-den, a native systemd service) if it's not present yet, or updates
+# it in place if it is. Mirrors that repo's own PKGBUILD/the-den.install
+# (verified there via makepkg/pacman/systemctl) step for step, just
+# executed directly instead of through a rebuilt pacman package — avoids
+# needing a full build toolchain on the installed system for what's really
+# just "copy files + venv + pip install", which the PKGBUILD's package()
+# does too.
+update_the_den() {
+    local target_tag="${1:-}"
+    local repo="jamesyoungdahr-debug/the-den"
+    local app_dir="/opt/the-den"
+    local new_commit latest_tag src_dir first_install=0
+
+    echo "==> Looking up the latest The Den release..."
+    if ! IFS=$'\t' read -r new_commit latest_tag < <(resolve_release "$repo" "$target_tag"); then
+        echo "No tagged The Den release found${target_tag:+ ($target_tag)}." >&2
+        return 1
+    fi
+
+    [ -d "$app_dir" ] || first_install=1
+
+    echo "==> Downloading The Den $latest_tag..."
+    src_dir="$(mktemp -d)"
+    download_release "$repo" "$latest_tag" "$src_dir"
+
+    if [ "$first_install" -eq 1 ]; then
+        echo "==> Setting up The Den for the first time..."
+        install -Dm644 "$src_dir/deploy/the-den-sysusers.conf" /usr/lib/sysusers.d/the-den.conf
+        install -Dm644 "$src_dir/deploy/the-den-tmpfiles.conf" /usr/lib/tmpfiles.d/the-den.conf
+        systemd-sysusers the-den.conf
+        systemd-tmpfiles --create the-den.conf
+        install -dm755 "$app_dir"
+        [ -f /etc/the-den/the-den.env ] || \
+            install -Dm640 "$src_dir/deploy/the-den.env.example" /etc/the-den/the-den.env
+        install -Dm644 "$src_dir/deploy/the-den.service" /usr/lib/systemd/system/the-den.service
+        cp /usr/share/icons/hicolor/scalable/apps/holtos-dashboard.svg \
+           /usr/share/icons/hicolor/scalable/apps/the-den.svg 2>/dev/null || true
+        cat > /usr/share/applications/the-den.desktop <<DESKTOP
+[Desktop Entry]
+Type=Application
+Name=The Den
+Comment=Movie/TV library manager
+Exec=xdg-open http://127.0.0.1:8686
+Icon=the-den
+Categories=AudioVideo;Video;
+DESKTOP
+    fi
+
+    echo "==> Syncing application files..."
+    rsync -a --delete "$src_dir/app/" "$app_dir/app/"
+    rsync -a --delete "$src_dir/migrations/" "$app_dir/migrations/"
+    cp "$src_dir/requirements.txt" "$app_dir/requirements.txt"
+    cp "$src_dir/alembic.ini" "$app_dir/alembic.ini"
+    rm -rf "$src_dir"
+
+    if [ "$first_install" -eq 1 ]; then
+        echo "==> Creating Python virtual environment..."
+        python -m venv "$app_dir/.venv"
+    fi
+    echo "==> Installing Python dependencies..."
+    "$app_dir/.venv/bin/python" -m pip install --no-cache-dir -q -r "$app_dir/requirements.txt"
+
+    echo "==> Applying database migrations..."
+    ( cd "$app_dir" && DATABASE_URL="sqlite:////var/lib/the-den/den.db" \
+        runuser -u the-den -- "$app_dir/.venv/bin/python" -m alembic upgrade head )
+
+    systemctl daemon-reload
+    if [ "$first_install" -eq 1 ]; then
+        systemctl enable the-den
+        echo "==> First install done. Edit /etc/the-den/the-den.env (TMDB_API_KEY,"
+        echo "    QBIT_USERNAME/QBIT_PASSWORD, MOVIES_ROOT/TV_ROOT), then:"
+        echo "    systemctl start the-den"
+    else
+        echo "==> Restarting The Den..."
+        systemctl restart the-den
+    fi
+
+    log_history the-den "$latest_tag" "$new_commit"
+    echo "==> The Den updated to $latest_tag"
+}
+
+# update_the_den_client [target_tag] — installs/updates The Den Client
+# (jamesyoungdahr-debug/the-den-client), a PySide6/Kirigami desktop app.
+# No systemd service (it's a GUI app the user launches), no venv (it has
+# no pip dependencies beyond the pyside6/kirigami/qqc2-desktop-style
+# system packages) — just synced files, a launcher script, and a
+# .desktop entry.
+update_the_den_client() {
+    local target_tag="${1:-}"
+    local repo="jamesyoungdahr-debug/the-den-client"
+    local app_dir="/opt/the-den-client"
+    local new_commit latest_tag src_dir first_install=0
+
+    echo "==> Looking up the latest The Den Client release..."
+    if ! IFS=$'\t' read -r new_commit latest_tag < <(resolve_release "$repo" "$target_tag"); then
+        echo "No tagged The Den Client release found${target_tag:+ ($target_tag)}." >&2
+        return 1
+    fi
+
+    [ -d "$app_dir" ] || first_install=1
+
+    echo "==> Downloading The Den Client $latest_tag..."
+    src_dir="$(mktemp -d)"
+    download_release "$repo" "$latest_tag" "$src_dir"
+
+    echo "==> Syncing application files..."
+    install -dm755 "$app_dir"
+    rsync -a --delete "$src_dir/src/" "$app_dir/src/"
+    rsync -a --delete "$src_dir/assets/" "$app_dir/assets/"
+    rm -rf "$src_dir"
+
+    if [ "$first_install" -eq 1 ]; then
+        cat > /usr/local/bin/the-den-client <<'LAUNCHER'
+#!/bin/bash
+export QT_QUICK_CONTROLS_STYLE=org.kde.desktop
+exec python /opt/the-den-client/src/main.py "$@"
+LAUNCHER
+        chmod +x /usr/local/bin/the-den-client
+
+        cat > /usr/share/applications/the-den-client.desktop <<DESKTOP
+[Desktop Entry]
+Type=Application
+Name=The Den Client
+Comment=Native companion app for The Den
+Exec=/usr/local/bin/the-den-client
+Icon=$app_dir/assets/logo.svg
+Categories=AudioVideo;Video;
+DESKTOP
+    fi
+
+    log_history the-den-client "$latest_tag" "$new_commit"
+    echo "==> The Den Client updated to $latest_tag"
+}
+
 update_system() {
     echo "==> Updating system packages (pacman -Syu)..."
     pacman -Syu --noconfirm
@@ -119,21 +269,32 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 if [ "$#" -eq 0 ]; then
-    echo "Usage: holtos-update-apply <service|authentik|config|rollback|system> ..." >&2
+    echo "Usage: holtos-update-apply <service|authentik|config|the-den|the-den-client|rollback|system> ..." >&2
     exit 1
 fi
 
+# Each item is attempted independently — one failing (e.g. The Den has no
+# tagged release yet) must not abort the rest of the batch. set -e only
+# skips its automatic-exit behavior for commands on the left of "||", so
+# every dispatch below is wrapped that way rather than relying on set -e.
+failed=()
 for item in "$@"; do
     case "$item" in
-        config) update_config ;;
-        rollback) rollback_config ;;
-        system) update_system ;;
+        config) update_config || failed+=("$item") ;;
+        rollback) rollback_config || failed+=("$item") ;;
+        system) update_system || failed+=("$item") ;;
+        the-den) update_the_den || failed+=("$item") ;;
+        the-den-client) update_the_den_client || failed+=("$item") ;;
         authentik)
-            update_service authentik-server
-            update_service authentik-worker
+            update_service authentik-server || failed+=("authentik-server")
+            update_service authentik-worker || failed+=("authentik-worker")
             ;;
-        *) update_service "$item" ;;
+        *) update_service "$item" || failed+=("$item") ;;
     esac
 done
 
+if [ "${#failed[@]}" -gt 0 ]; then
+    echo "==> Failed: ${failed[*]}" >&2
+    exit 1
+fi
 echo "==> Done."

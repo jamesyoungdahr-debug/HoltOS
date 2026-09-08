@@ -74,3 +74,16 @@ jq
 yad
 libnotify
 breeze-gtk
+
+# The Den (jamesyoungdahr-debug/the-den) — a companion movie/TV library
+# manager, and The Den Client (jamesyoungdahr-debug/the-den-client), its
+# native KDE desktop app. Both are separately-maintained repos pulled in
+# and updated via holtos-update-apply (update_the_den/update_the_den_client)
+# rather than baked into this image — neither has a tagged release yet, so
+# there's nothing to vendor at build time. python: the-den's own venv +
+# alembic migrations. pyside6/kirigami/qqc2-desktop-style: the client's
+# runtime, no separate venv needed (it has no pip dependencies of its own).
+python
+pyside6
+kirigami
+qqc2-desktop-style

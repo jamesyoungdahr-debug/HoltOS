@@ -22,6 +22,26 @@ something to actually find now. Also added rollback (`holtos-rollback-config`),
 an update history log/viewer, and release notes in update notifications —
 all untested, same caveat as everything else pending a rebuild.
 
+## The Den / The Den Client integration
+
+Added `update_the_den`/`update_the_den_client` to `holtos-update-apply` —
+separately-maintained repos (jamesyoungdahr-debug/the-den,
+the-den-client), tag-gated updates only, install-on-first-use since
+neither has a release yet. This is the **least-tested code in the whole
+updater**: `update_the_den` is a hand-translation of the-den's own
+PKGBUILD/install script (never executed, only read), and neither repo
+has a tag to actually test against yet. Once either repo cuts a `v*`
+release, test the full first-install path via the tray picker before
+trusting it on a real system — especially the-den's systemd-sysusers/
+tmpfiles/alembic-migration sequence.
+
+Also added `holtos-first-boot-apps.service` to auto-install both on first
+boot once releases exist (untested — depends on the same untested
+install path above), and fixed a real batch-abort bug in
+`holtos-update-apply`'s dispatch loop while implementing this (one
+failing item was silently skipping every item after it in the same
+picker selection).
+
 ## Tested & confirmed (booted in Hyper-V VM)
 
 - Calamares Welcome page logo — no black box (fixed `logo-icon.svg` rgba/bg)

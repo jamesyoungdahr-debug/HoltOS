@@ -1,9 +1,10 @@
 #!/bin/bash
 # Lets the user pick exactly which pieces to update — one or more
-# individual services, the shared config (quadlets + scripts, gated on the
-# latest tagged release), and/or system packages — rather than updating
-# everything at once. Runs the selected items through a single pkexec
-# prompt and shows progress in a yad dialog.
+# individual services, The Den / The Den Client (separately-maintained
+# companion repos, installed on first use if not present yet), the shared
+# config (quadlets + scripts), and/or system packages — rather than
+# updating everything at once. Runs the selected items through a single
+# pkexec prompt and shows progress in a yad dialog.
 ICON=/usr/share/icons/hicolor/scalable/apps/holtos-logo.svg
 
 result="$(yad --form --title="HoltOS Updater" --image="$ICON" --window-icon="$ICON" \
@@ -17,6 +18,8 @@ result="$(yad --form --title="HoltOS Updater" --image="$ICON" --window-icon="$IC
     --field="Plex:CHK" FALSE \
     --field="qBittorrent:CHK" FALSE \
     --field="Authentik:CHK" FALSE \
+    --field="The Den:CHK" FALSE \
+    --field="The Den Client:CHK" FALSE \
     --field="Config (quadlets + scripts):CHK" FALSE \
     --field="System Packages (pacman):CHK" FALSE \
     --button="Apply:0" --button="Cancel:1")"
@@ -24,7 +27,7 @@ rc=$?
 [ "$rc" -eq 0 ] || exit 0
 [ -n "$result" ] || exit 0
 
-IFS='|' read -r f_dashboard f_sonarr f_radarr f_prowlarr f_jellyseerr f_plex f_qbittorrent f_authentik f_config f_system <<< "$result"
+IFS='|' read -r f_dashboard f_sonarr f_radarr f_prowlarr f_jellyseerr f_plex f_qbittorrent f_authentik f_theden f_thedenclient f_config f_system <<< "$result"
 
 items=()
 [ "$f_dashboard" = "TRUE" ] && items+=(homepage-dashboard)
@@ -35,6 +38,8 @@ items=()
 [ "$f_plex" = "TRUE" ] && items+=(plex)
 [ "$f_qbittorrent" = "TRUE" ] && items+=(qbittorrent)
 [ "$f_authentik" = "TRUE" ] && items+=(authentik)
+[ "$f_theden" = "TRUE" ] && items+=(the-den)
+[ "$f_thedenclient" = "TRUE" ] && items+=(the-den-client)
 [ "$f_config" = "TRUE" ] && items+=(config)
 [ "$f_system" = "TRUE" ] && items+=(system)
 
