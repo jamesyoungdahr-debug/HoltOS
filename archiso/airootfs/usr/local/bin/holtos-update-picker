@@ -6,8 +6,8 @@
 # prompt and shows progress in a yad dialog.
 ICON=/usr/share/icons/hicolor/scalable/apps/holtos-logo.svg
 
-result="$(yad --form --title="HoltOS Updater" --image="$ICON" \
-    --text="Select what to update:" \
+result="$(yad --form --title="HoltOS Updater" --image="$ICON" --window-icon="$ICON" \
+    --text="<b>Select what to update</b>" \
     --width=380 --center \
     --field="Dashboard:CHK" FALSE \
     --field="Sonarr:CHK" FALSE \
@@ -39,20 +39,24 @@ items=()
 [ "$f_system" = "TRUE" ] && items+=(system)
 
 if [ "${#items[@]}" -eq 0 ]; then
-    yad --info --title="HoltOS Updater" --text="Nothing selected." --button="Close:0"
+    yad --info --title="HoltOS Updater" --window-icon="$ICON" \
+        --text="Nothing selected." --button="Close:0"
     exit 0
 fi
 
 pkexec /usr/local/bin/holtos-update-apply "${items[@]}" 2>&1 \
     | stdbuf -oL sed -u 's/^==> /#/' \
     | yad --progress --pulsate --auto-close --auto-kill \
-        --title="HoltOS Updater" --image="$ICON" \
-        --text="Starting update..." --width=420 --center \
+        --title="HoltOS Updater" --image="$ICON" --window-icon="$ICON" \
+        --text="Updating HoltOS..." --width=420 --center \
         --no-buttons
 
 status=${PIPESTATUS[0]}
 if [ "$status" -ne 0 ]; then
-    yad --image=dialog-error --title="HoltOS Updater" \
+    yad --image=dialog-error --title="HoltOS Updater" --window-icon="$ICON" \
         --text="Update failed (exit $status). Check your network connection and try again." \
         --button="Close:0"
+else
+    yad --image="$ICON" --title="HoltOS Updater" --window-icon="$ICON" \
+        --text="Update complete." --button="Close:0"
 fi

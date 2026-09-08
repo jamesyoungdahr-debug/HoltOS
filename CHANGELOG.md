@@ -24,6 +24,26 @@ All notable changes to HoltOS are logged here. Format loosely follows
   Updates") only watches for new tagged releases and notifies when one's
   out; `build.sh` stamps the ISO with its build commit so a fresh
   install's first check is accurate.
+- Branded the updater's GTK dialogs: added `breeze-gtk` plus dark-mode and
+  brand-purple-accent defaults under `/etc/skel/.config/gtk-{3,4}.0/`
+  (yad is a GTK3 app — without a theme it was rendering as plain light
+  Adwaita against the rest of the dark/purple system). Also added
+  `--window-icon`, a success dialog, and brand-voice copy to
+  `holtos-update-picker`'s dialogs.
+- Reworked the Calamares installer layout: the step list moved from a
+  vertical left sidebar to a horizontal bar along the bottom
+  (`calamares-sidebar.qml`), and Back/Cancel/Next moved into a new top
+  bar with the HoltOS logo centered between them
+  (`calamares-navigation.qml`), replacing Calamares' default widgets.
+  Both are custom QML (Calamares ships no built-in fallback for the
+  `sidebar: qml` / `navigation: qml` branding.desc options in this
+  build), adapted from a real shipped reference (KaOS's branding
+  component) rather than written from scratch. Also fixed the
+  `style:` section in `branding.desc`: `SidebarTextSelect` /
+  `SidebarTextHighlight` were never real Calamares style keys — the
+  actual ones are `SidebarBackgroundCurrent` / `SidebarTextCurrent`,
+  which now actually drive the current-step/current-button highlight
+  color instead of being silently ignored.
 - Calamares Welcome page: removed the opaque background rect from
   `logo-icon.svg` that showed as a black box on the white welcome content
   area; converted `rgba()` fills to hex + `fill-opacity` (Qt's SVG renderer

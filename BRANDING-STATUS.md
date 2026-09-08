@@ -3,6 +3,17 @@
 Working log for the "brand Arch into HoltOS" effort. Updated as each step
 lands. See `CHANGELOG.md` for the user-facing version of this same work.
 
+## ⚠️ Highest-risk untested change: custom navigation QML
+
+`calamares-navigation.qml` rebuilds Back/Cancel/Next from scratch (a real
+Calamares distro's shipped reference was used, not guessed syntax — see
+CHANGELOG — but it has never actually been loaded by Calamares). If
+something's wrong with it, the installer could load but leave Next/Back
+non-functional, which would block every install. **Test this before
+anything else** next time the ISO is rebuilt: click through every page,
+confirm Back/Next/Cancel all work, confirm Cancel hides correctly on the
+last step, confirm the step bar at the bottom highlights the current step.
+
 ## Tested & confirmed (booted in Hyper-V VM)
 
 - Calamares Welcome page logo — no black box (fixed `logo-icon.svg` rgba/bg)

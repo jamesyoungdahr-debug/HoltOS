@@ -27,10 +27,21 @@ images:
 
 slideshow: "show.qml"
 
+# Horizontal step list along the bottom (calamares-sidebar.qml) and a
+# horizontal Back / logo / Cancel / Next bar along the top
+# (calamares-navigation.qml) — both custom QML in this branding component,
+# replacing Calamares' default vertical left-hand sidebar + button widget.
+sidebar: qml,bottom
+navigation: qml,top
+
 # Real HoltOS Design System tokens (styles.css): holt-surface / holt-ink /
-# holt-current.
+# holt-current. These are the actual Calamares-recognized style keys
+# (SidebarBackground/SidebarText for the normal state,
+# SidebarBackgroundCurrent/SidebarTextCurrent for the active step/button) —
+# an earlier pass here used invented key names that Calamares silently
+# ignored.
 style:
-   SidebarBackground:    "#171423"
-   SidebarText:          "#FFFFFF"
-   SidebarTextSelect:    "#FFFFFF"
-   SidebarTextHighlight: "#B14DFF"
+   SidebarBackground:        "#171423"
+   SidebarText:               "#FFFFFF"
+   SidebarBackgroundCurrent:  "#B14DFF"
+   SidebarTextCurrent:        "#FFFFFF"

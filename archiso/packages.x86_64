@@ -63,8 +63,11 @@ podman
 # HoltOS updater (holtos-tray / holtos-update*): git for `ls-remote` tag
 # lookups (metadata only, no clone), curl to download the release tarball,
 # yad for the system-tray icon + menu, libnotify for the "update available"
-# desktop notification.
+# desktop notification. breeze-gtk: yad is a GTK3 app — without this it
+# renders as plain light Adwaita, clashing with the rest of the dark/purple
+# theme (see /etc/skel/.config/gtk-3.0/ for the dark+accent defaults).
 git
 curl
 yad
 libnotify
+breeze-gtk
