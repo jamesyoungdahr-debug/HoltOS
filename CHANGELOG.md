@@ -5,12 +5,61 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+- Replaced the Authentik admin-username approach entirely — Authentik
+  login still didn't work with the OS account's username after the
+  previous fix, tested live. Root cause: that fix (`admin-username.yaml`,
+  a *separate* blueprint renaming the bootstrap-created "akadmin" user
+  after the fact) raced against Authentik's own built-in bootstrap
+  blueprint. Fetched that built-in blueprint's actual source
+  (`goauthentik/authentik`'s `blueprints/system/bootstrap.yaml`) to
+  confirm: if the rename blueprint's `identifiers: {username: akadmin}`
+  runs *before* the built-in one has created that account yet, `state:
+  present` semantics mean it creates a new, mostly-empty user (no
+  password, no superuser group) under the desired username instead of
+  finding anything to rename — while the built-in blueprint then
+  separately creates the *real* akadmin once it runs. Two accounts,
+  neither one usable as "OS username + OS password". Fixed by mounting a
+  full replacement for Authentik's own `/blueprints/system/bootstrap.yaml`
+  (`etc/authentik/blueprints/bootstrap-override.yaml`, adapted from that
+  same fetched source with the username parameterized) directly over
+  that path, so the account is created correctly — right username,
+  password, and superuser group — in one step, no race possible.
+- Hardened the password-capture pipeline against locale-dependent text
+  corruption: the obscured password (see the earlier `String::obscure()`
+  fix) round-trips through several codepoints in Unicode's "Specials"
+  block, including ones that coincide with the UTF-8 replacement
+  character — a real risk if any tool in the pipeline (printf, bash,
+  python) isn't interpreting it as UTF-8. Both `capture-user-creds.conf`
+  and `homelab-generate-secrets.sh`'s deobscure step now force
+  `LC_ALL=C.UTF-8` explicitly rather than relying on the chroot's ambient
+  locale.
+- Added a proper "HoltOS Updater" entry to the System category of the
+  app menu (`holtos-updater.desktop`, launches the same update picker
+  the tray icon opens) — a reliable way to reach the updater regardless
+  of the tray icon's autostart status, and useful on its own regardless.
+- Fixed the installer's Finished-page "Next" button not restarting the
+  system (real bug hit live, after the earlier click-does-nothing fix
+  for the same button — this was a second, separate bug on the same
+  control). Calamares only runs the configured restart command when it
+  *exits* from the Finished page, and exiting is `ViewManager.quit()`,
+  not `next()` — on the last page there's nowhere for `next()` to
+  advance to, so it was just silently doing nothing. The button now
+  calls `quit()` specifically when already on the last page (and shows
+  "Done" instead of "Next" there).
 - Set the installer's account password requirement to a plain 4-character
   minimum, nothing else — no complexity/class requirements. Added
   `etc/calamares/modules/users.conf` (didn't exist before; Calamares was
   running on its own built-in defaults, which enforce no minimum length
-  at all). Deliberately minimal — only touches `passwordRequirements`,
-  every other users-module setting stays on Calamares' defaults.
+  at all) — deliberately minimal, only touches `passwordRequirements`,
+  every other users-module setting stays on Calamares' defaults. Took
+  two passes to actually land on 4: the first attempt set
+  libpwquality's own `minlen=4`, but libpwquality silently clamps any
+  `minlen` below 6 back up to 6 (confirmed against its own docs — hit
+  live, `minlen=4` still produced "The password is shorter than 6
+  characters", libpwquality's own message, not Calamares'). Fixed by
+  setting `minlen=0` (libpwquality's actual "disabled" value) instead,
+  leaving Calamares' own separate `minLength: 4` — no such floor — as
+  the real enforcement.
 - Authentik's admin login username now matches the OS account's username
   instead of staying the hardcoded `akadmin` (which is all
   `AUTHENTIK_BOOTSTRAP_*` env vars can ever produce — no username

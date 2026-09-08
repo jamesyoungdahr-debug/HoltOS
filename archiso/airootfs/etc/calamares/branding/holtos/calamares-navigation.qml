@@ -17,6 +17,16 @@
    still renders it looking perfectly clickable — real bug hit live: the
    Next button rendered normally on the Finished page but did nothing on
    click. Each onClicked now guards on the ViewManager flag itself instead.
+
+   Second bug hit live, same button: fixing the above made Next
+   *clickable* on the Finished page, but it still didn't restart the
+   system. Calamares only runs the configured restart command "when it
+   exits from the finished page" (finished.conf's restartNowMode/
+   restartNowCommand) — that exit is ViewManager.quit(), not next(). On
+   the last page there's no further page to advance to, so next() was
+   simply a no-op; nothing was ever wrong with the checkbox or the
+   restart command itself. Next now calls quit() specifically when
+   already on the last page.
 */
 import io.calamares.ui 1.0
 import io.calamares.core 1.0
@@ -113,6 +123,7 @@ Rectangle {
 
         Rectangle {
             id: nextArea
+            readonly property bool isLastPage: ViewManager.currentStepIndex >= ViewManager.rowCount() - 1
             Layout.preferredWidth: 96
             Layout.fillHeight: true
             color: mouseNext.containsMouse ? navigationBar.nextHoverColor : navigationBar.nextIdleColor
@@ -121,18 +132,24 @@ Rectangle {
             MouseArea {
                 id: mouseNext
                 anchors.fill: parent
-                cursorShape: ViewManager.nextEnabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                cursorShape: ( nextArea.isLastPage || ViewManager.nextEnabled ) ? Qt.PointingHandCursor : Qt.ArrowCursor
                 hoverEnabled: true
 
                 Text {
                     anchors.centerIn: parent
-                    text: qsTr("Next")
-                    color: !ViewManager.nextEnabled ? navigationBar.disabledTextColor : Branding.styleString( Branding.SidebarTextCurrent )
+                    text: nextArea.isLastPage ? qsTr("Done") : qsTr("Next")
+                    color: ( !nextArea.isLastPage && !ViewManager.nextEnabled ) ? navigationBar.disabledTextColor : Branding.styleString( Branding.SidebarTextCurrent )
                     font.pointSize: 9
                     font.bold: true
                 }
 
-                onClicked: { if ( ViewManager.nextEnabled ) ViewManager.next(); }
+                onClicked: {
+                    if ( nextArea.isLastPage ) {
+                        ViewManager.quit();
+                    } else if ( ViewManager.nextEnabled ) {
+                        ViewManager.next();
+                    }
+                }
             }
         }
     }

@@ -3,43 +3,53 @@
 Working log for the "brand Arch into HoltOS" effort. Updated as each step
 lands. See `CHANGELOG.md` for the user-facing version of this same work.
 
-## Authentik bootstrap password — real, longstanding bug, now fixed
+## Authentik login — tested live twice, still not confirmed working
 
-This has been broken since the feature was first written this session,
-across both the Python and shellprocess rewrites — nobody caught it
-because it fails *silently*: install completes, Authentik comes up,
-login just doesn't work, no error surfaced anywhere. Root cause:
-Calamares obscures the GlobalStorage `password` value before a
-shellprocess-based reader ever sees it (`Calamares::String::obscure()` —
-see CHANGELOG for the exact transform). Fixed by reversing it in
-`homelab-generate-secrets.sh`. **Not yet tested** — verify next install
-that logging into Authentik at `akadmin` + the OS account's actual
-password works.
+First pass: fixed the password never being deobscured (see CHANGELOG for
+`Calamares::String::obscure()`). Tested live — login still failed with
+the OS account's username + password.
 
-## Authentik admin username blueprint — new, untested
+Second pass, same live test: found the username side was *also* broken
+— a separate rename-based blueprint racing against Authentik's own
+built-in bootstrap blueprint (see CHANGELOG for the full mechanism).
+Replaced with a direct override of Authentik's own
+`/blueprints/system/bootstrap.yaml`
+(`etc/authentik/blueprints/bootstrap-override.yaml`) — no more race,
+account created correctly in one step. Also hardened the password
+pipeline against a real, separate risk (locale-dependent mangling of the
+obscured value's Unicode "Specials"-block characters, which weren't
+being forced to any specific encoding before) with explicit
+`LC_ALL=C.UTF-8`.
 
-`etc/authentik/blueprints/admin-username.yaml` renames the
-bootstrap-created `akadmin` account to the OS account's username via the
-`authentik_core.user` model. Unlike `homepage-oidc.yaml` (verified live
-against a real 2025.8.6 instance — see that file's own note), this one
-is inferred from Authentik's blueprint schema docs only, not verified.
-Worth checking specifically: does it apply reliably *after* bootstrap
-creates the account (ordering — if blueprints run first, the
-`identifiers: username: akadmin` lookup finds nothing and either no-ops
-or creates a stray second user instead of renaming), and does the
-rename survive/reapply correctly on every boot rather than just once.
+**Neither the bootstrap-override approach nor the LC_ALL hardening has
+been tested live yet.** This is now two consecutive live tests where
+Authentik login didn't work for reasons that turned out to be different
+each time — treat this area as still fundamentally unverified until a
+real login actually succeeds, not just until the current known bugs are
+fixed. If it's *still* broken next test, worth adding a temporary debug
+step that logs the captured username/deobscured-password length (not
+the value) to actually see what's landing in authentik.env, rather than
+reasoning about it blind again.
 
-## Custom navigation QML — tested live, two real bugs found and fixed
+## Custom navigation QML — tested live twice, two real bugs found and fixed
 
 `calamares-navigation.qml`/`calamares-sidebar.qml` have now actually been
-loaded by Calamares on a real install. Confirmed: Welcome → Users → full
-install completed successfully with the custom top/bottom bars in place.
-One real bug found: the Finished page's "Next" button rendered normally
-but did nothing on click (QML `enabled: false` cascading to the nested
-MouseArea — see CHANGELOG). Fixed, **not yet re-tested** — verify next
-build that Next actually closes/restarts on the Finished page, and
-re-confirm Back/Cancel/step-bar highlighting still work after the change
-(the fix touched all three buttons, not just Next).
+loaded by Calamares on two real installs. Confirmed: Welcome → Users →
+full install completed successfully with the custom top/bottom bars in
+place, both times. Two real bugs found on the Finished page's "Next"
+button specifically, one per live test so far:
+1. Rendered normally, did nothing on click (QML `enabled: false`
+   cascading to the nested MouseArea). Fixed.
+2. After fixing #1, click registered but the system still didn't
+   restart — `next()` on the last page has nowhere to advance to, it's
+   a no-op; the real exit/restart trigger is `quit()` (see CHANGELOG).
+   Fixed.
+Both fixes are in the same file, on the same button, found on
+consecutive live tests — **re-verify carefully next build**: click
+Next on the Finished page and confirm the system actually restarts,
+not just that the button responds. Also re-confirm Back/Cancel/step-bar
+highlighting still work (the first fix touched all three buttons, not
+just Next).
 
 Also found live: the desktop wallpaper never appeared on the installed
 system. Root mechanism was wrong (see CHANGELOG) — replaced with a
@@ -49,7 +59,18 @@ mechanism, unverified.
 Also found live: the updater's tray icon never appeared at all on the
 installed system. `X-KDE-autostart-phase=2` was making Plasma 6's
 systemd autostart generator skip the file outright (see CHANGELOG).
-Removed. **Not yet tested.**
+Removed — tested live, **still didn't appear**. Root cause not yet
+found; removing that key was a real, justified fix (confirmed via
+research it's a genuine known systemd-xdg-autostart-generator gotcha)
+but evidently not the whole story, or not the actual blocker here.
+Added a proper "System" category app-menu entry
+(`holtos-updater.desktop`) as a reliable way to reach the updater
+regardless — worth checking on the next test whether autostart works
+now on its own, since nothing new was changed there this round, or
+whether it needs actual debugging (e.g. `systemctl --user status
+app-holtos\\x2dtray@autostart.service`-style unit inspection, checking
+whether `yad` itself is even installed/working, checking for a stray
+process that's running but just not producing a visible icon).
 
 ## v0.0.1-alpha tagged and released
 

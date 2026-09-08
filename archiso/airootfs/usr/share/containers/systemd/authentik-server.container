@@ -23,7 +23,12 @@ EnvironmentFile=/var/mnt/tank/appdata/secrets/authentik.env
 # Authentik's image has no such init step.
 Volume=/var/mnt/tank/appdata/authentik/media:/media:U
 Volume=/var/mnt/tank/appdata/authentik/certs:/certs:U
-Volume=/etc/authentik/blueprints:/blueprints/custom:ro
+Volume=/etc/authentik/blueprints/homepage-oidc.yaml:/blueprints/custom/homepage-oidc.yaml:ro
+# Replaces Authentik's own built-in system/bootstrap.yaml (not just adds
+# alongside it — same path) so the admin account is created with the OS
+# account's username from the start. See bootstrap-override.yaml's own
+# header for why a separate custom/-mounted rename blueprint didn't work.
+Volume=/etc/authentik/blueprints/bootstrap-override.yaml:/blueprints/system/bootstrap.yaml:ro
 
 [Service]
 Restart=always

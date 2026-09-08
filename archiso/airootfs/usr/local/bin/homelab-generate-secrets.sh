@@ -20,11 +20,15 @@
 # The bootstrap admin *username* Authentik itself creates is always
 # "akadmin" — no AUTHENTIK_BOOTSTRAP_USERNAME variable exists, confirmed
 # against docs.goauthentik.io/install-config/automated-install/ (only
-# password/password-hash/email/token are configurable) — AUTHENTIK_ADMIN_USERNAME
-# below is instead consumed by a blueprint
-# (etc/authentik/blueprints/admin-username.yaml) that renames that
-# account after the fact. Deleted unconditionally: it's plaintext (well —
-# deobscured; see below) and must not survive on disk either way.
+# password/password-hash/email/token are configurable) —
+# AUTHENTIK_ADMIN_USERNAME below is instead consumed by
+# etc/authentik/blueprints/bootstrap-override.yaml, which replaces
+# Authentik's own built-in bootstrap blueprint outright (mounted over the
+# same /blueprints/system/bootstrap.yaml path — see that file's own
+# header for why a separate rename-after-the-fact blueprint didn't work
+# reliably) so the account is created with the right username from the
+# start. Deleted unconditionally: it's plaintext (well — deobscured; see
+# below) and must not survive on disk either way.
 #
 # The captured value is NOT the plaintext password. capture-user-creds
 # reads it from Calamares' GlobalStorage "password" key, which the users
@@ -42,7 +46,7 @@
 # OS account's real password never logs into Authentik. Done in Python
 # (already a dependency, and correctly Unicode-aware) rather than bash.
 deobscure() {
-    python3 -c '
+    LC_ALL=C.UTF-8 PYTHONIOENCODING=utf-8 python3 -c '
 import sys
 s = sys.stdin.read()
 sys.stdout.write("".join(ch if ord(ch) <= 0x21 else chr(0x1001F - ord(ch)) for ch in s))

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=HoltOS Updater
+Comment=Check for and apply HoltOS updates
+Exec=/usr/local/bin/holtos-update-picker
+Icon=holtos-logo
+Categories=System;
+Terminal=false
