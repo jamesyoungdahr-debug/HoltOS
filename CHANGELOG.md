@@ -5,6 +5,17 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+- Fixed the ISO build failing entirely ("checking for file conflicts...
+  Errors occurred, no packages were upgraded", every package download
+  wasted): the `/usr/lib/os-release` override landed on a path the
+  `filesystem` package actually owns, and mkarchiso copies `airootfs/`
+  onto the pacstrap target *before* installing packages — so pacman saw
+  our file already sitting there, unowned, and refused to let
+  `filesystem` install over it. `/etc/os-release` (a symlink to
+  `usr/lib/os-release`, *not* itself shipped by any package — confirmed
+  via `pacman -Fl`) is the actual convention every other Arch-based
+  distro's archiso profile uses for exactly this reason. Moved the
+  override there instead.
 - Config updates now log to `/var/lib/holtos/history.log` (every applied
   service/config/system update, world-readable, viewable via the tray's
   new "Update History" item), which also backs a new "Rollback Config"
