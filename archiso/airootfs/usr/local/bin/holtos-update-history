@@ -1,0 +1,14 @@
+#!/bin/bash
+# Shows the applied-update audit trail written by holtos-update-apply.
+ICON=/usr/share/icons/hicolor/scalable/apps/holtos-logo.svg
+HISTORY=/var/lib/holtos/history.log
+
+if [ ! -s "$HISTORY" ]; then
+    yad --info --title="HoltOS Update History" --window-icon="$ICON" \
+        --text="No updates have been applied yet." --button="Close:0"
+    exit 0
+fi
+
+yad --text-info --title="HoltOS Update History" --image="$ICON" --window-icon="$ICON" \
+    --filename="$HISTORY" --width=560 --height=360 --center \
+    --button="Close:0"

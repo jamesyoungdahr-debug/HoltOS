@@ -5,10 +5,23 @@
 # of: a podman service name matching a .container unit under
 # /usr/share/containers/systemd/, "authentik" (server+worker together),
 # "config" (Podman Quadlet units + homelab-*.sh scripts, gated on the
-# latest *tagged* HoltOS release — see holtos-update-check), or "system"
-# (plain `pacman -Syu`, for the kernel/OS packages the git repo has nothing
-# to do with).
+# latest *tagged* HoltOS release — see holtos-update-check), "rollback"
+# (re-applies the config release before the currently-deployed one), or
+# "system" (plain `pacman -Syu`, for the kernel/OS packages the git repo
+# has nothing to do with).
+#
+# Every applied item is appended to /var/lib/holtos/history.log (world-
+# readable — see holtos-update-history) as a small audit trail, and it's
+# what rollback reads to find "the release before this one".
 set -euo pipefail
+
+HISTORY=/var/lib/holtos/history.log
+
+log_history() {
+    mkdir -p "$(dirname "$HISTORY")"
+    printf '%s\t%s\t%s\t%s\n' "$(date -u +%FT%TZ)" "$1" "$2" "$3" >> "$HISTORY"
+    chmod 644 "$HISTORY"
+}
 
 update_service() {
     local name="$1" unit image
@@ -22,22 +35,37 @@ update_service() {
     podman pull "$image"
     echo "==> Restarting $name..."
     systemctl restart "$name"
+    log_history service "$name" "$image"
 }
 
+# update_config [target_tag] — with no argument, updates to the latest
+# tagged release found on the remote. With an argument, updates to exactly
+# that tag (used by rollback_config).
 update_config() {
+    local target_tag="${1:-}"
     local repo="jamesyoungdahr-debug/HoltOS"
     local state="/var/lib/holtos/deployed-commit"
     local line new_commit latest_tag tmp_tar src_dir
     mkdir -p "$(dirname "$state")"
 
-    echo "==> Looking up the latest release..."
-    line="$(git ls-remote --tags --refs --sort=-v:refname "https://github.com/$repo.git" 'v*' | head -1)"
-    if [ -z "$line" ]; then
-        echo "No tagged HoltOS release found." >&2
-        return 1
+    if [ -z "$target_tag" ]; then
+        echo "==> Looking up the latest release..."
+        line="$(git ls-remote --tags --refs --sort=-v:refname "https://github.com/$repo.git" 'v*' | head -1)"
+        if [ -z "$line" ]; then
+            echo "No tagged HoltOS release found." >&2
+            return 1
+        fi
+        new_commit="$(cut -f1 <<< "$line")"
+        latest_tag="$(cut -f2 <<< "$line" | sed 's#refs/tags/##')"
+    else
+        latest_tag="$target_tag"
+        line="$(git ls-remote --tags --refs "https://github.com/$repo.git" "refs/tags/$target_tag" | head -1)"
+        if [ -z "$line" ]; then
+            echo "Tag $target_tag not found on remote." >&2
+            return 1
+        fi
+        new_commit="$(cut -f1 <<< "$line")"
     fi
-    new_commit="$(cut -f1 <<< "$line")"
-    latest_tag="$(cut -f2 <<< "$line" | sed 's#refs/tags/##')"
 
     echo "==> Downloading $latest_tag..."
     tmp_tar="$(mktemp)"
@@ -60,12 +88,29 @@ update_config() {
     systemctl daemon-reload
 
     echo "$new_commit" > "$state"
+    log_history config "$latest_tag" "$new_commit"
     echo "==> Config updated to $latest_tag"
+}
+
+rollback_config() {
+    if [ ! -f "$HISTORY" ]; then
+        echo "No update history — nothing to roll back." >&2
+        return 1
+    fi
+    local prev_tag
+    prev_tag="$(grep -P '^\S+\tconfig\t' "$HISTORY" | tail -2 | head -1 | cut -f3)"
+    if [ -z "$prev_tag" ]; then
+        echo "No previous config release to roll back to." >&2
+        return 1
+    fi
+    echo "==> Rolling back config to $prev_tag..."
+    update_config "$prev_tag"
 }
 
 update_system() {
     echo "==> Updating system packages (pacman -Syu)..."
     pacman -Syu --noconfirm
+    log_history system pacman "$(date -u +%FT%TZ)"
 }
 
 if [ "$(id -u)" -ne 0 ]; then
@@ -74,13 +119,14 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 if [ "$#" -eq 0 ]; then
-    echo "Usage: holtos-update-apply <service|authentik|config|system> ..." >&2
+    echo "Usage: holtos-update-apply <service|authentik|config|rollback|system> ..." >&2
     exit 1
 fi
 
 for item in "$@"; do
     case "$item" in
         config) update_config ;;
+        rollback) rollback_config ;;
         system) update_system ;;
         authentik)
             update_service authentik-server

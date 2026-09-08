@@ -14,6 +14,14 @@ anything else** next time the ISO is rebuilt: click through every page,
 confirm Back/Next/Cancel all work, confirm Cancel hides correctly on the
 last step, confirm the step bar at the bottom highlights the current step.
 
+## v0.0.1-alpha tagged and released
+
+`v0.0.1-alpha` is now a real annotated git tag + GitHub Release (with
+notes) at commit `0ba1ac1` — the updater's "official release" check has
+something to actually find now. Also added rollback (`holtos-rollback-config`),
+an update history log/viewer, and release notes in update notifications —
+all untested, same caveat as everything else pending a rebuild.
+
 ## Tested & confirmed (booted in Hyper-V VM)
 
 - Calamares Welcome page logo — no black box (fixed `logo-icon.svg` rgba/bg)

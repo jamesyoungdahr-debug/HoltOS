@@ -5,6 +5,18 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+- Config updates now log to `/var/lib/holtos/history.log` (every applied
+  service/config/system update, world-readable, viewable via the tray's
+  new "Update History" item), which also backs a new "Rollback Config"
+  tray action (`holtos-rollback-config`) that re-applies the tagged
+  release before the currently-deployed one.
+- Update-available notifications now include the release's notes (pulled
+  from the GitHub Release body for that tag, via the GitHub API — falls
+  back to the generic message if the tag has no Release object). Added
+  `jq` to parse it.
+
+## [0.0.1-alpha] - 2026-09-08
+
 - Added a HoltOS updater: a system tray icon (`holtos-tray`, autostarted)
   with a per-item picker (`holtos-update-picker`) rather than one
   all-or-nothing update — check boxes for the dashboard, each individual
@@ -112,7 +124,7 @@ All notable changes to HoltOS are logged here. Format loosely follows
   teal hairline), designed by the HoltOS Design System project and wired
   in via a Plasma wallpaper package + SDDM `theme.conf.user`.
 
-## [0.0.1-alpha] - initial validated build
+### Earlier work in this release (initial validated build)
 
 - archiso + Calamares + Limine profile with a validated real
   install → reboot cycle in a Hyper-V VM.

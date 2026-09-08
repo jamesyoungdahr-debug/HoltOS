@@ -19,4 +19,4 @@ exec yad --notification \
     --image="$ICON" \
     --text="HoltOS Updater" \
     --command=/usr/local/bin/holtos-update-picker \
-    --menu="Check for Updates!/usr/local/bin/holtos-check-notify --verbose!$ICON|Update...!/usr/local/bin/holtos-update-picker!$ICON|Quit!quit!application-exit"
+    --menu="Check for Updates!/usr/local/bin/holtos-check-notify --verbose!$ICON|Update...!/usr/local/bin/holtos-update-picker!$ICON|Rollback Config!/usr/local/bin/holtos-rollback-config!$ICON|Update History!/usr/local/bin/holtos-update-history!$ICON|Quit!quit!application-exit"

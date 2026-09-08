@@ -1,0 +1,26 @@
+#!/bin/bash
+# Re-applies the config release before the currently-deployed one (see
+# holtos-update-apply's rollback_config). Confirms first — this rewrites
+# Quadlet units and scripts back to an older version.
+ICON=/usr/share/icons/hicolor/scalable/apps/holtos-logo.svg
+
+yad --question --title="HoltOS Updater" --image="$ICON" --window-icon="$ICON" \
+    --text="Roll config back to the release before the current one?" \
+    --button="Roll Back:0" --button="Cancel:1"
+[ $? -eq 0 ] || exit 0
+
+pkexec /usr/local/bin/holtos-update-apply rollback 2>&1 \
+    | stdbuf -oL sed -u 's/^==> /#/' \
+    | yad --progress --pulsate --auto-close --auto-kill \
+        --title="HoltOS Updater" --image="$ICON" --window-icon="$ICON" \
+        --text="Rolling back..." --width=420 --center \
+        --no-buttons
+
+status=${PIPESTATUS[0]}
+if [ "$status" -ne 0 ]; then
+    yad --image=dialog-error --title="HoltOS Updater" --window-icon="$ICON" \
+        --text="Rollback failed (exit $status)." --button="Close:0"
+else
+    yad --image="$ICON" --title="HoltOS Updater" --window-icon="$ICON" \
+        --text="Rollback complete." --button="Close:0"
+fi
