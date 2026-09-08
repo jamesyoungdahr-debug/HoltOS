@@ -5,6 +5,50 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+- Rebranded the installer's main content area (the actual page
+  background behind Welcome/Location/Users/etc., which was still plain
+  white — everything customized so far was the top/bottom QML bars
+  around it) to the HoltOS dark/purple palette. Added
+  `stylesheet.qss` (auto-loaded by Calamares since it sits next to
+  `branding.desc`, no config entry needed) styling the generic `QWidget`
+  selector rather than `#mainApp` alone — confirmed against a real
+  shipped example (SalientOS's Calamares branding) that individual page
+  widgets don't have their own dedicated ids, `#mainApp` alone doesn't
+  reach them. Also styles inputs, buttons, progress bar, scrollbar, and
+  list/tree views to match. Doesn't touch the top/bottom bars themselves
+  (QML, styled separately via `branding.desc`'s `style:` keys).
+- Fixed the "Homepage Dashboard" app tile in Authentik failing to load
+  after login (real bug hit live, right after confirming Authentik login
+  itself finally works). `homepage-oidc.yaml`'s `meta_launch_url` was
+  hardcoded to `http://homepage-dashboard:3000` — the *internal Podman
+  network* hostname, which only resolves between containers, never from
+  a browser. This exact class of mistake was already called out in a
+  comment on the neighboring `redirect_uris` field in the same file, just
+  missed for this one. Added `AUTHENTIK_DASHBOARD_URL` (same
+  hostname-based address the dashboard's own `NEXTAUTH_URL` already
+  uses) in `homelab-generate-secrets.sh` and reference it via `!Env`
+  instead of the hardcoded internal name.
+- Fixed the account password still requiring 6 characters after the
+  previous `minlen=0` attempt (tested live, unchanged). libpwquality's
+  own docs are explicit that "disable libpwquality at build-time" is the
+  only listed way to fully remove its influence — no config value
+  actually clears its ~6-character floor, `minlen=0` included. Bypassed
+  it via `allowWeakPasswords`/`allowWeakPasswordsDefault: true` instead
+  (pre-checked, so nothing changes from a user's perspective beyond one
+  extra checkbox), relying purely on Calamares' own separate `minLength`
+  — which has no such floor — for the actual 4-character enforcement.
+- Fixed the updater failing to launch at all ("The program
+  '/usr/local/bin/holtos-update-picker' is missing executable
+  permissions" — real error hit live, from the new System-menu entry).
+  Root cause almost certainly also explains the still-unresolved tray
+  icon issue: every `holtos-*` script's executable bit was set via
+  `chmod +x` in the working copy, but this repo is edited on
+  Windows/Git Bash while the archiso build reads it back through WSL2's
+  drvfs mount — that bit doesn't reliably survive the round trip.
+  `homelab-*.sh` already worked around this via `profiledef.sh`'s
+  `file_permissions` override (which forces permissions independent of
+  whatever the source filesystem reports); the `holtos-*` scripts were
+  simply never added to that same list. Added all eight.
 - Replaced the Authentik admin-username approach entirely — Authentik
   login still didn't work with the OS account's username after the
   previous fix, tested live. Root cause: that fix (`admin-username.yaml`,

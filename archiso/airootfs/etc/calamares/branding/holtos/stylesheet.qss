@@ -1,0 +1,115 @@
+/* HoltOS installer content-area theme — the page background behind
+   Welcome/Location/Keyboard/Partitions/Users/Summary/Install/Finish
+   (everything except our own top/bottom bars, which are QML rendered
+   via a QQuickWidget and styled separately through branding.desc's
+   style: keys — this stylesheet doesn't reach into QML content).
+   Auto-loaded by Calamares because it sits next to branding.desc, no
+   config entry needed.
+
+   Adapted from a real, shipped example (SalientOS's Calamares branding)
+   rather than guessed from scratch — notably, that file leaves #mainApp
+   (the top-level window id) empty and does all the actual work through
+   the generic QWidget selector, since individual page widgets don't
+   have their own dedicated ids to target directly. Same approach here,
+   with our own brand tokens (holt-deep/holt-surface/holt-current)
+   instead of copying their colors.
+*/
+
+QWidget {
+    color: #F4EBFF;
+    background-color: #0D0B12;
+}
+
+QLineEdit, QPlainTextEdit, QTextEdit, QSpinBox {
+    background-color: #171423;
+    color: #FFFFFF;
+    border: 1px solid #2a2438;
+    border-radius: 4px;
+    padding: 4px 8px;
+    selection-background-color: #B14DFF;
+    selection-color: #FFFFFF;
+}
+
+QComboBox {
+    background-color: #171423;
+    color: #FFFFFF;
+    border: 1px solid #2a2438;
+    border-radius: 4px;
+    padding: 4px 8px;
+}
+
+QComboBox QAbstractItemView {
+    background-color: #171423;
+    color: #FFFFFF;
+    selection-background-color: #B14DFF;
+}
+
+QPushButton {
+    background-color: #B14DFF;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 16px;
+    min-width: 80px;
+}
+
+QPushButton:hover {
+    background-color: #c46eff;
+}
+
+QPushButton:pressed {
+    background-color: #8F2FE0;
+}
+
+QPushButton:disabled {
+    background-color: #2a2438;
+    color: #5a5568;
+}
+
+QProgressBar {
+    background-color: #171423;
+    color: #FFFFFF;
+    border: 1px solid #2a2438;
+    border-radius: 4px;
+    text-align: center;
+}
+
+QProgressBar::chunk {
+    background-color: #B14DFF;
+    border-radius: 4px;
+}
+
+QCheckBox, QRadioButton, QLabel {
+    color: #F4EBFF;
+    background-color: transparent;
+}
+
+QScrollBar:vertical {
+    background: #0D0B12;
+    width: 12px;
+    border: none;
+}
+
+QScrollBar::handle:vertical {
+    background: #2a2438;
+    border-radius: 4px;
+    min-height: 20px;
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px;
+    border: none;
+    background: none;
+}
+
+QListView, QTreeView {
+    background-color: #171423;
+    color: #F4EBFF;
+    alternate-background-color: #1c1830;
+    border: 1px solid #2a2438;
+}
+
+QListView::item:selected, QTreeView::item:selected {
+    background-color: #B14DFF;
+    color: #FFFFFF;
+}

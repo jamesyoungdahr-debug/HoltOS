@@ -59,4 +59,11 @@ entries:
       name: Homepage Dashboard
       slug: homepage-dashboard
       provider: !KeyOf homepage-oidc-provider
-      meta_launch_url: "http://homepage-dashboard:3000"
+      # Same browser-reachability concern as redirect_uris above, and
+      # actually hit live this time: this was still hardcoded to the
+      # internal Podman network name "homepage-dashboard", which doesn't
+      # resolve from a browser at all — clicking the app tile failed with
+      # a "can't find [host]" error. AUTHENTIK_DASHBOARD_URL is set by
+      # homelab-generate-secrets.sh from the box's own hostname, the same
+      # value the dashboard's own NEXTAUTH_URL already uses.
+      meta_launch_url: !Env AUTHENTIK_DASHBOARD_URL

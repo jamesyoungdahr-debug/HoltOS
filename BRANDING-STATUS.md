@@ -3,33 +3,53 @@
 Working log for the "brand Arch into HoltOS" effort. Updated as each step
 lands. See `CHANGELOG.md` for the user-facing version of this same work.
 
-## Authentik login — tested live twice, still not confirmed working
+## Installer content-area theme — new, untested
 
-First pass: fixed the password never being deobscured (see CHANGELOG for
-`Calamares::String::obscure()`). Tested live — login still failed with
-the OS account's username + password.
+Added `stylesheet.qss` to rebrand the page content background (still
+plain white until now — only the QML top/bottom bars around it had been
+themed). Confirmed the mechanism and the `QWidget`-not-`#mainApp`
+approach against a real production example rather than guessing, but
+this specific file has never been loaded by Calamares yet. **Not yet
+tested** — check on the next install that every page actually picks up
+the dark theme (not just the ones with simple text fields — Partitions
+especially, which has several page-specific widgets like
+`#partitionBarView`/`#scrollAreaWidgetContents` this stylesheet doesn't
+target directly and which might not inherit the generic `QWidget` rule
+cleanly), and that text stays readable everywhere (dropdowns, combo
+popups, etc.).
 
-Second pass, same live test: found the username side was *also* broken
-— a separate rename-based blueprint racing against Authentik's own
-built-in bootstrap blueprint (see CHANGELOG for the full mechanism).
-Replaced with a direct override of Authentik's own
-`/blueprints/system/bootstrap.yaml`
-(`etc/authentik/blueprints/bootstrap-override.yaml`) — no more race,
-account created correctly in one step. Also hardened the password
-pipeline against a real, separate risk (locale-dependent mangling of the
-obscured value's Unicode "Specials"-block characters, which weren't
-being forced to any specific encoding before) with explicit
-`LC_ALL=C.UTF-8`.
+## Authentik login — CONFIRMED WORKING (third live test)
 
-**Neither the bootstrap-override approach nor the LC_ALL hardening has
-been tested live yet.** This is now two consecutive live tests where
-Authentik login didn't work for reasons that turned out to be different
-each time — treat this area as still fundamentally unverified until a
-real login actually succeeds, not just until the current known bugs are
-fixed. If it's *still* broken next test, worth adding a temporary debug
-step that logs the captured username/deobscured-password length (not
-the value) to actually see what's landing in authentik.env, rather than
-reasoning about it blind again.
+First pass: fixed the password never being deobscured. Login still
+failed. Second pass: found the username side was *also* broken (a
+rename-based blueprint racing against Authentik's own bootstrap
+blueprint) — replaced with a direct override of Authentik's own
+`/blueprints/system/bootstrap.yaml`, and hardened the password pipeline
+with `LC_ALL=C.UTF-8`. **Third live test: login succeeds** — OS
+account's username + password now correctly log into Authentik. This
+area can be considered done.
+
+## Dashboard app tile — real bug found and fixed, plus one unexplained error
+
+Follow-up detail: "Server error occurred" on Authentik's own app-picker
+page, and clicking through to the dashboard "cannot find [host]:port".
+
+The second part is a confirmed, real bug: `homepage-oidc.yaml`'s
+`meta_launch_url` was hardcoded to the internal Podman network hostname
+`homepage-dashboard`, which a browser can never resolve — see CHANGELOG.
+Fixed via `AUTHENTIK_DASHBOARD_URL`.
+
+The first part ("Server error occurred" on Authentik's *own* library
+page) is **not yet explained** — this is Authentik's own core UI, not
+anything this session customized beyond the bootstrap blueprint and this
+one OIDC blueprint. Possible it's related to the same broken
+`meta_launch_url` (if Authentik does strict validation when rendering
+app tiles) and gets fixed as a side effect, possible it's unrelated
+(e.g. something about the freshly-replaced bootstrap blueprint). **Not
+yet tested** — if "Server error occurred" persists after this fix,
+get the actual error detail (Authentik usually logs a real traceback
+server-side even when the UI just shows a generic message) rather than
+reasoning about it blind.
 
 ## Custom navigation QML — tested live twice, two real bugs found and fixed
 
@@ -58,19 +78,19 @@ mechanism, unverified.
 
 Also found live: the updater's tray icon never appeared at all on the
 installed system. `X-KDE-autostart-phase=2` was making Plasma 6's
-systemd autostart generator skip the file outright (see CHANGELOG).
-Removed — tested live, **still didn't appear**. Root cause not yet
-found; removing that key was a real, justified fix (confirmed via
-research it's a genuine known systemd-xdg-autostart-generator gotcha)
-but evidently not the whole story, or not the actual blocker here.
-Added a proper "System" category app-menu entry
-(`holtos-updater.desktop`) as a reliable way to reach the updater
-regardless — worth checking on the next test whether autostart works
-now on its own, since nothing new was changed there this round, or
-whether it needs actual debugging (e.g. `systemctl --user status
-app-holtos\\x2dtray@autostart.service`-style unit inspection, checking
-whether `yad` itself is even installed/working, checking for a stray
-process that's running but just not producing a visible icon).
+systemd autostart generator skip the file outright (see CHANGELOG) —
+real, justified fix, but tested live and the tray **still didn't
+appear**. Added a "System" category app-menu entry
+(`holtos-updater.desktop`) as a reliable fallback — and *that* promptly
+surfaced the actual root cause via a clear on-screen error: "missing
+executable permissions". Every `holtos-*` script's executable bit
+wasn't reliably surviving the Windows/Git Bash → WSL2 drvfs → archiso
+build round trip (see CHANGELOG) — almost certainly the real reason the
+tray never launched either, autostart-phase key or not. Added all eight
+scripts to `profiledef.sh`'s `file_permissions` override. **Not yet
+tested** — this is the second candidate root cause for the tray issue;
+confirm on the next test that both the app-menu entry *and* autostart
+actually launch it now.
 
 ## v0.0.1-alpha tagged and released
 

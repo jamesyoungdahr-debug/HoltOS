@@ -28,4 +28,21 @@ file_permissions=(
   ["/usr/local/bin/homelab-cleanup-live.sh"]="0:0:755"
   ["/usr/local/bin/homelab-generate-secrets.sh"]="0:0:755"
   ["/usr/local/bin/homelab-sync-arr-keys.sh"]="0:0:755"
+  # HoltOS updater scripts. These were relying on the executable bit set
+  # via `chmod +x` in the working copy surviving verbatim into the built
+  # image — it doesn't reliably: this repo is edited on Windows/Git Bash,
+  # and the archiso build reads it back through WSL2's drvfs mount
+  # (/mnt/c/...), which doesn't always translate that bit the same way.
+  # homelab-*.sh above already went through file_permissions for exactly
+  # this reason; these were simply never added to the same list — real
+  # bug hit live ("missing executable permissions" launching the
+  # updater), not a build/packaging issue with the scripts themselves.
+  ["/usr/local/bin/holtos-tray"]="0:0:755"
+  ["/usr/local/bin/holtos-check-notify"]="0:0:755"
+  ["/usr/local/bin/holtos-update-check"]="0:0:755"
+  ["/usr/local/bin/holtos-update-apply"]="0:0:755"
+  ["/usr/local/bin/holtos-update-picker"]="0:0:755"
+  ["/usr/local/bin/holtos-update-history"]="0:0:755"
+  ["/usr/local/bin/holtos-rollback-config"]="0:0:755"
+  ["/usr/local/bin/holtos-first-boot-apps"]="0:0:755"
 )
