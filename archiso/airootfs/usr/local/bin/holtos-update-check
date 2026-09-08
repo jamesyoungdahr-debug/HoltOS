@@ -1,0 +1,26 @@
+#!/bin/bash
+# Checks for a new *tagged* HoltOS release only — never tracks raw branch
+# commits. Only tags matching v* (e.g. v0.0.1-alpha) count, so in-progress
+# work pushed to the repo never shows up as an "update" until it's actually
+# released. No clone needed — `git ls-remote` alone is enough.
+#
+# Exit 0 + prints "<tag> <sha>" = update available.
+# Exit 1 = already up to date, no tagged release exists yet, or the
+# network/state file isn't available.
+set -euo pipefail
+
+REPO_URL="https://github.com/jamesyoungdahr-debug/HoltOS.git"
+STATE_FILE="/var/lib/holtos/deployed-commit"
+
+line="$(git ls-remote --tags --refs --sort=-v:refname "$REPO_URL" 'v*' 2>/dev/null | head -1)"
+[ -n "$line" ] || exit 1
+
+remote_sha="$(cut -f1 <<< "$line")"
+remote_tag="$(cut -f2 <<< "$line" | sed 's#refs/tags/##')"
+local_sha="$(cat "$STATE_FILE" 2>/dev/null || true)"
+
+if [ "$remote_sha" != "$local_sha" ]; then
+    echo "$remote_tag $remote_sha"
+    exit 0
+fi
+exit 1

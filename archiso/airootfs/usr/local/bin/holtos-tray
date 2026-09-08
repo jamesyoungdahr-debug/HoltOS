@@ -1,0 +1,22 @@
+#!/bin/bash
+# System tray icon for the HoltOS updater. Left-click (yad's --command) and
+# the menu's "Update..." both open holtos-update-picker, which lets the
+# user choose exactly which item(s) to update. "Check for Updates" checks
+# whether a new tagged HoltOS release exists (config-sync gate only — the
+# per-item picker doesn't need a release to update an individual service).
+# A background loop checks every 6h on its own and notifies if something's
+# found — see holtos-check-notify.
+ICON=/usr/share/icons/hicolor/scalable/apps/holtos-logo.svg
+
+(
+    while true; do
+        sleep 21600
+        /usr/local/bin/holtos-check-notify
+    done
+) &
+
+exec yad --notification \
+    --image="$ICON" \
+    --text="HoltOS Updater" \
+    --command=/usr/local/bin/holtos-update-picker \
+    --menu="Check for Updates!/usr/local/bin/holtos-check-notify --verbose!$ICON|Update...!/usr/local/bin/holtos-update-picker!$ICON|Quit!quit!application-exit"

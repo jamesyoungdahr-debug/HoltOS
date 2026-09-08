@@ -1,0 +1,13 @@
+NAME="HoltOS"
+PRETTY_NAME="HoltOS 0.0.1-alpha"
+ID=holtos
+ID_LIKE=arch
+BUILD_ID=rolling
+VERSION="0.0.1-alpha"
+VERSION_ID="0.0.1-alpha"
+ANSI_COLOR="38;2;177;77;255"
+LOGO=holtos-logo
+HOME_URL="https://github.com/jamesyoungdahr-debug/HoltOS"
+DOCUMENTATION_URL="https://github.com/jamesyoungdahr-debug/HoltOS"
+SUPPORT_URL="https://github.com/jamesyoungdahr-debug/HoltOS/issues"
+BUG_REPORT_URL="https://github.com/jamesyoungdahr-debug/HoltOS/issues"

@@ -3,6 +3,6 @@ Type=Application
 Name=Prowlarr
 Comment=Indexer management
 Exec=falkon http://localhost:9696
-Icon=applications-internet
+Icon=holtos-prowlarr
 Categories=Network;
 Terminal=false

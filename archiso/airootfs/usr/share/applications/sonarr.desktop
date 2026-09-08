@@ -3,6 +3,6 @@ Type=Application
 Name=Sonarr
 Comment=TV show management
 Exec=falkon http://localhost:8989
-Icon=applications-internet
+Icon=holtos-sonarr
 Categories=Network;
 Terminal=false

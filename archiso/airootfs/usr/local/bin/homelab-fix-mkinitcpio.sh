@@ -23,6 +23,13 @@
 set -euo pipefail
 sed -i -E 's/[[:space:]]*archiso(_[a-z_]+)?//g' /etc/mkinitcpio.conf
 
+# Add the plymouth hook for the HoltOS boot animation — the base
+# mkinitcpio.conf has no airootfs override, so its HOOKS line is whatever
+# the `mkinitcpio` package's default ships, which doesn't include it. Insert
+# right after `udev`, matching the standard placement (must come before any
+# hook that mounts the real root, e.g. `filesystems`/`encrypt`).
+sed -i -E 's/^(HOOKS=\([^)]*\budev\b)/\1 plymouth/' /etc/mkinitcpio.conf
+
 rm -f /etc/mkinitcpio.conf.d/archiso.conf
 rm -f /etc/mkinitcpio.d/linux.preset
 

@@ -1,0 +1,6 @@
+# Overrides the stock Breeze SDDM theme's wallpaper with the HoltOS
+# corner-otter background, without forking the theme itself.
+[General]
+type=image
+background=backgrounds/holtos.png
+color=#0D0B12

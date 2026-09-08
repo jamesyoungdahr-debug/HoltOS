@@ -1,3 +1,8 @@
+<p align="center">
+  <img src="archiso/airootfs/etc/calamares/branding/holtos/logo-wide.svg" width="420" alt="HoltOS">
+</p>
+<p align="center"><sub>MEDIA-FIRST ARCH</sub></p>
+
 # HoltOS
 
 A custom Arch Linux live/install medium (archiso + Calamares + Limine) for a

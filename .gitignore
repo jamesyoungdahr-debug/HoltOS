@@ -12,3 +12,4 @@ releng-reference/
 secrets/
 **/*.env
 !**/*.env.example
+archiso/airootfs/var/lib/holtos/

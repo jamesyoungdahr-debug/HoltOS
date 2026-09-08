@@ -4,6 +4,7 @@ linux
 linux-firmware
 mkinitcpio
 mkinitcpio-archiso
+plymouth
 amd-ucode
 intel-ucode
 sudo
@@ -58,3 +59,12 @@ polkit
 
 # Podman, for the Quadlets that make up the actual homelab-os stack
 podman
+
+# HoltOS updater (holtos-tray / holtos-update*): git for `ls-remote` tag
+# lookups (metadata only, no clone), curl to download the release tarball,
+# yad for the system-tray icon + menu, libnotify for the "update available"
+# desktop notification.
+git
+curl
+yad
+libnotify

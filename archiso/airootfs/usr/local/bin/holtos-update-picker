@@ -1,0 +1,58 @@
+#!/bin/bash
+# Lets the user pick exactly which pieces to update — one or more
+# individual services, the shared config (quadlets + scripts, gated on the
+# latest tagged release), and/or system packages — rather than updating
+# everything at once. Runs the selected items through a single pkexec
+# prompt and shows progress in a yad dialog.
+ICON=/usr/share/icons/hicolor/scalable/apps/holtos-logo.svg
+
+result="$(yad --form --title="HoltOS Updater" --image="$ICON" \
+    --text="Select what to update:" \
+    --width=380 --center \
+    --field="Dashboard:CHK" FALSE \
+    --field="Sonarr:CHK" FALSE \
+    --field="Radarr:CHK" FALSE \
+    --field="Prowlarr:CHK" FALSE \
+    --field="Jellyseerr:CHK" FALSE \
+    --field="Plex:CHK" FALSE \
+    --field="qBittorrent:CHK" FALSE \
+    --field="Authentik:CHK" FALSE \
+    --field="Config (quadlets + scripts):CHK" FALSE \
+    --field="System Packages (pacman):CHK" FALSE \
+    --button="Apply:0" --button="Cancel:1")"
+rc=$?
+[ "$rc" -eq 0 ] || exit 0
+[ -n "$result" ] || exit 0
+
+IFS='|' read -r f_dashboard f_sonarr f_radarr f_prowlarr f_jellyseerr f_plex f_qbittorrent f_authentik f_config f_system <<< "$result"
+
+items=()
+[ "$f_dashboard" = "TRUE" ] && items+=(homepage-dashboard)
+[ "$f_sonarr" = "TRUE" ] && items+=(sonarr)
+[ "$f_radarr" = "TRUE" ] && items+=(radarr)
+[ "$f_prowlarr" = "TRUE" ] && items+=(prowlarr)
+[ "$f_jellyseerr" = "TRUE" ] && items+=(jellyseerr)
+[ "$f_plex" = "TRUE" ] && items+=(plex)
+[ "$f_qbittorrent" = "TRUE" ] && items+=(qbittorrent)
+[ "$f_authentik" = "TRUE" ] && items+=(authentik)
+[ "$f_config" = "TRUE" ] && items+=(config)
+[ "$f_system" = "TRUE" ] && items+=(system)
+
+if [ "${#items[@]}" -eq 0 ]; then
+    yad --info --title="HoltOS Updater" --text="Nothing selected." --button="Close:0"
+    exit 0
+fi
+
+pkexec /usr/local/bin/holtos-update-apply "${items[@]}" 2>&1 \
+    | stdbuf -oL sed -u 's/^==> /#/' \
+    | yad --progress --pulsate --auto-close --auto-kill \
+        --title="HoltOS Updater" --image="$ICON" \
+        --text="Starting update..." --width=420 --center \
+        --no-buttons
+
+status=${PIPESTATUS[0]}
+if [ "$status" -ne 0 ]; then
+    yad --image=dialog-error --title="HoltOS Updater" \
+        --text="Update failed (exit $status). Check your network connection and try again." \
+        --button="Close:0"
+fi

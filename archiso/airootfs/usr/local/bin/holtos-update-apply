@@ -1,0 +1,93 @@
+#!/bin/bash
+# Applies updates for the specific items named on argv, run as root (the
+# tray's holtos-update-picker launches this via a single pkexec call so
+# picking several items only prompts for a password once). Each arg is one
+# of: a podman service name matching a .container unit under
+# /usr/share/containers/systemd/, "authentik" (server+worker together),
+# "config" (Podman Quadlet units + homelab-*.sh scripts, gated on the
+# latest *tagged* HoltOS release — see holtos-update-check), or "system"
+# (plain `pacman -Syu`, for the kernel/OS packages the git repo has nothing
+# to do with).
+set -euo pipefail
+
+update_service() {
+    local name="$1" unit image
+    unit="/usr/share/containers/systemd/${name}.container"
+    if [ ! -f "$unit" ]; then
+        echo "Unknown service: $name" >&2
+        return 1
+    fi
+    image="$(grep -E '^Image=' "$unit" | head -1 | cut -d= -f2-)"
+    echo "==> Pulling $image..."
+    podman pull "$image"
+    echo "==> Restarting $name..."
+    systemctl restart "$name"
+}
+
+update_config() {
+    local repo="jamesyoungdahr-debug/HoltOS"
+    local state="/var/lib/holtos/deployed-commit"
+    local line new_commit latest_tag tmp_tar src_dir
+    mkdir -p "$(dirname "$state")"
+
+    echo "==> Looking up the latest release..."
+    line="$(git ls-remote --tags --refs --sort=-v:refname "https://github.com/$repo.git" 'v*' | head -1)"
+    if [ -z "$line" ]; then
+        echo "No tagged HoltOS release found." >&2
+        return 1
+    fi
+    new_commit="$(cut -f1 <<< "$line")"
+    latest_tag="$(cut -f2 <<< "$line" | sed 's#refs/tags/##')"
+
+    echo "==> Downloading $latest_tag..."
+    tmp_tar="$(mktemp)"
+    src_dir="$(mktemp -d)"
+    curl -fsSL "https://github.com/$repo/archive/refs/tags/${latest_tag}.tar.gz" -o "$tmp_tar"
+    tar -xzf "$tmp_tar" -C "$src_dir" --strip-components=1
+    rm -f "$tmp_tar"
+
+    echo "==> Syncing Podman Quadlet units..."
+    rsync -a --delete \
+        "$src_dir/archiso/airootfs/usr/share/containers/systemd/" \
+        /usr/share/containers/systemd/
+
+    echo "==> Syncing homelab-*.sh scripts..."
+    cp "$src_dir"/archiso/airootfs/usr/local/bin/homelab-*.sh /usr/local/bin/
+    chmod +x /usr/local/bin/homelab-*.sh
+    rm -rf "$src_dir"
+
+    echo "==> Reloading systemd..."
+    systemctl daemon-reload
+
+    echo "$new_commit" > "$state"
+    echo "==> Config updated to $latest_tag"
+}
+
+update_system() {
+    echo "==> Updating system packages (pacman -Syu)..."
+    pacman -Syu --noconfirm
+}
+
+if [ "$(id -u)" -ne 0 ]; then
+    echo "holtos-update-apply must run as root (use: pkexec holtos-update-apply ...)" >&2
+    exit 1
+fi
+
+if [ "$#" -eq 0 ]; then
+    echo "Usage: holtos-update-apply <service|authentik|config|system> ..." >&2
+    exit 1
+fi
+
+for item in "$@"; do
+    case "$item" in
+        config) update_config ;;
+        system) update_system ;;
+        authentik)
+            update_service authentik-server
+            update_service authentik-worker
+            ;;
+        *) update_service "$item" ;;
+    esac
+done
+
+echo "==> Done."

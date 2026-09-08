@@ -3,6 +3,6 @@ Type=Application
 Name=qBittorrent
 Comment=Download client
 Exec=falkon http://localhost:8080
-Icon=applications-internet
+Icon=holtos-qbittorrent
 Categories=Network;
 Terminal=false

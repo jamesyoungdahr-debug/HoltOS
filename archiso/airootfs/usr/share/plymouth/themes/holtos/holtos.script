@@ -1,0 +1,43 @@
+// HoltOS boot splash — script plugin (the "spinner" plugin this Plymouth
+// build ships isn't compiled with a spinner renderer at all; script is
+// the built-in plugin that actually exists, and lets us draw our own
+// brand colors/mark plus a Windows-style ring spinner instead).
+
+Window.SetBackgroundTopColor(0.051, 0.043, 0.071);
+Window.SetBackgroundBottomColor(0.051, 0.043, 0.071);
+
+logo.image = Image("watermark.png");
+logo.sprite = Sprite(logo.image);
+logo.x = Window.GetWidth() / 2 - logo.image.GetWidth() / 2;
+logo.y = Window.GetHeight() / 2 - logo.image.GetHeight() / 2 - 60;
+logo.sprite.SetPosition(logo.x, logo.y, 10000);
+
+// Windows-11-style ring of dots below the mark: fixed positions, opacity
+// swept around the ring each frame so the "lit" dot appears to travel.
+dot.image = Image("dot.png");
+dot.count = 8;
+dot.radius = 34;
+ring.center_x = Window.GetWidth() / 2;
+ring.center_y = logo.y + logo.image.GetHeight() + 90;
+
+for (i = 0; i < dot.count; i++) {
+    dots[i].angle = 2 * Math.Pi * i / dot.count;
+    dots[i].x = ring.center_x + dot.radius * Math.Cos(dots[i].angle) - dot.image.GetWidth() / 2;
+    dots[i].y = ring.center_y + dot.radius * Math.Sin(dots[i].angle) - dot.image.GetHeight() / 2;
+    dots[i].sprite = Sprite(dot.image);
+    dots[i].sprite.SetPosition(dots[i].x, dots[i].y, 10000);
+}
+
+global.t = 0;
+
+fun refresh_callback() {
+    global.t++;
+    phase = global.t / 8;
+    for (i = 0; i < dot.count; i++) {
+        lit = Math.Cos(dots[i].angle - phase);
+        opacity = 0.2 + 0.8 * Math.Max(0, lit);
+        dots[i].sprite.SetOpacity(opacity);
+    }
+}
+
+Plymouth.SetRefreshFunction(refresh_callback);

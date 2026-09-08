@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2034
 
-iso_name="homelab-os"
-iso_label="HOMELAB_$(date --date="@${SOURCE_DATE_EPOCH:-$(date +%s)}" +%Y%m)"
-iso_publisher="homelab-os <https://github.com/jamesyoungdahr-debug/homelab-os>"
-iso_application="homelab-os Live/Install Medium"
-iso_version="$(date --date="@${SOURCE_DATE_EPOCH:-$(date +%s)}" +%Y.%m.%d)"
+iso_name="holtos"
+iso_label="HOLTOS_$(date --date="@${SOURCE_DATE_EPOCH:-$(date +%s)}" +%Y%m)"
+iso_publisher="HoltOS <https://github.com/jamesyoungdahr-debug/HoltOS>"
+iso_application="HoltOS Live/Install Medium"
+iso_version="0.0.1-alpha"
 install_dir="arch"
 buildmodes=('iso')
 bootmodes=('bios.syslinux'

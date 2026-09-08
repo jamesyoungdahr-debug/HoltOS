@@ -4,16 +4,16 @@
 ---
 componentName: holtos
 
-welcomeStyleCalamares: true
+welcomeStyleCalamares: false
 welcomeExpandingLogo: true
 
 strings:
     productName:         HoltOS
     shortProductName:    HoltOS
-    version:              1.0
-    shortVersion:         1.0
-    versionedName:        HoltOS 1.0
-    shortVersionedName:   HoltOS 1.0
+    version:              0.0.1-alpha
+    shortVersion:         0.0.1-alpha
+    versionedName:        HoltOS 0.0.1-alpha
+    shortVersionedName:   HoltOS 0.0.1-alpha
     bootloaderEntryName:  HoltOS
     productUrl:           https://github.com/jamesyoungdahr-debug/HoltOS
     supportUrl:           https://github.com/jamesyoungdahr-debug/HoltOS/issues
@@ -21,14 +21,16 @@ strings:
     releaseNotesUrl:      https://github.com/jamesyoungdahr-debug/HoltOS
 
 images:
-    productLogo:          "logo.svg"
-    productIcon:          "logo.svg"
-    productWelcome:       "logo.svg"
+    productLogo:          "logo-icon.svg"
+    productIcon:          "logo-icon.svg"
+    productWelcome:       "logo-icon.svg"
 
 slideshow: "show.qml"
 
+# Real HoltOS Design System tokens (styles.css): holt-surface / holt-ink /
+# holt-current.
 style:
-   SidebarBackground:    "#292F34"
+   SidebarBackground:    "#171423"
    SidebarText:          "#FFFFFF"
    SidebarTextSelect:    "#FFFFFF"
-   SidebarTextHighlight: "#3878C4"
+   SidebarTextHighlight: "#B14DFF"

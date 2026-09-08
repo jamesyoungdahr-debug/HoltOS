@@ -3,6 +3,6 @@ Type=Application
 Name=Authentik
 Comment=SSO admin
 Exec=falkon http://localhost:9000
-Icon=applications-internet
+Icon=holtos-authentik
 Categories=Network;
 Terminal=false

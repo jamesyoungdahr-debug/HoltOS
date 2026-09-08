@@ -13,6 +13,24 @@
 # hostname (from /etc/hostname, which the `users` step already wrote to the
 # target) — works out of the box on a LAN with mDNS/local DNS resolution;
 # replace with a static IP or reverse-proxy domain later if needed.
+# capture-user-creds (a custom Calamares job run just before `users`) drops
+# the plaintext OS account login here, root-only — see
+# etc/calamares/modules/capture-user-creds/main.py. Consumed below so
+# Authentik's bootstrap admin password matches the OS account's password
+# (the bootstrap admin username itself is always "akadmin" — Authentik has
+# no AUTHENTIK_BOOTSTRAP_USERNAME variable, confirmed against
+# docs.goauthentik.io/install-config/automated-install/ — only
+# password/password-hash/email/token are configurable). Deleted
+# unconditionally: it's plaintext and must not survive on disk either way.
+BOOTSTRAP_CREDS_FILE=/etc/holtos-bootstrap-creds
+HOLTOS_BOOTSTRAP_USERNAME=""
+HOLTOS_BOOTSTRAP_PASSWORD=""
+if [ -f "$BOOTSTRAP_CREDS_FILE" ]; then
+    # shellcheck disable=SC1090
+    source "$BOOTSTRAP_CREDS_FILE"
+    rm -f "$BOOTSTRAP_CREDS_FILE"
+fi
+
 set -euo pipefail
 
 SECRETS_DIR=/var/mnt/tank/appdata/secrets
@@ -27,6 +45,12 @@ CLIENT_SECRET="$(gen)"
 NEXTAUTH_SECRET="$(gen)"
 BOX_HOSTNAME="$(cat /etc/hostname)"
 
+# Fall back to a random password if capture-user-creds didn't run/find
+# anything (Calamares version drift) — Authentik still needs *some*
+# bootstrap password to come up.
+AUTHENTIK_BOOTSTRAP_PASSWORD="${HOLTOS_BOOTSTRAP_PASSWORD:-$(gen)}"
+AUTHENTIK_BOOTSTRAP_EMAIL_USER="${HOLTOS_BOOTSTRAP_USERNAME:-akadmin}"
+
 cat > "$SECRETS_DIR/authentik.env" <<EOF
 POSTGRES_USER=authentik
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -39,6 +63,8 @@ AUTHENTIK_REDIS__HOST=redis
 AUTHENTIK_SECRET_KEY=${AUTHENTIK_SECRET_KEY}
 AUTHENTIK_ERROR_REPORTING__ENABLED=false
 AUTHENTIK_HOMEPAGE_CLIENT_SECRET=${CLIENT_SECRET}
+AUTHENTIK_BOOTSTRAP_EMAIL=${AUTHENTIK_BOOTSTRAP_EMAIL_USER}@holtos.local
+AUTHENTIK_BOOTSTRAP_PASSWORD=${AUTHENTIK_BOOTSTRAP_PASSWORD}
 EOF
 chmod 600 "$SECRETS_DIR/authentik.env"
 

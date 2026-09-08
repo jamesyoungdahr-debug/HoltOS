@@ -60,7 +60,7 @@ timeout: 3
 /homelab-os
     protocol: linux
     path: boot():/boot/vmlinuz-linux
-    cmdline: root=UUID=${ROOT_UUID} rw quiet
+    cmdline: root=UUID=${ROOT_UUID} rw quiet splash
     module_path: boot():/boot/initramfs-linux.img
 EOF
 

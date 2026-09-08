@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=HoltOS
+Description=HoltOS branded boot splash
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/holtos
+ScriptFile=/usr/share/plymouth/themes/holtos/holtos.script

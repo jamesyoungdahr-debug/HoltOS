@@ -1,0 +1,16 @@
+#!/bin/bash
+# Runs the lightweight update check and pops a desktop notification if a
+# new tagged release is available. Pass --verbose (used by the tray's
+# "Check for Updates" menu entry) to also notify on "up to date" — a manual
+# click going silent would look broken. The background timer loop calls
+# this without --verbose so it stays quiet until there's actually something
+# to say.
+ICON=/usr/share/icons/hicolor/scalable/apps/holtos-logo.svg
+
+if out="$(/usr/local/bin/holtos-update-check)"; then
+    tag="${out%% *}"
+    notify-send -i "$ICON" "HoltOS $tag available" \
+        "Right-click the HoltOS tray icon → Apply Update."
+elif [ "${1:-}" = "--verbose" ]; then
+    notify-send -i "$ICON" "HoltOS is up to date"
+fi
