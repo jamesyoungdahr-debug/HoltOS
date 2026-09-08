@@ -3,16 +3,53 @@
 Working log for the "brand Arch into HoltOS" effort. Updated as each step
 lands. See `CHANGELOG.md` for the user-facing version of this same work.
 
-## ⚠️ Highest-risk untested change: custom navigation QML
+## Authentik bootstrap password — real, longstanding bug, now fixed
 
-`calamares-navigation.qml` rebuilds Back/Cancel/Next from scratch (a real
-Calamares distro's shipped reference was used, not guessed syntax — see
-CHANGELOG — but it has never actually been loaded by Calamares). If
-something's wrong with it, the installer could load but leave Next/Back
-non-functional, which would block every install. **Test this before
-anything else** next time the ISO is rebuilt: click through every page,
-confirm Back/Next/Cancel all work, confirm Cancel hides correctly on the
-last step, confirm the step bar at the bottom highlights the current step.
+This has been broken since the feature was first written this session,
+across both the Python and shellprocess rewrites — nobody caught it
+because it fails *silently*: install completes, Authentik comes up,
+login just doesn't work, no error surfaced anywhere. Root cause:
+Calamares obscures the GlobalStorage `password` value before a
+shellprocess-based reader ever sees it (`Calamares::String::obscure()` —
+see CHANGELOG for the exact transform). Fixed by reversing it in
+`homelab-generate-secrets.sh`. **Not yet tested** — verify next install
+that logging into Authentik at `akadmin` + the OS account's actual
+password works.
+
+## Authentik admin username blueprint — new, untested
+
+`etc/authentik/blueprints/admin-username.yaml` renames the
+bootstrap-created `akadmin` account to the OS account's username via the
+`authentik_core.user` model. Unlike `homepage-oidc.yaml` (verified live
+against a real 2025.8.6 instance — see that file's own note), this one
+is inferred from Authentik's blueprint schema docs only, not verified.
+Worth checking specifically: does it apply reliably *after* bootstrap
+creates the account (ordering — if blueprints run first, the
+`identifiers: username: akadmin` lookup finds nothing and either no-ops
+or creates a stray second user instead of renaming), and does the
+rename survive/reapply correctly on every boot rather than just once.
+
+## Custom navigation QML — tested live, two real bugs found and fixed
+
+`calamares-navigation.qml`/`calamares-sidebar.qml` have now actually been
+loaded by Calamares on a real install. Confirmed: Welcome → Users → full
+install completed successfully with the custom top/bottom bars in place.
+One real bug found: the Finished page's "Next" button rendered normally
+but did nothing on click (QML `enabled: false` cascading to the nested
+MouseArea — see CHANGELOG). Fixed, **not yet re-tested** — verify next
+build that Next actually closes/restarts on the Finished page, and
+re-confirm Back/Cancel/step-bar highlighting still work after the change
+(the fix touched all three buttons, not just Next).
+
+Also found live: the desktop wallpaper never appeared on the installed
+system. Root mechanism was wrong (see CHANGELOG) — replaced with a
+proper Plasma Look-and-Feel package. **Not yet tested** — this is a new
+mechanism, unverified.
+
+Also found live: the updater's tray icon never appeared at all on the
+installed system. `X-KDE-autostart-phase=2` was making Plasma 6's
+systemd autostart generator skip the file outright (see CHANGELOG).
+Removed. **Not yet tested.**
 
 ## v0.0.1-alpha tagged and released
 

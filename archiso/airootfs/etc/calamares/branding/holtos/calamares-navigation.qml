@@ -8,6 +8,15 @@
    KaOS's ColumnLayout, dropped the Debug/About buttons (About is already
    reachable from the Welcome page itself), and recolored to the HoltOS
    palette instead of KaOS's light-grey hover states.
+
+   Each button's MouseArea is deliberately never QML-`enabled: false` —
+   only its *ancestor* Rectangle's color/text reflect the ViewManager
+   enabled flag. Setting `enabled: false` on an ancestor Item cascades to
+   every descendant, silently making a nested MouseArea non-interactive
+   even though its color binding (driven by hover state, not `enabled`)
+   still renders it looking perfectly clickable — real bug hit live: the
+   Next button rendered normally on the Finished page but did nothing on
+   click. Each onClicked now guards on the ViewManager flag itself instead.
 */
 import io.calamares.ui 1.0
 import io.calamares.core 1.0
@@ -37,23 +46,22 @@ Rectangle {
             Layout.preferredWidth: 96
             Layout.fillHeight: true
             color: mouseBack.containsMouse ? navigationBar.hoverColor : navigationBar.idleColor
-            enabled: ViewManager.backEnabled
             visible: ViewManager.backAndNextVisible
 
             MouseArea {
                 id: mouseBack
                 anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
+                cursorShape: ViewManager.backEnabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                 hoverEnabled: true
 
                 Text {
                     anchors.centerIn: parent
                     text: qsTr("Back")
-                    color: !backArea.enabled ? navigationBar.disabledTextColor : Branding.styleString( Branding.SidebarText )
+                    color: !ViewManager.backEnabled ? navigationBar.disabledTextColor : Branding.styleString( Branding.SidebarText )
                     font.pointSize: 9
                 }
 
-                onClicked: { ViewManager.back(); }
+                onClicked: { if ( ViewManager.backEnabled ) ViewManager.back(); }
             }
         }
 
@@ -77,7 +85,6 @@ Rectangle {
             Layout.preferredWidth: 96
             Layout.fillHeight: true
             color: mouseCancel.containsMouse ? navigationBar.hoverColor : navigationBar.idleColor
-            enabled: ViewManager.quitEnabled
             visible: ViewManager.quitVisible && ( ViewManager.currentStepIndex < ViewManager.rowCount() - 1 )
 
             ToolTip {
@@ -90,17 +97,17 @@ Rectangle {
             MouseArea {
                 id: mouseCancel
                 anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
+                cursorShape: ViewManager.quitEnabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                 hoverEnabled: true
 
                 Text {
                     anchors.centerIn: parent
                     text: qsTr("Cancel")
-                    color: !cancelArea.enabled ? navigationBar.disabledTextColor : Branding.styleString( Branding.SidebarText )
+                    color: !ViewManager.quitEnabled ? navigationBar.disabledTextColor : Branding.styleString( Branding.SidebarText )
                     font.pointSize: 9
                 }
 
-                onClicked: { ViewManager.quit(); }
+                onClicked: { if ( ViewManager.quitEnabled ) ViewManager.quit(); }
             }
         }
 
@@ -109,24 +116,23 @@ Rectangle {
             Layout.preferredWidth: 96
             Layout.fillHeight: true
             color: mouseNext.containsMouse ? navigationBar.nextHoverColor : navigationBar.nextIdleColor
-            enabled: ViewManager.nextEnabled
             visible: ViewManager.backAndNextVisible
 
             MouseArea {
                 id: mouseNext
                 anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
+                cursorShape: ViewManager.nextEnabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                 hoverEnabled: true
 
                 Text {
                     anchors.centerIn: parent
                     text: qsTr("Next")
-                    color: !nextArea.enabled ? navigationBar.disabledTextColor : Branding.styleString( Branding.SidebarTextCurrent )
+                    color: !ViewManager.nextEnabled ? navigationBar.disabledTextColor : Branding.styleString( Branding.SidebarTextCurrent )
                     font.pointSize: 9
                     font.bold: true
                 }
 
-                onClicked: { ViewManager.next(); }
+                onClicked: { if ( ViewManager.nextEnabled ) ViewManager.next(); }
             }
         }
     }

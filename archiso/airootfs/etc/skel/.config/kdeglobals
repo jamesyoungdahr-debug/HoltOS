@@ -1,5 +1,5 @@
 [KDE]
-LookAndFeelPackage=org.kde.breezedark.desktop
+LookAndFeelPackage=org.holtos.desktop
 
 [General]
 ColorScheme=BreezeDark

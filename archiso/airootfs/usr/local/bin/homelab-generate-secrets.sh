@@ -14,14 +14,41 @@
 # target) — works out of the box on a LAN with mDNS/local DNS resolution;
 # replace with a static IP or reverse-proxy domain later if needed.
 # capture-user-creds (a custom Calamares job run just before `users`) drops
-# the plaintext OS account login here, root-only — see
-# etc/calamares/modules/capture-user-creds/main.py. Consumed below so
-# Authentik's bootstrap admin password matches the OS account's password
-# (the bootstrap admin username itself is always "akadmin" — Authentik has
-# no AUTHENTIK_BOOTSTRAP_USERNAME variable, confirmed against
-# docs.goauthentik.io/install-config/automated-install/ — only
-# password/password-hash/email/token are configurable). Deleted
-# unconditionally: it's plaintext and must not survive on disk either way.
+# the OS account login here, root-only — see
+# etc/calamares/modules/capture-user-creds.conf. Consumed below so
+# Authentik's bootstrap admin password matches the OS account's password.
+# The bootstrap admin *username* Authentik itself creates is always
+# "akadmin" — no AUTHENTIK_BOOTSTRAP_USERNAME variable exists, confirmed
+# against docs.goauthentik.io/install-config/automated-install/ (only
+# password/password-hash/email/token are configurable) — AUTHENTIK_ADMIN_USERNAME
+# below is instead consumed by a blueprint
+# (etc/authentik/blueprints/admin-username.yaml) that renames that
+# account after the fact. Deleted unconditionally: it's plaintext (well —
+# deobscured; see below) and must not survive on disk either way.
+#
+# The captured value is NOT the plaintext password. capture-user-creds
+# reads it from Calamares' GlobalStorage "password" key, which the users
+# module populates via Calamares::String::obscure() — a self-inverse
+# substitution (chars <= 0x21 unchanged, everything else mapped to
+# 0x1001F - codepoint), confirmed against that function's actual C++
+# source. It's not meaningful obfuscation (same transform reverses it),
+# just enough that the value isn't sitting in GlobalStorage in the clear
+# — but it means what lands in holtos-bootstrap-creds is unusable as a
+# password until run back through the same transform. Every character
+# above 0x21 (i.e. nearly all of a real password) gets remapped, so
+# skipping this step doesn't fail loudly — it silently sets Authentik's
+# bootstrap password to garbage the user never sees, which is exactly
+# what happened before this was found: install completes fine, but the
+# OS account's real password never logs into Authentik. Done in Python
+# (already a dependency, and correctly Unicode-aware) rather than bash.
+deobscure() {
+    python3 -c '
+import sys
+s = sys.stdin.read()
+sys.stdout.write("".join(ch if ord(ch) <= 0x21 else chr(0x1001F - ord(ch)) for ch in s))
+'
+}
+
 BOOTSTRAP_CREDS_FILE=/etc/holtos-bootstrap-creds
 HOLTOS_BOOTSTRAP_USERNAME=""
 HOLTOS_BOOTSTRAP_PASSWORD=""
@@ -29,6 +56,9 @@ if [ -f "$BOOTSTRAP_CREDS_FILE" ]; then
     # shellcheck disable=SC1090
     source "$BOOTSTRAP_CREDS_FILE"
     rm -f "$BOOTSTRAP_CREDS_FILE"
+    if [ -n "$HOLTOS_BOOTSTRAP_PASSWORD" ]; then
+        HOLTOS_BOOTSTRAP_PASSWORD="$(printf '%s' "$HOLTOS_BOOTSTRAP_PASSWORD" | deobscure)"
+    fi
 fi
 
 set -euo pipefail
@@ -65,6 +95,7 @@ AUTHENTIK_ERROR_REPORTING__ENABLED=false
 AUTHENTIK_HOMEPAGE_CLIENT_SECRET=${CLIENT_SECRET}
 AUTHENTIK_BOOTSTRAP_EMAIL=${AUTHENTIK_BOOTSTRAP_EMAIL_USER}@holtos.local
 AUTHENTIK_BOOTSTRAP_PASSWORD=${AUTHENTIK_BOOTSTRAP_PASSWORD}
+AUTHENTIK_ADMIN_USERNAME=${AUTHENTIK_BOOTSTRAP_EMAIL_USER}
 EOF
 chmod 600 "$SECRETS_DIR/authentik.env"
 

@@ -4,5 +4,4 @@ Name=HoltOS Updater
 Comment=System tray icon for checking and applying HoltOS updates
 Exec=/usr/local/bin/holtos-tray
 Icon=holtos-logo
-X-KDE-autostart-phase=2
 NoDisplay=true

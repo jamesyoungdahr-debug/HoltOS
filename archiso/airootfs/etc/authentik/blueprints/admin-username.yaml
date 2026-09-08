@@ -1,0 +1,39 @@
+# Authentik blueprint: renames the bootstrap-created admin account's
+# *username* (login identifier) from the hardcoded "akadmin" to the OS
+# account's own username — AUTHENTIK_BOOTSTRAP_USERNAME env var has no
+# effect on this (confirmed against docs.goauthentik.io/install-config/
+# automated-install/: Authentik's bootstrap process only accepts
+# password/password-hash/email/token, the admin username it creates is
+# always literally "akadmin"). This blueprint runs after that bootstrap
+# creation and just renames the resulting user.
+#
+# AUTHENTIK_ADMIN_USERNAME is set in
+# /var/mnt/tank/appdata/secrets/authentik.env by
+# homelab-generate-secrets.sh, from the same OS-account username
+# capture-user-creds captured — same value used for
+# AUTHENTIK_BOOTSTRAP_EMAIL. Falls back to "akadmin" (a no-op rename) if
+# capture failed for some reason.
+#
+# Untested against a live instance (unlike homepage-oidc.yaml, which was
+# — see that file's own note): the `authentik_core.user` model and
+# `identifiers: username: akadmin` matching the bootstrap-created account
+# specifically are inferred from Authentik's blueprint schema docs, not
+# verified live. If this blueprint fails to apply, the account stays
+# reachable at the original "akadmin" username — nothing here can lock
+# you out.
+#
+# Mounted read-only into authentik-server/authentik-worker at
+# /blueprints/custom (see authentik-server.container / authentik-worker.container).
+# Authentik watches this path and applies blueprints automatically.
+
+version: 1
+metadata:
+  name: rename-bootstrap-admin
+
+entries:
+  - model: authentik_core.user
+    id: rename-bootstrap-admin
+    identifiers:
+      username: akadmin
+    attrs:
+      username: !Env AUTHENTIK_ADMIN_USERNAME

@@ -1,0 +1,15 @@
+[kdeglobals][KDE]
+widgetStyle=Breeze
+
+[kdeglobals][General]
+ColorScheme=BreezeDark
+AccentColor=177,77,255
+
+[kdeglobals][Icons]
+Theme=breeze-dark
+
+[Wallpaper]
+Image=HoltOS
+
+[kcminputrc][Mouse]
+cursorTheme=breeze_cursors

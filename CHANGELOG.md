@@ -5,6 +5,66 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+- Set the installer's account password requirement to a plain 4-character
+  minimum, nothing else — no complexity/class requirements. Added
+  `etc/calamares/modules/users.conf` (didn't exist before; Calamares was
+  running on its own built-in defaults, which enforce no minimum length
+  at all). Deliberately minimal — only touches `passwordRequirements`,
+  every other users-module setting stays on Calamares' defaults.
+- Authentik's admin login username now matches the OS account's username
+  instead of staying the hardcoded `akadmin` (which is all
+  `AUTHENTIK_BOOTSTRAP_*` env vars can ever produce — no username
+  variable exists there). Added a blueprint
+  (`etc/authentik/blueprints/admin-username.yaml`) that renames the
+  bootstrap-created account after the fact, using the same OS-account
+  username `homelab-generate-secrets.sh` already captures. Falls back to
+  a no-op rename (stays `akadmin`) if capture failed. Untested against a
+  live instance — flagged in BRANDING-STATUS.
+- Fixed Authentik's bootstrap admin password never actually matching the
+  OS account's password (real bug hit live: install completes fine,
+  Authentik comes up fine, but the credentials just don't work — no
+  error anywhere, because there wasn't one to see). Root cause: Calamares'
+  GlobalStorage `password` key isn't the plaintext password — the `users`
+  module runs it through `Calamares::String::obscure()` first (a
+  self-inverse substitution cipher, confirmed against that function's
+  actual C++ source: characters <= `0x21` pass through, everything else
+  maps to `0x1001F - codepoint`), so `capture-user-creds` was faithfully
+  capturing a garbled, unusable string the whole time and
+  `homelab-generate-secrets.sh`'s "no captured password → fall back to a
+  random one" path was silently kicking in on every single install. Fixed
+  by reversing the transform (via `python3`, for correct Unicode
+  handling) before using the value. **Reminder, unrelated to this bug:**
+  the Authentik login *username* is always `akadmin` — never the OS
+  account's own username — Authentik has no setting to change that.
+- Fixed the HoltOS updater tray icon never appearing on the installed
+  system. `holtos-tray.desktop`'s `X-KDE-autostart-phase=2` key — a
+  leftover concept from KSMServer's old phased autostart — makes Plasma
+  6's `systemd-xdg-autostart-generator` (which converts autostart
+  `.desktop` files into systemd user services) silently skip the file
+  entirely, so no service, no tray icon, ever. Removed the key; it
+  wasn't serving any purpose here anyway.
+- Fixed the Calamares "Next" button doing nothing on the Finished page
+  (real bug hit live, after a full successful install). Root cause: the
+  custom `calamares-navigation.qml` set `enabled: ViewManager.nextEnabled`
+  directly on each button's Rectangle — in QML, `enabled: false` on an
+  Item cascades to disable every descendant, including the nested
+  `MouseArea`, even though that MouseArea's own color binding (driven by
+  hover state, not `enabled`) still rendered the button looking perfectly
+  normal and clickable. Every button now stays interactive; each
+  `onClicked` guards on the ViewManager flag itself instead.
+- Fixed the desktop wallpaper not carrying through to the installed
+  system. The `/etc/skel/.config/plasma-org.kde.plasma.desktop-appletsrc`
+  approach was the wrong mechanism entirely — hand-writing Plasma's
+  containment file is fragile and Plasma just falls back to its own
+  defaults when the file doesn't look like what it expects. The actual,
+  correct mechanism (confirmed against a real KDE source file) is a
+  Plasma Look-and-Feel package's `contents/defaults`, using
+  `[Wallpaper] Image=<wallpaper-package-id>` — same mechanism that
+  already made dark mode work correctly via `LookAndFeelPackage=` in
+  kdeglobals. Added `org.holtos.desktop` (a new look-and-feel package,
+  not overriding any package-owned path this time) cascading dark mode +
+  brand accent + the HoltOS wallpaper together, and pointed kdeglobals at
+  it instead of `org.kde.breezedark.desktop`.
 - Fixed the ISO build failing entirely ("checking for file conflicts...
   Errors occurred, no packages were upgraded", every package download
   wasted): the `/usr/lib/os-release` override landed on a path the
