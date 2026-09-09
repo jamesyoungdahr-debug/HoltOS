@@ -21,12 +21,21 @@ fi
 mkdir -p archiso/airootfs/var/lib/holtos
 git rev-parse HEAD > archiso/airootfs/var/lib/holtos/deployed-commit
 
+# Git Bash's own /c/... paths and WSL2's /mnt/c/... paths use the same
+# layout under the drive letter, just a different mount prefix — real bug
+# hit trying to run this on a machine other than the one it was first
+# written on: this used to hardcode /mnt/c/Users/Liam/..., which silently
+# pointed at nothing (or someone else's files) for any other Windows
+# username or clone location. Derive it from wherever this checkout
+# actually is instead.
+WSL_ROOT="/mnt$(pwd)"
+
 LOG="out/build-$(date +%Y%m%d-%H%M%S).log"
 export MSYS_NO_PATHCONV=1
 wsl -d Ubuntu -- sudo podman run --privileged --rm \
-    -v /mnt/c/Users/Liam/c/homepage/distro-arch/archiso:/profile:Z \
-    -v /mnt/c/Users/Liam/c/homepage/distro-arch/local-repo:/homelab-local-repo:Z \
-    -v /mnt/c/Users/Liam/c/homepage/distro-arch/out:/tmp/out:Z \
+    -v "${WSL_ROOT}/archiso:/profile:Z" \
+    -v "${WSL_ROOT}/local-repo:/homelab-local-repo:Z" \
+    -v "${WSL_ROOT}/out:/tmp/out:Z" \
     archiso-image \
     bash -c "mkarchiso -v -w /tmp/work -o /tmp/out /profile" | tee "$LOG"
 

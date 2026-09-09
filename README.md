@@ -43,8 +43,13 @@ archiso/                      # the archiso profile passed to mkarchiso
     usr/share/applications/   # app-menu launchers for the web UIs
   packages.x86_64             # package list (base system + KDE + Calamares + podman)
   profiledef.sh                # ISO metadata + file permission overrides
-build-aur-packages.sh         # builds the AUR packages (zfs-dkms, limine-*)
-                               # the profile needs, run once to populate local-repo/
+containers/                   # Containerfiles for the two images the build needs
+  archiso-image.Containerfile  # runs mkarchiso itself (see build.sh)
+  aur-builder.Containerfile    # builds the AUR packages below (see build-local-repo.sh)
+build-local-repo.sh           # builds containers/aur-builder.Containerfile, runs
+                               # build-aur-packages.sh inside it — see BUILD.md
+build-aur-packages.sh         # builds the AUR packages (calamares, zfs-dkms, limine-*)
+                               # the profile needs, run via build-local-repo.sh
 local-repo/                   # (gitignored) built AUR packages, consumed by pacman.conf
 out/                          # (gitignored) built ISOs land here
 vm/                           # (gitignored) local VM test scratch (QEMU logs, disk images)
@@ -105,23 +110,15 @@ follow a mount that appears later.
 
 ## Building the ISO
 
-Requires `archiso`'s `mkarchiso` — done here via a privileged container
-(built from `archiso-image`, matching upstream `archlinux/archlinux:base-devel`
-plus `archiso`) so it doesn't need a native Arch host:
+See **[BUILD.md](BUILD.md)** for the full, from-scratch pipeline —
+prerequisites, the two `Containerfile`s under `containers/`, and the
+exact order to run `build-local-repo.sh` then `build.sh` in. Short
+version, from a clean checkout:
 
 ```bash
-podman run --privileged --rm \
-  -v "$(pwd)/archiso:/profile:Z" \
-  -v "$(pwd)/local-repo:/homelab-local-repo:Z" \
-  -v "$(pwd)/out:/tmp/out:Z" \
-  archiso-image \
-  bash -c "mkarchiso -v -w /tmp/work -o /tmp/out /profile"
+./build-local-repo.sh   # once — builds calamares + zfs + limine AUR packages into local-repo/
+./build.sh               # every time — actually builds the ISO into out/
 ```
-
-The resulting ISO lands in `out/`. `local-repo/` needs the AUR packages
-(`zfs-dkms`, `zfs-utils`, `limine-mkinitcpio-hook`, `limine-entry-tool`)
-built once via `build-aur-packages.sh` before the first build — `pacman.conf`
-points at `local-repo` as an extra repo for these.
 
 ## What's been validated
 
