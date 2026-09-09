@@ -1,0 +1,27 @@
+#!/bin/bash
+# User-triggered snapshot, for peace of mind outside the automatic ones
+# holtos-update-apply already takes before "config"/"system" updates (see
+# holtos-btrfs-snapshot). Same yad progress/result pattern as
+# holtos-rollback-config.
+ICON=/usr/share/icons/hicolor/scalable/apps/holtos-logo.svg
+
+logfile="$(mktemp)"
+pkexec /usr/local/bin/holtos-btrfs-snapshot manual 2>&1 | tee "$logfile" \
+    | stdbuf -oL sed -u 's/^==> /#/' \
+    | yad --progress --pulsate --auto-close --auto-kill \
+        --title="HoltOS Updater" --image="$ICON" --window-icon="$ICON" \
+        --text="Creating snapshot..." --width=420 --center \
+        --no-buttons
+
+status=${PIPESTATUS[0]}
+if [ "$status" -ne 0 ]; then
+    detail="$(tail -8 "$logfile")"
+    yad --image=dialog-error --title="HoltOS Updater" --window-icon="$ICON" \
+        --width=520 --wrap \
+        --text="Snapshot failed (exit $status):\n\n${detail}" \
+        --button="Close:0"
+else
+    yad --image="$ICON" --title="HoltOS Updater" --window-icon="$ICON" \
+        --text="Snapshot created." --button="Close:0"
+fi
+rm -f "$logfile"

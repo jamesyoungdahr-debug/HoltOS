@@ -3,6 +3,243 @@
 Working log for the "brand Arch into HoltOS" effort. Updated as each step
 lands. See `CHANGELOG.md` for the user-facing version of this same work.
 
+## Limine branding + boot-environment snapshots — implemented, NOT yet tested
+
+Requested after (and deferred until) the full code review below. Two
+asks: theme the Limine menu, and set up snapshot support "out of the box."
+Root was actually ext4 (verified, not assumed — see the review's own bug
+below for why that verification habit matters), so real snapshots needed
+a real filesystem change: switched the installed system's root to Btrfs.
+Full design/rationale in the plan file this was built from (Limine: brand
+it + give it out-of-the-box boot-environment snapshots).
+
+**What changed:**
+- New `etc/calamares/modules/partition.conf` / `mount.conf` — Btrfs root
+  (`@`/`@home`/`@cache`/`@log`/`@snapshots` subvolumes), ESP bumped to
+  1024MiB/512MiB to fit multiple retained kernel+initramfs copies.
+- `homelab-limine-install.sh` — `rootflags=subvol=@`, HoltOS wallpaper +
+  color theme in `limine.conf`, empty snapshot-block markers for the new
+  script to fill in.
+- New `holtos-btrfs-snapshot` — read-only root snapshot + ESP kernel copy
+  + regenerated Limine menu entry, 5-snapshot retention. Wired into
+  `holtos-update-apply`'s `update_system()`/`update_config()` (best-
+  effort, non-fatal on failure) and a new tray entry "Create Snapshot
+  Now" (`holtos-snapshot-now`).
+- Both new scripts added to `profiledef.sh`'s `file_permissions` — this
+  project has hit the "script silently loses its executable bit through
+  the Windows/WSL2/archiso build round-trip" bug for real, twice, before
+  (see the updater tray icon entry below), so this was checked
+  deliberately rather than assumed fine this time.
+
+**Verified by research, not by a live boot** (this is a root-filesystem
+change — needs an actual fresh VM install, not an in-place test):
+- Calamares' real `btrfsSubvolumes` config key/schema (fetched the actual
+  stock `mount.conf`/`partition.conf` from calamares/calamares upstream —
+  same technique already proven for `bootstrap-override.yaml`).
+- `gawk` (used by both this and the earlier resolve_release fix) is a
+  real `base` package dependency, confirmed via search, not assumed.
+- Deliberately did NOT switch root to ZFS despite the data pool already
+  being ZFS — ZFS-root-on-Arch is a much bigger lift (dracut/zfsbootmenu
+  territory, not a small addition to what's already built), and did NOT
+  use the one existing third-party Limine+Btrfs snapshot tool
+  (`limine-btrfs`) — checked its actual GitHub repo: 1 star, zero tagged
+  releases, single small distro's own project. Both were real trade-offs
+  weighed against a hand-rolled bash approach, not skipped without
+  looking.
+
+**LIVE-TESTED (2026-09-09), first real Btrfs install + boot attempt:**
+- Fresh install via Calamares completed with no errors. Directly confirmed
+  in both the live partition-preview UI and the install job log: ESP
+  created at exactly 1024MiB (up from stock 300MiB), root created as
+  Btrfs at the remaining ~39GiB. `partition.conf`'s two real changes both
+  verified working as intended.
+- 4-character password (`allowWeakPasswords`/`minLength: 4`) also
+  reconfirmed working during this same install — showed a "shorter than
+  6 characters" warning (libpwquality's own floor) but did NOT block
+  proceeding, matching the intended design from earlier this session.
+- **Real bug found and fixed**: booting the fresh install first tried the
+  VM's stale NVRAM boot entries from a PREVIOUS test's install (now
+  pointing at a destroyed partition layout after Erase Disk) and hung on
+  a black screen. Forcing the VM's first boot device straight to the hard
+  disk — which resolves through the generic `/EFI/BOOT/BOOTX64.EFI`
+  fallback path, not the `/EFI/limine/` NVRAM one — surfaced a SEPARATE,
+  real, pre-existing bug: Limine printed `[config file not found]` and
+  refused to boot at all. Root-caused against Limine's actual source
+  (confirmed via search: it checks the directory of the EFI binary it was
+  loaded from, first): `homelab-limine-install.sh` only ever wrote
+  `limine.conf` next to the primary copy, never next to the fallback
+  copy — so any firmware that actually falls back to that path (the
+  entire reason the fallback copy exists) would always have hit this,
+  Btrfs or not. Never caught before because every earlier test this
+  session happened to boot via the NVRAM entry, not the fallback. Fixed:
+  write the identical config to both `/EFI/limine/limine.conf` and
+  `/EFI/BOOT/limine.conf`; `holtos-btrfs-snapshot` updated to keep both
+  copies in sync on every snapshot too. Rebuilding and re-testing now.
+
+**CONFIRMED WORKING (2026-09-09), second fresh install + forced-fallback-
+path boot:**
+- The Limine `[config file not found]` fix — confirmed. Rebuilt, fresh
+  install, DVD ejected, VM forced to boot via the generic
+  `/EFI/BOOT/BOOTX64.EFI` fallback path (the exact same forced-HDD-first
+  test that hit the bug originally) — booted straight through to the
+  installed system's own SDDM login screen this time, no error.
+- Logged in as the real account, opened Konsole, and directly confirmed
+  the whole Btrfs chain end to end: `findmnt /` shows
+  `/dev/sda2[/@] btrfs rw,relatime,compress=zstd:1,...,subvol=/@` — root
+  is really mounted as the `@` subvolume (not the top-level), with the
+  `compress=zstd:1` option from `mount.conf`'s `mountOptions` applied.
+- **Second real bug found in the same session**, this one NOT about
+  Btrfs: `sudo` was completely broken for the real account (see
+  CHANGELOG.md `[Unreleased]` for the full root-cause). Confirmed via
+  `groups` that the account IS in `wheel`; confirmed via `pkexec whoami`
+  → `root` that the updater's own privilege-escalation path (polkit, not
+  sudo) was NOT affected. Fixed in `homelab-cleanup-live.sh`. **Not yet
+  re-verified with a rebuild** — logically sound (matches the documented
+  sudoers.d mechanism exactly, 0440 permission requirement respected) but
+  flagging per this session's own standard until an actual `sudo`
+  invocation is re-tested post-fix.
+
+**CONFIRMED WORKING (2026-09-09), third round — sudo fix verified:**
+- Rebuilt with the sudoers fix, fresh install, rebooted straight into the
+  installed system (no DVD trickery needed this time — ejected before
+  reboot, booted the real disk directly), logged in, opened Konsole,
+  `sudo whoami` → `root`. Confirmed fixed.
+
+**Two MORE real bugs found while poking around in that same session,
+both fixed, both need a rebuild+reinstall to confirm for real:**
+- `holtos-tray` segfaults 100% of the time (autostart AND manual
+  foreground run) — root-caused via `coredumpctl info` to
+  `QSystemTrayIcon.isSystemTrayAvailable()` being called before
+  `QApplication()` existed. Confirmed the fix direction empirically on
+  the live VM (sed-deleted the offending lines, segfault gone, replaced
+  by an unrelated ordinary Python error from the rough test edit) before
+  applying the real fix to the source. Also added `qt6-wayland` to
+  packages.x86_64 (independently correct, wasn't the actual cause alone).
+- Pacman's keyring was never initialized on the installed system —
+  `pacman -S` failed outright with "Public keyring not found." This
+  would have silently broken `holtos-update-apply system`
+  (`pacman -Syu`) for every real install. Fixed in
+  `homelab-cleanup-live.sh` (`pacman-key --init` + `--populate
+  archlinux`). Confirmed the fix works in isolation on the live VM
+  (ran both commands manually, then `pacman -S qt6-wayland` succeeded
+  immediately after) — but not yet confirmed as part of the actual
+  install pipeline running automatically.
+
+**Still genuinely unverified, flagged explicitly:**
+- All three fixes above (tray ordering, qt6-wayland, pacman-key) baked
+  into a real ISO build and exercised via a fresh install — in
+  progress, this is the next rebuild.
+- Whether Limine correctly renders the wallpaper/theme keys as written —
+  still not visually confirmed across three rounds now; worth a
+  dedicated screenshot next time the Limine menu is on screen.
+- The full snapshot-create -> Limine-entry-appears -> boot-into-snapshot
+  -> retention-eviction cycle — still not run for real anywhere yet.
+- Stale NVRAM boot-entry accumulation across repeated test installs on
+  the same VM (10+ "File" boot entries observed) is a real annoyance for
+  *this specific VM's* repeated testing, not a HoltOS bug — a real
+  physical/fresh VM install only ever runs `efibootmgr --create` once per
+  actual disk wipe, so this doesn't need a code fix, just noting it here
+  since it's what forced the fallback-path test that found the real bug
+  above.
+
+## Full code review pass — one real bug found and fixed, rest clean
+
+Systematic step-by-step review of everything built this session, each step
+verified against either the live-tested behavior already confirmed
+elsewhere in this file or real upstream source/state (not just re-reading
+the code and assuming it's right):
+
+1. **Calamares installer** (branding.desc, navigation/sidebar QML,
+   stylesheet.qss, users.conf, capture-user-creds.conf, settings.conf
+   ordering) — clean. Cross-checked style keys, sequence order.
+2. **Boot chain** (Plymouth, os-release, mkinitcpio) — clean.
+3. **KDE desktop defaults** (look-and-feel package, kdeglobals, Konsole
+   colorscheme) — clean. Cross-verified matching IDs across files (e.g.
+   wallpaper package ID `HoltOS` == `Image=HoltOS` in look-and-feel
+   defaults; Konsole `ColorScheme=HoltOS` == that colorscheme file's own
+   `Description=HoltOS`).
+4. **Updater scripts** (holtos-tray, holtos-check-notify,
+   holtos-update-check, holtos-update-picker, holtos-rollback-config,
+   holtos-update-apply, holtos-update-history, holtos-first-boot-apps) —
+   **found a real, confirmed bug**, see below. Everything else clean,
+   including cross-checking `update_the_den`/`update_the_den_client`
+   directly against the real `v0.1.0-alpha` release tarballs on GitHub
+   (port 8686 in the-den.desktop matches the real the-den.service's
+   `--port 8686`; DATABASE_URL path matches; the-den-client's launcher
+   path `/opt/the-den-client/src/main.py` matches what
+   `update_the_den_client` actually syncs to; icon-theme name
+   `the-den-client` matches the real `Icon=` key in that repo's own
+   `.desktop`).
+5. **Authentik integration** (bootstrap-override.yaml,
+   homepage-oidc.yaml, both `.container` volume mounts,
+   homelab-generate-secrets.sh, capture-user-creds.conf) — clean, full
+   chain re-traced from GlobalStorage capture through deobscure through
+   env-file generation through blueprint consumption.
+6. **The Den / Den Client cross-check** — done as part of step 4 above.
+7. **Package list & profiledef.sh** — clean. All 8 `holtos-*` scripts
+   under `usr/local/bin/` have a matching `file_permissions` entry (no
+   more, no fewer); the app-menu entry (`holtos-updater.desktop`,
+   `Categories=System`) and autostart entry (`holtos-tray.desktop`) both
+   point at real files with a real matching icon
+   (`holtos-logo.svg`).
+8. **Cross-cutting path/ID verification** — this is where the real bug
+   surfaced (see below).
+
+### The real bug: annotated-tag sha vs. commit sha
+
+`resolve_release()` (holtos-update-apply) and `holtos-update-check`'s own
+copy of the same query both used `git ls-remote --tags --refs`. Checked
+this against the actual HoltOS repo on GitHub:
+
+```
+$ git ls-remote --tags https://github.com/jamesyoungdahr-debug/HoltOS.git
+5664b1c459d4927da9208bbce34ce8a2815f4a92	refs/tags/v0.0.1-alpha
+0ba1ac121993bc8c3cf34dd7e9c276354079f03e	refs/tags/v0.0.1-alpha^{}
+```
+
+The tag is annotated (confirmed by the peeled `^{}` line existing at
+all — lightweight tags never produce one). `--refs` strips peeled lines,
+so the old code got `5664b1c...` (the tag *object's own* sha) and treated
+it as if it were the commit sha. But `deployed-commit` (what
+`holtos-update-check` compares against) is seeded by `build.sh` from
+`git rev-parse HEAD` — a real commit sha, e.g. `0ba1ac1...`. Those two
+would never be equal, even immediately after a fresh install at the exact
+tagged commit — so the tray's 6-hour background check would have shown
+"HoltOS v0.0.1-alpha available" forever, starting from first boot, no
+matter how current the system actually was. Same annotated-tag situation
+confirmed on both companion repos' tags too (the-den, the-den-client),
+though it was harmless there since neither compares shas for equality —
+only cosmetic (wrong sha logged to history.log).
+
+Fixed both call sites to query without `--refs` and explicitly prefer the
+peeled (`^{}`) line — the real commit sha — falling back to the plain ref
+sha for lightweight tags (no peeled line, so the ref sha already *is* the
+commit sha). Verified the fix directly against the live repo (see
+CHANGELOG.md `[Unreleased]` entry) — resolves to `0ba1ac1...`, matching
+`git rev-parse HEAD`. **Not yet re-tested in a live VM boot** (would
+require a full rebuild + fresh install + waiting to observe no spurious
+notification, or manually running holtos-update-check on an already-
+installed system) — logically verified against real remote state, high
+confidence, but flagging per this session's own standard of being
+explicit about what's live-confirmed vs. not.
+
+## Updater error dialog — CONFIRMED WORKING; The Den repos were private
+
+The improved failure dialog (tee output to a tempfile, show the tail on
+failure) worked on the first real test — showed the actual `git
+ls-remote` failure ("could not read Username for 'https://github.com'")
+instead of the old generic message, which is exactly what let this get
+diagnosed in one pass instead of another blind guess.
+
+Root cause: `the-den` and `the-den-client` were **private** GitHub
+repos. The updater only ever does anonymous git/curl (same as it does
+for HoltOS itself) — no code bug, it correctly can't authenticate.
+Made both public (user's explicit go-ahead — this is an external
+account change, not something to do unprompted). Neither has a tagged
+release yet, so the updater should now report "No tagged release found"
+cleanly instead of the auth-prompt crash — worth a quick confirm next
+test, but this isn't expected to need further code changes.
+
 ## Installer content-area theme — new, untested
 
 Added `stylesheet.qss` to rebrand the page content background (still
@@ -87,10 +324,38 @@ executable permissions". Every `holtos-*` script's executable bit
 wasn't reliably surviving the Windows/Git Bash → WSL2 drvfs → archiso
 build round trip (see CHANGELOG) — almost certainly the real reason the
 tray never launched either, autostart-phase key or not. Added all eight
-scripts to `profiledef.sh`'s `file_permissions` override. **Not yet
-tested** — this is the second candidate root cause for the tray issue;
-confirm on the next test that both the app-menu entry *and* autostart
-actually launch it now.
+scripts to `profiledef.sh`'s `file_permissions` override. Tested live:
+the exec-bit fix confirmed correct — the app-menu entry now launches the
+updater successfully, and an actual update attempt returns a real error
+(not a permissions failure) — but **autostart still doesn't fire**, so
+that fix, while real and necessary, wasn't the (whole) tray-autostart
+story either.
+
+**Third pass — actual root cause, confirmed via real log data.** Pulled
+`/tmp/holtos-tray.log` off the live installed system (the logging added
+in the second pass) instead of guessing again: `yad --notification`
+fails outright with "WARNING: This mode not supported outside X11" —
+this session runs Wayland, and yad's tray mode is built on GTK3's
+deprecated, X11-only `GtkStatusIcon`. Neither of the first two fixes
+could ever have mattered; the log shows the script launching and
+reaching yad fine both times. Rewrote `holtos-tray` in Python using
+PySide6's `QSystemTrayIcon` (proper StatusNotifierItem support, works
+under X11 and Wayland both) — no new dependency, PySide6 was already
+installed for The Den Client. High confidence this is actually it, but
+**not yet tested** — confirm the icon actually appears in the tray on
+next boot, and that its menu (Check for Updates / Update... / Rollback
+Config / Update History / Quit) all still work the same as before.
+
+Separately, running an actual update surfaced a real UX bug: the
+failure dialog only ever said "check your network connection" no matter
+what actually went wrong, because the real output was only ever
+streamed through the progress dialog before `--auto-close` closed it.
+Fixed in `holtos-update-picker`/`holtos-rollback-config` — failures now
+show the last few lines of real output. **Not yet tested** — next
+failure (there will be one, since the live test that surfaced this
+*was* itself a failed update) should show something actually
+diagnostic; if it still doesn't, the tee-to-tempfile plumbing itself
+needs a second look.
 
 ## v0.0.1-alpha tagged and released
 
@@ -100,18 +365,29 @@ something to actually find now. Also added rollback (`holtos-rollback-config`),
 an update history log/viewer, and release notes in update notifications —
 all untested, same caveat as everything else pending a rebuild.
 
-## The Den / The Den Client integration
+## The Den / The Den Client integration — real releases now exist
 
 Added `update_the_den`/`update_the_den_client` to `holtos-update-apply` —
 separately-maintained repos (jamesyoungdahr-debug/the-den,
-the-den-client), tag-gated updates only, install-on-first-use since
-neither has a release yet. This is the **least-tested code in the whole
-updater**: `update_the_den` is a hand-translation of the-den's own
-PKGBUILD/install script (never executed, only read), and neither repo
-has a tag to actually test against yet. Once either repo cuts a `v*`
-release, test the full first-install path via the tray picker before
-trusting it on a real system — especially the-den's systemd-sysusers/
-tmpfiles/alembic-migration sequence.
+the-den-client), tag-gated updates only. Both are now tagged
+`v0.1.0-alpha` — downloaded and diffed the actual release tarballs
+against what these functions expect: `update_the_den` matched exactly
+(no changes). `update_the_den_client` didn't — the repo grew its own
+`deploy/` (official launcher, `.desktop`, icon) since this function was
+written against an earlier version without one; switched to installing
+those real files instead of the hand-written launcher/.desktop this
+function used to generate.
+
+Still genuinely untested end-to-end: `update_the_den` remains a
+hand-translation of the-den's own PKGBUILD/install script (verified
+*there* via makepkg/pacman/systemctl per that repo's own STATUS.md, but
+never executed through *this* code path). First real test should
+exercise the full first-boot auto-install
+(`holtos-first-boot-apps.service`, which will finally do something now
+that tags exist) end to end — sysusers/tmpfiles creation, the
+alembic-migration step, and confirm `the-den.service` actually comes up
+and is reachable at `127.0.0.1:8686` — before trusting it on a real
+system.
 
 Also added `holtos-first-boot-apps.service` to auto-install both on first
 boot once releases exist (untested — depends on the same untested

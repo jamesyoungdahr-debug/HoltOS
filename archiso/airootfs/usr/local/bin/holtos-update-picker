@@ -49,7 +49,12 @@ if [ "${#items[@]}" -eq 0 ]; then
     exit 0
 fi
 
-pkexec /usr/local/bin/holtos-update-apply "${items[@]}" 2>&1 \
+# Captured to a file (not just streamed through to the progress dialog,
+# which --auto-close closes the instant the process exits, before there's
+# any chance to read the last line) so a failure can show *why* it
+# failed instead of a generic guess.
+logfile="$(mktemp)"
+pkexec /usr/local/bin/holtos-update-apply "${items[@]}" 2>&1 | tee "$logfile" \
     | stdbuf -oL sed -u 's/^==> /#/' \
     | yad --progress --pulsate --auto-close --auto-kill \
         --title="HoltOS Updater" --image="$ICON" --window-icon="$ICON" \
@@ -58,10 +63,13 @@ pkexec /usr/local/bin/holtos-update-apply "${items[@]}" 2>&1 \
 
 status=${PIPESTATUS[0]}
 if [ "$status" -ne 0 ]; then
+    detail="$(tail -8 "$logfile")"
     yad --image=dialog-error --title="HoltOS Updater" --window-icon="$ICON" \
-        --text="Update failed (exit $status). Check your network connection and try again." \
+        --width=520 --wrap \
+        --text="Update failed (exit $status):\n\n${detail}" \
         --button="Close:0"
 else
     yad --image="$ICON" --title="HoltOS Updater" --window-icon="$ICON" \
         --text="Update complete." --button="Close:0"
 fi
+rm -f "$logfile"

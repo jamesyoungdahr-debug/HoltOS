@@ -14,7 +14,12 @@ networkmanager
 openssh
 reflector
 
-# Partitioning / filesystem tools Calamares' partition/fstab/unpackfs modules need
+# Partitioning / filesystem tools Calamares' partition/fstab/unpackfs modules
+# need. btrfs-progs: root is Btrfs (see etc/calamares/modules/partition.conf)
+# so holtos-btrfs-snapshot can take real read-only snapshots for the Limine
+# "boot into a snapshot" menu entries — e2fsprogs stays too, only for
+# whatever the live medium's own squashfs/overlay work still touches, root
+# itself is no longer ext4.
 arch-install-scripts
 parted
 gptfdisk
@@ -83,7 +88,21 @@ breeze-gtk
 # there's nothing to vendor at build time. python: the-den's own venv +
 # alembic migrations. pyside6/kirigami/qqc2-desktop-style: the client's
 # runtime, no separate venv needed (it has no pip dependencies of its own).
+# pyside6 is also what holtos-tray (the updater's tray icon) is built on
+# now — see that script's own header for why (yad's tray mode is
+# X11-only, doesn't work under Wayland at all). qt6-wayland: real crash
+# found live-testing the Btrfs install — without it, PySide6's
+# QSystemTrayIcon.isSystemTrayAvailable() straight-up segfaults under this
+# session's Wayland (XDG_SESSION_TYPE=wayland), confirmed via
+# coredumpctl info (SIGSEGV inside libQt6Widgets.so's
+# QSystemTrayIcon::isSystemTrayAvailable, called from holtos-tray on both
+# its autostart launch and a manual foreground run — not a one-off).
+# qt6-wayland is Qt6's actual Wayland platform integration; PySide6 pulls
+# in Qt6 itself but not this separate platform plugin package, so it was
+# silently missing the whole time despite pyside6 nominally "supporting"
+# Wayland.
 python
 pyside6
+qt6-wayland
 kirigami
 qqc2-desktop-style

@@ -1,0 +1,127 @@
+#!/usr/bin/env bash
+# Takes a read-only Btrfs snapshot of the root subvolume, copies the
+# CURRENT (pre-update) kernel+initramfs to the ESP alongside it, and
+# regenerates the "HOLTOS SNAPSHOTS" block in limine.conf so the snapshot
+# shows up as a bootable menu entry — a self-contained, HoltOS-owned
+# safety net so boot-environment snapshots work out of the box, no end-
+# user setup (see BRANDING-STATUS.md for why this is hand-rolled instead
+# of depending on the one third-party tool for this, limine-btrfs: a
+# 1-star, zero-release project, too unproven for a homelab server nobody's
+# babysitting).
+#
+# Called by holtos-update-apply right before update_system() (label
+# "system") and update_config() (label "config") actually change
+# anything, and by the tray's "Create Snapshot Now" menu entry (label
+# "manual") for on-demand snapshots.
+#
+# Root must be Btrfs with the @ / @snapshots subvolume layout this script
+# assumes — see etc/calamares/modules/{partition,mount}.conf. Requires a
+# fresh install with that layout; there's no in-place migration path from
+# an existing ext4 install.
+set -euo pipefail
+
+KEEP=5
+LABEL="${1:?Usage: holtos-btrfs-snapshot <label>}"
+SNAP_LOG=/var/lib/holtos/snapshots.log
+SNAPSHOTS_DIR=/.snapshots
+
+if [ "$(id -u)" -ne 0 ]; then
+    echo "holtos-btrfs-snapshot must run as root (use: pkexec holtos-btrfs-snapshot ...)" >&2
+    exit 1
+fi
+
+# Same ESP auto-detection as homelab-limine-install.sh / homelab-limine-sync.sh.
+for candidate in /boot/efi /efi /boot; do
+    if mountpoint -q "$candidate" 2>/dev/null && [ -d "$candidate/EFI" -o -w "$candidate" ]; then
+        ESP="$candidate"
+        break
+    fi
+done
+: "${ESP:?Could not find a mounted EFI System Partition under /boot/efi, /efi, or /boot}"
+
+ROOT_UUID="$(findmnt -no UUID /)"
+NAME="$(date -u +%Y%m%dT%H%M%SZ)-${LABEL}"
+
+echo "==> Snapshotting root as ${NAME}..."
+mkdir -p "$SNAPSHOTS_DIR"
+btrfs subvolume snapshot -r / "${SNAPSHOTS_DIR}/${NAME}"
+
+echo "==> Copying current kernel/initramfs to the ESP..."
+mkdir -p "${ESP}/holtos-snapshots/${NAME}"
+cp /boot/vmlinuz-linux "${ESP}/holtos-snapshots/${NAME}/vmlinuz-linux"
+cp /boot/initramfs-linux.img "${ESP}/holtos-snapshots/${NAME}/initramfs-linux.img"
+
+mkdir -p "$(dirname "$SNAP_LOG")"
+printf '%s\t%s\t%s\n' "$(date -u +%FT%TZ)" "$LABEL" "$NAME" >> "$SNAP_LOG"
+chmod 644 "$SNAP_LOG"
+
+# Retention: evict the oldest entries beyond KEEP — both the Btrfs
+# subvolume and its ESP kernel copy — then drop them from the log too.
+# Unbounded growth would otherwise fill the (finite, FAT32) ESP; see
+# partition.conf's own comment for the size math this count was chosen
+# against.
+mapfile -t all_names < <(cut -f3 "$SNAP_LOG")
+total="${#all_names[@]}"
+if [ "$total" -gt "$KEEP" ]; then
+    evict_count=$((total - KEEP))
+    echo "==> Evicting ${evict_count} snapshot(s) beyond the ${KEEP}-snapshot retention limit..."
+    for ((i = 0; i < evict_count; i++)); do
+        old="${all_names[$i]}"
+        btrfs subvolume delete "${SNAPSHOTS_DIR}/${old}" 2>/dev/null || true
+        rm -rf "${ESP}/holtos-snapshots/${old}"
+    done
+    tail -n "$KEEP" "$SNAP_LOG" > "${SNAP_LOG}.tmp"
+    mv "${SNAP_LOG}.tmp" "$SNAP_LOG"
+fi
+
+# Regenerate the HOLTOS SNAPSHOTS block in limine.conf from the (now
+# retention-trimmed) log — one boot entry per retained snapshot, oldest
+# first. Rewritten wholesale between the two marker lines every time
+# (simpler and more robust than trying to insert/remove single entries in
+# place), leaving everything outside the markers — the main /homelab-os
+# entry, wallpaper/theme lines, see homelab-limine-install.sh — untouched.
+#
+# Written to BOTH copies of limine.conf (/EFI/limine/ and /EFI/BOOT/,
+# same two paths homelab-limine-install.sh writes) — confirmed live that
+# Limine only reads whichever copy sits next to the BOOTX64.EFI it was
+# actually loaded from, so letting them drift out of sync would silently
+# break snapshot boot entries on whichever path isn't the one the
+# firmware happens to use. See homelab-limine-install.sh's own comment
+# for the full story on why both copies must exist at all.
+block="$(mktemp)"
+{
+    echo "#### HOLTOS SNAPSHOTS START ####"
+    while IFS=$'\t' read -r ts snap_label snap_name; do
+        echo
+        echo "/HoltOS snapshot: ${snap_label} (${ts})"
+        echo "    protocol: linux"
+        echo "    path: boot():/holtos-snapshots/${snap_name}/vmlinuz-linux"
+        echo "    cmdline: root=UUID=${ROOT_UUID} rootflags=subvol=@snapshots/${snap_name} rw quiet"
+        echo "    module_path: boot():/holtos-snapshots/${snap_name}/initramfs-linux.img"
+    done < "$SNAP_LOG"
+    echo
+    echo "#### HOLTOS SNAPSHOTS END ####"
+} > "$block"
+
+updated_any=0
+for LIMINE_CONF in "${ESP}/EFI/limine/limine.conf" "${ESP}/EFI/BOOT/limine.conf"; do
+    if [ -f "$LIMINE_CONF" ] && grep -q '#### HOLTOS SNAPSHOTS START ####' "$LIMINE_CONF"; then
+        awk -v blockfile="$block" '
+            /#### HOLTOS SNAPSHOTS START ####/ { skip = 1; while ((getline line < blockfile) > 0) print line; next }
+            /#### HOLTOS SNAPSHOTS END ####/   { skip = 0; next }
+            skip { next }
+            { print }
+        ' "$LIMINE_CONF" > "${LIMINE_CONF}.tmp"
+        mv "${LIMINE_CONF}.tmp" "$LIMINE_CONF"
+        updated_any=1
+    fi
+done
+rm -f "$block"
+
+if [ "$updated_any" -eq 1 ]; then
+    echo "==> Updated Limine's snapshot menu entries"
+else
+    echo "==> WARNING: no limine.conf with HOLTOS SNAPSHOTS markers found under ${ESP} — skipping Limine entry (was Limine installed by an older version of homelab-limine-install.sh?)" >&2
+fi
+
+echo "==> Snapshot created: ${NAME}"

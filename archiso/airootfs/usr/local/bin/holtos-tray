@@ -1,22 +1,114 @@
-#!/bin/bash
-# System tray icon for the HoltOS updater. Left-click (yad's --command) and
-# the menu's "Update..." both open holtos-update-picker, which lets the
-# user choose exactly which item(s) to update. "Check for Updates" checks
-# whether a new tagged HoltOS release exists (config-sync gate only — the
-# per-item picker doesn't need a release to update an individual service).
-# A background loop checks every 6h on its own and notifies if something's
-# found — see holtos-check-notify.
-ICON=/usr/share/icons/hicolor/scalable/apps/holtos-logo.svg
+#!/usr/bin/env python3
+# System tray icon for the HoltOS updater.
+#
+# Previously implemented as a bash script wrapping `yad --notification`.
+# Confirmed live (via /tmp/holtos-tray.log from the version below) that
+# this NEVER worked on this system, no matter what else got fixed:
+#
+#   yad: /usr/bin/yad
+#   Launching yad --notification...
+#   WARNING: This mode not supported outside X11
+#
+# yad's tray-icon mode is built on GTK3's deprecated GtkStatusIcon, which
+# is X11-only and was never ported to the StatusNotifierItem (SNI) D-Bus
+# protocol Wayland compositors (including Plasma's) actually use. This
+# session runs XDG_SESSION_TYPE=wayland — the two earlier "fixes" for
+# this (a bad X-KDE-autostart-phase key, then a missing executable bit)
+# were both real bugs, just not *this* bug; the log confirms the script
+# was launching and reaching yad just fine both times, yad itself was
+# the dead end regardless of autostart mechanics.
+#
+# Rewritten using PySide6's QSystemTrayIcon instead — Qt implements SNI
+# properly and works under both X11 and Wayland in a Plasma session.
+# PySide6 is already a dependency (for The Den Client), so this adds no
+# new packages.
+import subprocess
+import sys
+import threading
+import time
 
-(
-    while true; do
-        sleep 21600
-        /usr/local/bin/holtos-check-notify
-    done
-) &
+LOG_PATH = "/tmp/holtos-tray.log"
 
-exec yad --notification \
-    --image="$ICON" \
-    --text="HoltOS Updater" \
-    --command=/usr/local/bin/holtos-update-picker \
-    --menu="Check for Updates!/usr/local/bin/holtos-check-notify --verbose!$ICON|Update...!/usr/local/bin/holtos-update-picker!$ICON|Rollback Config!/usr/local/bin/holtos-rollback-config!$ICON|Update History!/usr/local/bin/holtos-update-history!$ICON|Quit!quit!application-exit"
+
+def log(msg):
+    try:
+        with open(LOG_PATH, "a") as f:
+            f.write(f"{msg}\n")
+    except OSError:
+        pass
+
+
+try:
+    from PySide6.QtGui import QIcon
+    from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
+except Exception as exc:  # pragma: no cover - diagnostic path only
+    log(f"holtos-tray: failed to import PySide6: {exc}")
+    sys.exit(1)
+
+ICON_PATH = "/usr/share/icons/hicolor/scalable/apps/holtos-logo.svg"
+CHECK_INTERVAL_SECONDS = 21600  # 6h, same cadence as the old version
+
+
+def run(cmd, *args):
+    subprocess.Popen([cmd, *args])
+
+
+def check_for_updates(verbose=False):
+    args = ["--verbose"] if verbose else []
+    run("/usr/local/bin/holtos-check-notify", *args)
+
+
+def background_check_loop():
+    while True:
+        time.sleep(CHECK_INTERVAL_SECONDS)
+        check_for_updates(verbose=False)
+
+
+def main():
+    log(f"=== holtos-tray started {time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())} ===")
+
+    # Real bug found live-testing the Btrfs install: this used to call
+    # QSystemTrayIcon.isSystemTrayAvailable() HERE, before QApplication()
+    # existed below — confirmed via coredumpctl (SIGSEGV/SEGV_MAPERR
+    # inside that exact call, both on autostart and a manual foreground
+    # run, reproducible every time). Qt's platform integration — display
+    # connection, tray protocol plugin, all of it — is only initialized
+    # by constructing QApplication/QGuiApplication; touching practically
+    # any QtWidgets API before that, even ones that look like plain
+    # static queries, is a well-known way to crash into uninitialized
+    # platform state. QApplication now goes first.
+    app = QApplication(sys.argv)
+    app.setQuitOnLastWindowClosed(False)
+
+    if not QSystemTrayIcon.isSystemTrayAvailable():
+        log("holtos-tray: QSystemTrayIcon.isSystemTrayAvailable() is False")
+
+    tray = QSystemTrayIcon(QIcon(ICON_PATH))
+    tray.setToolTip("HoltOS Updater")
+
+    menu = QMenu()
+    menu.addAction("Check for Updates", lambda: check_for_updates(verbose=True))
+    menu.addAction("Update...", lambda: run("/usr/local/bin/holtos-update-picker"))
+    menu.addAction("Rollback Config", lambda: run("/usr/local/bin/holtos-rollback-config"))
+    menu.addAction("Update History", lambda: run("/usr/local/bin/holtos-update-history"))
+    menu.addSeparator()
+    menu.addAction("Create Snapshot Now", lambda: run("/usr/local/bin/holtos-snapshot-now"))
+    menu.addSeparator()
+    menu.addAction("Quit", app.quit)
+    tray.setContextMenu(menu)
+
+    def on_activated(reason):
+        if reason == QSystemTrayIcon.ActivationReason.Trigger:
+            run("/usr/local/bin/holtos-update-picker")
+
+    tray.activated.connect(on_activated)
+    tray.show()
+    log("holtos-tray: tray icon shown")
+
+    threading.Thread(target=background_check_loop, daemon=True).start()
+
+    sys.exit(app.exec())
+
+
+if __name__ == "__main__":
+    main()

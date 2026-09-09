@@ -9,7 +9,8 @@ yad --question --title="HoltOS Updater" --image="$ICON" --window-icon="$ICON" \
     --button="Roll Back:0" --button="Cancel:1"
 [ $? -eq 0 ] || exit 0
 
-pkexec /usr/local/bin/holtos-update-apply rollback 2>&1 \
+logfile="$(mktemp)"
+pkexec /usr/local/bin/holtos-update-apply rollback 2>&1 | tee "$logfile" \
     | stdbuf -oL sed -u 's/^==> /#/' \
     | yad --progress --pulsate --auto-close --auto-kill \
         --title="HoltOS Updater" --image="$ICON" --window-icon="$ICON" \
@@ -18,9 +19,13 @@ pkexec /usr/local/bin/holtos-update-apply rollback 2>&1 \
 
 status=${PIPESTATUS[0]}
 if [ "$status" -ne 0 ]; then
+    detail="$(tail -8 "$logfile")"
     yad --image=dialog-error --title="HoltOS Updater" --window-icon="$ICON" \
-        --text="Rollback failed (exit $status)." --button="Close:0"
+        --width=520 --wrap \
+        --text="Rollback failed (exit $status):\n\n${detail}" \
+        --button="Close:0"
 else
     yad --image="$ICON" --title="HoltOS Updater" --window-icon="$ICON" \
         --text="Rollback complete." --button="Close:0"
 fi
+rm -f "$logfile"

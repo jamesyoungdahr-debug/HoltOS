@@ -18,6 +18,12 @@
 # Every applied item is appended to /var/lib/holtos/history.log (world-
 # readable — see holtos-update-history) as a small audit trail, and it's
 # what rollback reads to find "the release before this one".
+#
+# config/system also take a Btrfs snapshot (holtos-btrfs-snapshot) right
+# before touching anything — a full-filesystem, boot-from-Limine safety
+# net independent of the tag-based rollback above (that one undoes to a
+# specific *release*; the snapshot recovers from "something broke the box"
+# more generally, including a bad kernel from a `system` update).
 set -euo pipefail
 
 HISTORY=/var/lib/holtos/history.log
@@ -31,17 +37,36 @@ log_history() {
 # resolve_release <owner/repo> [target_tag] — prints "<commit>\t<tag>" for
 # either the latest v* tag (no target_tag given) or that exact tag
 # (verifying it actually exists on the remote). Returns 1 if nothing found.
+#
+# Real bug found in code review: `git ls-remote --refs` on an ANNOTATED tag
+# (what GitHub's own "Create a release" UI creates — confirmed against this
+# repo's own v0.0.1-alpha: `git ls-remote --tags` shows a
+# `refs/tags/v0.0.1-alpha^{}` peeled line with a DIFFERENT sha from the
+# plain ref) returns the tag OBJECT's own sha, not the commit it points to.
+# holtos-update-check compares that against a real commit sha (deployed-
+# commit, seeded from `git rev-parse HEAD` by build.sh and updated below) —
+# they'd never match even when already up to date, so the tray's
+# background check would report "update available" forever. Fix: query
+# without --refs and explicitly prefer the peeled (^{}) line, which holds
+# the real commit sha; lightweight tags have no peeled line, so the plain
+# ref sha (already the commit sha) is used for those unchanged.
 resolve_release() {
-    local repo="$1" target_tag="${2:-}" line
+    local repo="$1" target_tag="${2:-}" url="https://github.com/$1.git" raw tag sha
     if [ -z "$target_tag" ]; then
-        line="$(git ls-remote --tags --refs --sort=-v:refname "https://github.com/$repo.git" 'v*' | head -1)"
-        [ -n "$line" ] || return 1
-        printf '%s\t%s\n' "$(cut -f1 <<< "$line")" "$(cut -f2 <<< "$line" | sed 's#refs/tags/##')"
+        raw="$(git ls-remote --tags --sort=-v:refname "$url" 'v*' 2>/dev/null)"
+        [ -n "$raw" ] || return 1
+        tag="$(head -1 <<< "$raw" | cut -f2)"
+        tag="${tag%^\{\}}"
+        tag="${tag#refs/tags/}"
     else
-        line="$(git ls-remote --tags --refs "https://github.com/$repo.git" "refs/tags/$target_tag" | head -1)"
-        [ -n "$line" ] || return 1
-        printf '%s\t%s\n' "$(cut -f1 <<< "$line")" "$target_tag"
+        raw="$(git ls-remote --tags "$url" "refs/tags/$target_tag" "refs/tags/$target_tag^{}" 2>/dev/null)"
+        [ -n "$raw" ] || return 1
+        tag="$target_tag"
     fi
+    sha="$(awk -F'\t' -v want="refs/tags/${tag}^{}" '$2==want{print $1}' <<< "$raw")"
+    [ -n "$sha" ] || sha="$(awk -F'\t' -v want="refs/tags/${tag}" '$2==want{print $1}' <<< "$raw")"
+    [ -n "$sha" ] || return 1
+    printf '%s\t%s\n' "$sha" "$tag"
 }
 
 # download_release <owner/repo> <tag> <dest_dir> — extracts the tag's
@@ -84,6 +109,13 @@ update_config() {
         echo "No tagged HoltOS release found${target_tag:+ ($target_tag)}." >&2
         return 1
     fi
+
+    # Best-effort, and only once we know there's actually something to
+    # apply — a missing/failed snapshot shouldn't block the real update
+    # (e.g. holtos-btrfs-snapshot assumes the Btrfs root layout from
+    # etc/calamares/modules/{partition,mount}.conf, which only a fresh
+    # install has).
+    /usr/local/bin/holtos-btrfs-snapshot config || echo "==> WARNING: pre-update snapshot failed, continuing without one" >&2
 
     echo "==> Downloading $latest_tag..."
     src_dir="$(mktemp -d)"
@@ -191,10 +223,12 @@ DESKTOP
 
     systemctl daemon-reload
     if [ "$first_install" -eq 1 ]; then
-        systemctl enable the-den
-        echo "==> First install done. Edit /etc/the-den/the-den.env (TMDB_API_KEY,"
-        echo "    QBIT_USERNAME/QBIT_PASSWORD, MOVIES_ROOT/TV_ROOT), then:"
-        echo "    systemctl start the-den"
+        echo "==> Enabling and starting The Den..."
+        systemctl enable --now the-den
+        echo "==> Running with placeholder settings from the-den.env.example"
+        echo "    (empty TMDB_API_KEY, default qBittorrent credentials) —"
+        echo "    edit /etc/the-den/the-den.env and restart it once you have"
+        echo "    real values: systemctl restart the-den"
     else
         echo "==> Restarting The Den..."
         systemctl restart the-den
@@ -208,8 +242,12 @@ DESKTOP
 # (jamesyoungdahr-debug/the-den-client), a PySide6/Kirigami desktop app.
 # No systemd service (it's a GUI app the user launches), no venv (it has
 # no pip dependencies beyond the pyside6/kirigami/qqc2-desktop-style
-# system packages) — just synced files, a launcher script, and a
-# .desktop entry.
+# system packages, already in packages.x86_64) — just synced files plus
+# the repo's own official launcher/.desktop/icon (deploy/), the same way
+# update_the_den installs the-den's own deploy/ files rather than
+# reinventing them. (This function used to hand-write its own launcher
+# and .desktop — the repo didn't ship deploy/ yet when it was first
+# written. It does now; switched to using the real ones.)
 update_the_den_client() {
     local target_tag="${1:-}"
     local repo="jamesyoungdahr-debug/the-den-client"
@@ -231,33 +269,26 @@ update_the_den_client() {
     echo "==> Syncing application files..."
     install -dm755 "$app_dir"
     rsync -a --delete "$src_dir/src/" "$app_dir/src/"
-    rsync -a --delete "$src_dir/assets/" "$app_dir/assets/"
-    rm -rf "$src_dir"
 
     if [ "$first_install" -eq 1 ]; then
-        cat > /usr/local/bin/the-den-client <<'LAUNCHER'
-#!/bin/bash
-export QT_QUICK_CONTROLS_STYLE=org.kde.desktop
-exec python /opt/the-den-client/src/main.py "$@"
-LAUNCHER
-        chmod +x /usr/local/bin/the-den-client
-
-        cat > /usr/share/applications/the-den-client.desktop <<DESKTOP
-[Desktop Entry]
-Type=Application
-Name=The Den Client
-Comment=Native companion app for The Den
-Exec=/usr/local/bin/the-den-client
-Icon=$app_dir/assets/logo.svg
-Categories=AudioVideo;Video;
-DESKTOP
+        echo "==> Installing launcher, .desktop entry, and icon..."
+        install -Dm755 "$src_dir/deploy/the-den-client" /usr/bin/the-den-client
+        install -Dm644 "$src_dir/deploy/the-den-client.desktop" /usr/share/applications/the-den-client.desktop
+        install -Dm644 "$src_dir/assets/logo.svg" /usr/share/icons/hicolor/scalable/apps/the-den-client.svg
     fi
+
+    rm -rf "$src_dir"
 
     log_history the-den-client "$latest_tag" "$new_commit"
     echo "==> The Den Client updated to $latest_tag"
 }
 
 update_system() {
+    # Same best-effort reasoning as update_config()'s own snapshot call —
+    # this is the one most worth having, since a kernel/package upgrade is
+    # the update most likely to actually break boot.
+    /usr/local/bin/holtos-btrfs-snapshot system || echo "==> WARNING: pre-update snapshot failed, continuing without one" >&2
+
     echo "==> Updating system packages (pacman -Syu)..."
     pacman -Syu --noconfirm
     log_history system pacman "$(date -u +%FT%TZ)"

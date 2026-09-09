@@ -45,4 +45,6 @@ file_permissions=(
   ["/usr/local/bin/holtos-update-history"]="0:0:755"
   ["/usr/local/bin/holtos-rollback-config"]="0:0:755"
   ["/usr/local/bin/holtos-first-boot-apps"]="0:0:755"
+  ["/usr/local/bin/holtos-btrfs-snapshot"]="0:0:755"
+  ["/usr/local/bin/holtos-snapshot-now"]="0:0:755"
 )

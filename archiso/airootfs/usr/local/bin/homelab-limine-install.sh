@@ -37,32 +37,80 @@ ROOT_DEVICE="$(findmnt -no SOURCE /)"
 ESP_DISK="$(lsblk -no PKNAME "$(findmnt -no SOURCE "${ESP}")")"
 ESP_PARTNUM="$(findmnt -no SOURCE "${ESP}" | grep -oE '[0-9]+$')"
 
-# Limine's own ext4 driver can't read our root filesystem: mkfs.ext4 on a
-# current e2fsprogs enables the `orphan_file` and `metadata_csum_seed`
-# features by default, which Limine doesn't understand, so it fails to open
-# ANY path on that partition (confirmed: PANIC "Failed to open kernel with
-# path" even with a correct uuid()-referenced path and a verified-matching
-# UUID). Limine reads its own ESP (FAT32) fine — that's how it found this
-# very limine.conf — so sidestep the ext4 compatibility problem entirely by
-# keeping a copy of the kernel/initramfs ON the ESP and loading them via
-# `boot():`, which resolves to "the partition Limine itself was loaded
-# from" (i.e. $ESP here). The root filesystem stays ext4 as normal; only
-# the boot-time-readable copies live on the ESP. Kept in sync on kernel
-# upgrades by the homelab-limine-sync pacman hook (see
-# /etc/pacman.d/hooks/95-homelab-limine-sync.hook).
+# Kernel/initramfs are loaded from the ESP via `boot():` (resolves to "the
+# partition Limine itself was loaded from") instead of straight from root,
+# root filesystem be damned what it is. Originally forced by a real ext4
+# bug: mkfs.ext4 on a current e2fsprogs enables the `orphan_file` and
+# `metadata_csum_seed` features by default, which Limine's ext4 driver
+# doesn't understand, so it failed to open ANY path on that partition
+# (confirmed live: PANIC "Failed to open kernel with path" even with a
+# correct uuid()-referenced path and a verified-matching UUID). Root is
+# Btrfs now (see etc/calamares/modules/partition.conf), and Limine does
+# have a Btrfs driver — but keeping this same ESP-copy pattern anyway
+# rather than trusting an unverified claim that it reads OUR specific
+# subvolume layout cleanly, and it needs to exist regardless for the
+# per-snapshot kernel/initramfs copies holtos-btrfs-snapshot adds later
+# (see the HOLTOS SNAPSHOTS block below) — those load the exact same way.
+# Kept in sync on kernel upgrades by the homelab-limine-sync pacman hook
+# (see /etc/pacman.d/hooks/95-homelab-limine-sync.hook).
 mkdir -p "${ESP}/boot"
 cp /boot/vmlinuz-linux "${ESP}/boot/vmlinuz-linux"
 cp /boot/initramfs-linux.img "${ESP}/boot/initramfs-linux.img"
 
-cat > "${ESP}/EFI/limine/limine.conf" <<EOF
+# Root is Btrfs (see etc/calamares/modules/partition.conf) with a @
+# subvolume, not the top-level (subvolid=5) — rootflags=subvol=@ is what
+# tells the kernel/initramfs which subvolume to actually mount as / on
+# first boot, same as the subvol= mount option Calamares' own mount.conf
+# (btrfsSubvolumes) already puts in the target's /etc/fstab for every
+# later remount. Without it the kernel mounts the raw top-level subvolume
+# instead of @, which is essentially empty — none of the installed
+# system's actual files live there.
+ROOTFLAGS="subvol=@"
+
+# HoltOS-branded wallpaper for the Limine menu itself — reuses the same
+# raster image already used as the installed system's KDE desktop
+# wallpaper (see usr/share/plasma/look-and-feel/org.holtos.desktop), so
+# boot menu and desktop match. Limine can only read its own ESP
+# (boot():), same reason the kernel/initramfs live there instead of on
+# root — see the comment above this block for the full story; copying a
+# 30KB PNG here costs nothing.
+cp /usr/share/wallpapers/HoltOS/contents/images/1920x1080.png "${ESP}/wallpaper.png"
+
+# Real bug found live-testing this exact fallback path (not a Btrfs-
+# specific issue — pre-existed, just never actually exercised until a test
+# forced the VM to boot via the generic HDD/removable-media path instead
+# of the NVRAM entry below): Limine's own config search checks the
+# directory of the EFI binary THAT WAS ACTUALLY LOADED first (confirmed
+# against Limine's real init_efi_app_path()/init_config_disk() source) —
+# it does not automatically also check the OTHER copy's directory. Loaded
+# via /EFI/limine/BOOTX64.EFI (the NVRAM entry below), it looks for
+# /EFI/limine/limine.conf and finds it fine. Loaded via the
+# /EFI/BOOT/BOOTX64.EFI fallback copy above (what actually happens on
+# firmware that ignores/loses NVRAM — the whole reason that copy exists),
+# it looked for /EFI/BOOT/limine.conf, found nothing, and refused to boot
+# at all ("[config file not found]", confirmed live). Writing the exact
+# same config to both paths makes it boot correctly regardless of which
+# copy the firmware actually runs.
+LIMINE_CONF_CONTENT="$(cat <<EOF
 timeout: 3
+
+wallpaper: boot():/wallpaper.png
+wallpaper_style: stretched
+backdrop: 0D0B12
+term_palette: 0D0B12;B14DFF;28E0C8;F4EBFF;171423;B14DFF;28E0C8;F4EBFF
 
 /homelab-os
     protocol: linux
     path: boot():/boot/vmlinuz-linux
-    cmdline: root=UUID=${ROOT_UUID} rw quiet splash
+    cmdline: root=UUID=${ROOT_UUID} rootflags=${ROOTFLAGS} rw quiet splash
     module_path: boot():/boot/initramfs-linux.img
+
+#### HOLTOS SNAPSHOTS START ####
+#### HOLTOS SNAPSHOTS END ####
 EOF
+)"
+printf '%s\n' "$LIMINE_CONF_CONTENT" > "${ESP}/EFI/limine/limine.conf"
+printf '%s\n' "$LIMINE_CONF_CONTENT" > "${ESP}/EFI/BOOT/limine.conf"
 
 # NVRAM entry — best-effort; the fallback path copy above is what actually
 # guarantees boot if this doesn't take (e.g. firmware without NVRAM
