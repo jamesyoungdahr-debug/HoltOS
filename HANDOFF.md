@@ -1,16 +1,45 @@
-# HoltOS Session Handoff — 2026-09-09
+# HoltOS Session Handoff — updated 2026-09-09
 
 What shipped, what broke, what got fixed, and what's still open — for
-whoever picks this branch up next (including future you).
+whoever picks this branch up next. **This handoff is going to a
+different model (Gemma) taking over the work**, so treat nothing here as
+already-shared context — the ground rules below are things the prior
+session learned the hard way and are worth following rather than
+rediscovering.
 
-Commit: `d8b20b1` on `master`. Test VM: `homelab-os-test` (Hyper-V).
+Commit: `234412f` on `master`. Test VM: `homelab-os-test` (Hyper-V).
 ISO: `holtos-0.0.1-alpha-x86_64.iso`.
+
+## Ground rules for whoever/whatever picks this up
+
+- **Never guess at a root cause — verify it.** Every bug below got found
+  by pulling real diagnostic output (`coredumpctl`, `journalctl`,
+  `git ls-remote` against the actual repo, a live VM's own log files) and
+  reasoning from that, after earlier blind guesses in this same project
+  turned out wrong more than once. Read `BUILD.md` before touching the
+  build pipeline and `README.md` before touching install/boot behavior —
+  both explain *why* things are built the way they are, not just what to
+  run.
+- **Only build/push when explicitly told to.** Standing rule from the
+  human running this project — don't rebuild the ISO or push commits on
+  your own initiative mid-task.
+- **Test in the VM, not by inspection alone.** `homelab-os-test`
+  (Hyper-V) is the existing test VM — a fresh install (Erase Disk) is
+  required to pick up any partition/bootloader change; an in-place boot
+  of an already-installed disk won't. See `BUILD.md` for how the ISO
+  itself gets built before it can be tested.
+- **This is being handed to a different, more limited local model.** Keep
+  changes small and verifiable one at a time rather than large
+  speculative batches — easier to confirm each step actually worked
+  before building on it.
 
 ## At a glance
 
-- **4** real bugs found and fixed this session
-- **3×** fresh installs run to confirm each fix
-- **3** items still genuinely unverified
+- **5** real bugs found and fixed last session (4 runtime bugs + 1 build-
+  pipeline bug, see below)
+- **3×** fresh installs run to confirm the runtime fixes
+- **3** runtime items still genuinely unverified, **1** build-pipeline
+  item worth a real test run (see "Picking this back up")
 
 ## What shipped
 
@@ -131,8 +160,44 @@ error: failed to commit transaction (could not find or read file)
 **Fix:** `pacman-key --init && pacman-key --populate archlinux`, once, on
 the real target during cleanup.
 
+### 06 — Build pipeline unreproducible on any machine but this one — FIXED, NOT YET RE-VERIFIED
+
+**Files:** `build.sh`, `build-aur-packages.sh`, `containers/*.Containerfile`
+(new), `build-local-repo.sh` (new), `BUILD.md` (new)
+
+**Root cause:** Two of the three container images the build needs
+(`archiso-image`, plus a since-removed `calamares-installed`) were only
+ever built by hand on this machine — `podman commit`, never a
+`Containerfile` — so there was no way to reproduce them anywhere else.
+`build.sh` also hardcoded the WSL-side mount path with the Windows
+username `Liam` baked in (`/mnt/c/Users/Liam/...`), which silently points
+at nothing on any other username or clone location. And nothing anywhere
+called `repo-add`, so `local-repo/` was never actually a valid pacman
+repo by itself — it happened to work here only because a real repo
+database was left over from however it was first set up.
+
+**Fix:** Reconstructed both images as real `containers/*.Containerfile`s
+(folding the redundant `calamares-installed` image away — `calamares`
+now builds through the same AUR-build script as the other four
+packages), added the missing `repo-add` step to
+`build-aur-packages.sh`, and made both `build.sh` and the new
+`build-local-repo.sh` derive the WSL path from the actual checkout
+location instead of a hardcoded one. Full pipeline documented in
+`BUILD.md`.
+
+**Not yet verified:** this was fixed by inspecting the existing working
+images and reconstructing what must have produced them — logically
+sound, but nobody has actually run `build-local-repo.sh` +
+`build.sh` from a totally clean state (no pre-existing `local-repo/`,
+no pre-existing container images) to confirm the reconstruction is
+complete. This is the single highest-value thing to verify next if the
+build is still failing on the machine it's being handed off to.
+
 ## Still open
 
+- **Build pipeline reconstruction (bug 06), never run from a clean
+  state.** See above — this blocks everything else if it doesn't
+  actually work, so verify it first.
 - **Limine wallpaper/theme, visual confirmation.** The config keys are
   written and Limine boots correctly, but nobody has actually watched the
   branded boot menu render — every round this session got sidetracked
@@ -148,16 +213,27 @@ the real target during cleanup.
 
 ## Picking this back up
 
-1. **Watch the Limine menu render, start to finish.** Fresh install, and
-   this time actually sit through the boot menu before logging in — the
-   one visual check every round so far skipped.
-2. **Trigger a snapshot and boot into it.** From the tray: *Create
+Roughly in priority order — each step assumes the one before it actually
+worked, so confirm before moving on rather than batching them:
+
+1. **Verify the build pipeline actually works from clean.** Delete (or
+   rename aside) `local-repo/` and the `archiso-image`/`aur-builder`
+   podman images if they already exist locally, then follow `BUILD.md`
+   exactly: `./build-local-repo.sh` then `./build.sh`. If it fails, the
+   error will point at which reconstructed piece (a `Containerfile`, the
+   `repo-add` step, the path derivation) is still wrong — fix that one
+   piece and rerun, don't restart the whole reconstruction from scratch.
+2. **Watch the Limine menu render, start to finish.** Fresh install
+   (Erase Disk, in the `homelab-os-test` VM), and this time actually sit
+   through the boot menu before logging in — the one visual check every
+   round so far skipped.
+3. **Trigger a snapshot and boot into it.** From the tray: *Create
    Snapshot Now*, then confirm the Limine menu grows a matching entry
    and it actually boots. Verify with `btrfs subvolume list /`.
-3. **Run six update cycles to test retention.** Confirm the oldest
+4. **Run six update cycles to test retention.** Confirm the oldest
    snapshot — subvolume, ESP kernel copy, and Limine entry — is evicted
    cleanly on the sixth.
-4. **Give the test VM a clean disk.** Clears the accumulated NVRAM
+5. **Give the test VM a clean disk.** Clears the accumulated NVRAM
    boot-entry cruft so future fallback-path tests aren't racing against
    stale entries again.
 
@@ -165,16 +241,24 @@ the real target during cleanup.
 
 | | Path |
 |---|---|
+| **start here** | `BUILD.md` — full build pipeline, read before touching `build.sh` |
+| **start here** | `README.md` — architecture, install flow, repo layout |
 | new | `archiso/airootfs/etc/calamares/modules/partition.conf` |
 | new | `archiso/airootfs/etc/calamares/modules/mount.conf` |
 | new | `archiso/airootfs/usr/local/bin/holtos-btrfs-snapshot` |
 | new | `archiso/airootfs/usr/local/bin/holtos-snapshot-now` |
+| new | `containers/archiso-image.Containerfile` |
+| new | `containers/aur-builder.Containerfile` |
+| new | `build-local-repo.sh` |
 | fix | `archiso/airootfs/usr/local/bin/homelab-limine-install.sh` |
 | fix | `archiso/airootfs/usr/local/bin/homelab-cleanup-live.sh` |
 | fix | `archiso/airootfs/usr/local/bin/holtos-update-apply` |
 | fix | `archiso/airootfs/usr/local/bin/holtos-update-check` |
 | fix | `archiso/airootfs/usr/local/bin/holtos-tray` |
+| fix | `build.sh` (WSL path derivation) |
+| fix | `build-aur-packages.sh` (added calamares + repo-add) |
 | log | `BRANDING-STATUS.md`, `CHANGELOG.md` |
 
 ---
-Full styled version: https://claude.ai/code/artifact/224f740f-629d-43fc-a927-c155a6ce1c4c
+Full styled version (may be stale after this update — this file is the
+source of truth going forward): https://claude.ai/code/artifact/224f740f-629d-43fc-a927-c155a6ce1c4c
