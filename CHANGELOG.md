@@ -5,6 +5,21 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+- Branding audit (every asset referenced by branding.desc, the
+  look-and-feel package, SDDM, Plymouth, Konsole, os-release, the
+  `.desktop` launchers, the updater scripts, and both boot menus was
+  checked to exist and be a valid image/config): one gap found.
+  `archiso/syslinux/splash.png` — the BIOS boot menu background — was
+  still upstream releng's stock Arch Linux artwork under the HoltOS
+  `MENU TITLE`. Replaced with a HoltOS splash built from the desktop
+  wallpaper, letterboxed onto the brand background to fit syslinux's
+  640x480 frame. The UEFI menu (systemd-boot) is text-only and was
+  already branded.
+- `build-local-repo.sh` exported `MSYS_NO_PATHCONV=1` only *after* its
+  `podman build` call, so Git Bash rewrote the `/mnt/c/...` Containerfile
+  and context paths into Windows paths before `wsl.exe` saw them. Moved
+  the export ahead of the first `wsl` call; BUILD.md's manual
+  `archiso-image` build command gained the same prefix.
 - **Two more real bugs found in the same live-testing round**, both
   confirmed and fixed:
   - `holtos-tray` segfaulted every time — on autostart AND on a manual
