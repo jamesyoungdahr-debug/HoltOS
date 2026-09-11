@@ -1,0 +1,8 @@
+# Everything in this repo is consumed by Linux (bash, mkarchiso, Calamares,
+# systemd, podman) - CRLF line endings break `set -euo pipefail`, shebangs,
+# and unit files outright. Force LF on checkout regardless of the local
+# core.autocrlf setting (Git for Windows defaults it to true).
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ico binary

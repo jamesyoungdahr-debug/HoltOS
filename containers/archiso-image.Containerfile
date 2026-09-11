@@ -16,4 +16,12 @@
 #   podman build -t archiso-image -f containers/archiso-image.Containerfile .
 FROM docker.io/library/archlinux:latest
 
+# The archlinux base image ships a populated keyring but no local master
+# key, so the archlinux-keyring package's own upgrade hook fails with
+# "There is no secret key available to sign with" (seen live, first
+# clean-state build of this file) and any packager keys added since the
+# base image was cut never get locally signed -- pacman then rejects
+# packages signed by them. Initialize the keyring properly first.
+RUN pacman-key --init && pacman-key --populate archlinux
+
 RUN pacman -Syu --noconfirm --needed archiso
