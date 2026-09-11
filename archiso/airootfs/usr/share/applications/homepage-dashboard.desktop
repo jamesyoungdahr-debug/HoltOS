@@ -1,8 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=Homepage Dashboard
-Comment=HoltOS dashboard
-Exec=falkon http://localhost:3000
-Icon=holtos-dashboard
-Categories=Network;
-Terminal=false

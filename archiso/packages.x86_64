@@ -52,18 +52,14 @@ dolphin
 plasma-nm
 ark
 print-manager
-# Needed so the app-menu launchers (Sonarr, Radarr, etc. — see
-# usr/share/applications/) have something to actually open; nothing else in
-# this package list provides a browser.
+# The Den's own web UI (the-den.desktop opens http://127.0.0.1:8686) needs a
+# browser; nothing else in this package list provides one.
 falkon
 
 # Calamares installer (AUR, via the local repo). polkit provides pkexec,
 # which the installer's desktop launcher uses to gain root.
 calamares
 polkit
-
-# Podman, for the Quadlets that make up the actual homelab-os stack
-podman
 
 # HoltOS updater (holtos-tray / holtos-update*): git for `ls-remote` tag
 # lookups (metadata only, no clone), curl to download the release tarball

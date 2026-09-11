@@ -1,8 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=Jellyseerr
-Comment=Media requests
-Exec=falkon http://localhost:5055
-Icon=holtos-jellyseerr
-Categories=Network;
-Terminal=false

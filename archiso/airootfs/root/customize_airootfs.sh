@@ -22,7 +22,6 @@ systemctl mask systemd-firstboot.service
 
 systemctl enable NetworkManager.service
 systemctl enable sddm.service
-systemctl enable podman.socket
 
 # systemd only honors real symlinks in *.wants/ directories. This profile
 # used to ship plain FILES there (copies of the units — git on Windows
@@ -33,7 +32,7 @@ systemctl enable podman.socket
 # `systemctl list-dependencies multi-user.target` didn't list them.
 # Enabling here creates proper symlinks at image-build time instead.
 systemctl enable choose-mirror.service livecd-alsa-unmuter.service
-systemctl enable holtos-first-boot-apps.service homelab-sync-arr-keys.service
+systemctl enable holtos-first-boot-apps.service
 systemctl enable holtos-pacman-keyring-init.service
 
 # A non-root live user, auto-logged into Plasma — the standard pattern for

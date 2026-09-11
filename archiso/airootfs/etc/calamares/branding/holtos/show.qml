@@ -38,7 +38,7 @@ Presentation {
             width: parent.width * 0.8
             wrapMode: Text.WordWrap
             horizontalAlignment: Text.AlignHCenter
-            text: "HoltOS ships Authentik SSO, Sonarr, Radarr, Prowlarr, Jellyseerr, qBittorrent, and Plex, pre-wired as Podman Quadlets."
+            text: "HoltOS ships The Den — your movie and TV library manager — and its native desktop app, ready on first boot."
             color: presentation.holtInk
             font.pointSize: 16
         }

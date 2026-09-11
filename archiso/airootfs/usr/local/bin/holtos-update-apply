@@ -2,13 +2,14 @@
 # Applies updates for the specific items named on argv, run as root (the
 # tray's holtos-update-picker launches this via a single pkexec call so
 # picking several items only prompts for a password once). Each arg is one
-# of: a podman service name matching a .container unit under
-# /usr/share/containers/systemd/, "authentik" (server+worker together),
-# "config" (Podman Quadlet units + homelab-*.sh scripts), "the-den" /
+# of: "config" (the homelab-*.sh install/boot scripts), "the-den" /
 # "the-den-client" (companion apps, separately-maintained repos — see
 # below), "rollback" (re-applies the config release before the
 # currently-deployed one), or "system" (plain `pacman -Syu`, for the
 # kernel/OS packages no git repo has anything to do with).
+#
+# (The per-service `podman pull` items and the Authentik pair are gone
+# along with the container stack itself — 2026-09-11, see PLAN.md.)
 #
 # config/the-den/the-den-client are all gated on the latest *tagged*
 # release of their own repo, downloaded as a GitHub release tarball (no
@@ -79,21 +80,6 @@ download_release() {
     rm -f "$tmp_tar"
 }
 
-update_service() {
-    local name="$1" unit image
-    unit="/usr/share/containers/systemd/${name}.container"
-    if [ ! -f "$unit" ]; then
-        echo "Unknown service: $name" >&2
-        return 1
-    fi
-    image="$(grep -E '^Image=' "$unit" | head -1 | cut -d= -f2-)"
-    echo "==> Pulling $image..."
-    podman pull "$image"
-    echo "==> Restarting $name..."
-    systemctl restart "$name"
-    log_history service "$name" "$image"
-}
-
 # update_config [target_tag] — with no argument, updates to the latest
 # tagged release found on the remote. With an argument, updates to exactly
 # that tag (used by rollback_config).
@@ -120,11 +106,6 @@ update_config() {
     echo "==> Downloading $latest_tag..."
     src_dir="$(mktemp -d)"
     download_release "$repo" "$latest_tag" "$src_dir"
-
-    echo "==> Syncing Podman Quadlet units..."
-    rsync -a --delete \
-        "$src_dir/archiso/airootfs/usr/share/containers/systemd/" \
-        /usr/share/containers/systemd/
 
     echo "==> Syncing homelab-*.sh scripts..."
     cp "$src_dir"/archiso/airootfs/usr/local/bin/homelab-*.sh /usr/local/bin/
@@ -190,7 +171,7 @@ update_the_den() {
         [ -f /etc/the-den/the-den.env ] || \
             install -Dm640 "$src_dir/deploy/the-den.env.example" /etc/the-den/the-den.env
         install -Dm644 "$src_dir/deploy/the-den.service" /usr/lib/systemd/system/the-den.service
-        cp /usr/share/icons/hicolor/scalable/apps/holtos-dashboard.svg \
+        cp /usr/share/icons/hicolor/scalable/apps/holtos-logo.svg \
            /usr/share/icons/hicolor/scalable/apps/the-den.svg 2>/dev/null || true
         cat > /usr/share/applications/the-den.desktop <<DESKTOP
 [Desktop Entry]
@@ -300,7 +281,7 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 if [ "$#" -eq 0 ]; then
-    echo "Usage: holtos-update-apply <service|authentik|config|the-den|the-den-client|rollback|system> ..." >&2
+    echo "Usage: holtos-update-apply <config|the-den|the-den-client|rollback|system> ..." >&2
     exit 1
 fi
 
@@ -316,11 +297,7 @@ for item in "$@"; do
         system) update_system || failed+=("$item") ;;
         the-den) update_the_den || failed+=("$item") ;;
         the-den-client) update_the_den_client || failed+=("$item") ;;
-        authentik)
-            update_service authentik-server || failed+=("authentik-server")
-            update_service authentik-worker || failed+=("authentik-worker")
-            ;;
-        *) update_service "$item" || failed+=("$item") ;;
+        *) echo "Unknown item: $item" >&2; failed+=("$item") ;;
     esac
 done
 

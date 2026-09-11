@@ -1,8 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=Radarr
-Comment=Movie management
-Exec=falkon http://localhost:7878
-Icon=holtos-radarr
-Categories=Network;
-Terminal=false

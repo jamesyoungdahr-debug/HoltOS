@@ -1,7 +1,7 @@
 #!/bin/bash
 # Re-applies the config release before the currently-deployed one (see
 # holtos-update-apply's rollback_config). Confirms first — this rewrites
-# Quadlet units and scripts back to an older version.
+# homelab-*.sh scripts back to an older version.
 ICON=/usr/share/icons/hicolor/scalable/apps/holtos-logo.svg
 
 yad --question --title="HoltOS Updater" --image="$ICON" --window-icon="$ICON" \

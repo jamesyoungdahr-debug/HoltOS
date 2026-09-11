@@ -1,8 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=Authentik
-Comment=SSO admin
-Exec=falkon http://localhost:9000
-Icon=holtos-authentik
-Categories=Network;
-Terminal=false
