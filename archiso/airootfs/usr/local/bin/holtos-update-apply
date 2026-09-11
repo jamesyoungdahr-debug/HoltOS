@@ -322,7 +322,7 @@ DROPIN
         echo "==> Waiting for The Den to come up..."
         local i up=0
         for i in $(seq 1 30); do
-            if systemctl is-active --quiet the-den && curl -fsS -o /dev/null --max-time 2 http://127.0.0.1:8686/; then
+            if systemctl is-active --quiet the-den && curl -fs -o /dev/null --max-time 2 http://127.0.0.1:8686/ 2>/dev/null; then
                 up=1; break
             fi
             if systemctl is-failed --quiet the-den; then break; fi
