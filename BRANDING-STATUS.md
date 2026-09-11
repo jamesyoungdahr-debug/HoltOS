@@ -3,6 +3,31 @@
 Working log for the "brand Arch into HoltOS" effort. Updated as each step
 lands. See `CHANGELOG.md` for the user-facing version of this same work.
 
+## HoltOS Glass (from HoltOS-Glass-Design-Handoff.md) — built 2026-09-11, NOT yet seen on screen
+
+Everything in this section is implemented and committed but has not been
+looked at on a real boot yet. Update each line to "confirmed on screen"
+or a bug as it is checked, in boot order:
+
+- Limine: pool-rings wallpaper (was corner otter) — not yet seen.
+- Plymouth: ring draws over 1.6 s then holds, ambient glow, wordmark — not yet seen.
+- SDDM: custom `holtos` QML theme (glass card, MultiEffect blur, opaque
+  twin under software rendering). Highest risk: a QML error here gives a
+  blank greeter; fallback is `Current=breeze` in `etc/sddm.conf.d/holtos.conf`
+  over SSH — not yet seen.
+- KSplash `org.holtos.desktop`: otter + drawn ring + lockup — not yet seen.
+- Plasma: `HoltOS.colors`, Nunito/JetBrains Mono fonts, KWin Blur +
+  Background Contrast, translucent default panel (layout script
+  `panel.opacity = "translucent"` — unverified API), pool-rings wallpaper,
+  Konsole/GTK tokens — not yet seen.
+- Installer: Glass QSS, mono step bar, Nunito nav, deep slideshow with
+  drawn dots; the two old cosmetic bugs (partition-bar labels,
+  slideshow white frame) should be gone — not yet seen.
+- Updater copy ("Everything's fine.") — not yet seen.
+
+Contrast to check per §7 of the brief: ink-55 (#8C8C8C) step names on
+`#171423`; ink at 85% on deep; error amber on the glass card.
+
 ## 2026-09-11 — first full clean-machine build + two fresh installs
 
 Everything below this heading that was marked "not yet tested" has now
