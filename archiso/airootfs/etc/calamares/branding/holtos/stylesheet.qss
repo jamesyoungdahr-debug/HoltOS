@@ -1,137 +1,171 @@
-/* HoltOS installer content-area theme — the page background behind
-   Welcome/Location/Keyboard/Partitions/Users/Summary/Install/Finish
-   (everything except our own top/bottom bars, which are QML rendered
-   via a QQuickWidget and styled separately through branding.desc's
-   style: keys — this stylesheet doesn't reach into QML content).
-   Auto-loaded by Calamares because it sits next to branding.desc, no
-   config entry needed.
+/* HoltOS installer content-area theme — HoltOS Glass, opaque twins.
+   Qt Widgets QSS cannot blur, so the installer uses the opaque versions
+   of the Glass surfaces: ground holt-deep #0D0B12, inputs/cards on
+   holt-raised #1D1927 with a hairline border and radius 10, ink text,
+   exactly one purple action per screen (the Next button in the QML top
+   bar — every QPushButton inside a page is therefore a quiet, hairline
+   secondary button). Type is Nunito (ttf-nunito) with JetBrains Mono for
+   the step names in calamares-sidebar.qml.
 
    Adapted from a real, shipped example (SalientOS's Calamares branding)
-   rather than guessed from scratch — notably, that file leaves #mainApp
-   (the top-level window id) empty and does all the actual work through
-   the generic QWidget selector, since individual page widgets don't
-   have their own dedicated ids to target directly. Same approach here,
-   with our own brand tokens (holt-deep/holt-surface/holt-current)
-   instead of copying their colors.
+   rather than guessed: individual page widgets don't have ids to target,
+   so the generic QWidget selector does the base work. Auto-loaded by
+   Calamares because it sits next to branding.desc.
 */
 
 QWidget {
-    color: #F4EBFF;
+    color: rgba(255, 255, 255, 0.85);
     background-color: #0D0B12;
+    font-family: "Nunito";
 }
 
-QLineEdit, QPlainTextEdit, QTextEdit, QSpinBox {
-    background-color: #171423;
-    color: #FFFFFF;
-    border: 1px solid #2a2438;
-    border-radius: 4px;
-    padding: 4px 8px;
-    selection-background-color: #B14DFF;
-    selection-color: #FFFFFF;
-}
-
-QComboBox {
-    background-color: #171423;
-    color: #FFFFFF;
-    border: 1px solid #2a2438;
-    border-radius: 4px;
-    padding: 4px 8px;
-}
-
-QComboBox QAbstractItemView {
-    background-color: #171423;
-    color: #FFFFFF;
-    selection-background-color: #B14DFF;
-}
-
-QPushButton {
-    background-color: #B14DFF;
-    color: #FFFFFF;
-    border: none;
-    border-radius: 4px;
-    padding: 6px 16px;
-    min-width: 80px;
-}
-
-QPushButton:hover {
-    background-color: #c46eff;
-}
-
-QPushButton:pressed {
-    background-color: #8F2FE0;
-}
-
-QPushButton:disabled {
-    background-color: #2a2438;
-    color: #5a5568;
-}
-
-QProgressBar {
-    background-color: #171423;
-    color: #FFFFFF;
-    border: 1px solid #2a2438;
-    border-radius: 4px;
-    text-align: center;
-}
-
-QProgressBar::chunk {
-    background-color: #B14DFF;
-    border-radius: 4px;
-}
-
-QCheckBox, QRadioButton, QLabel {
-    color: #F4EBFF;
+QLabel {
+    color: rgba(255, 255, 255, 0.85);
     background-color: transparent;
 }
 
-QScrollBar:vertical {
-    background: #0D0B12;
-    width: 12px;
-    border: none;
-}
-
-QScrollBar::handle:vertical {
-    background: #2a2438;
-    border-radius: 4px;
-    min-height: 20px;
-}
-
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-    height: 0px;
-    border: none;
-    background: none;
-}
-
-QListView, QTreeView {
-    background-color: #171423;
-    color: #F4EBFF;
-    alternate-background-color: #1c1830;
-    border: 1px solid #2a2438;
-}
-
-QListView::item:selected, QTreeView::item:selected {
-    background-color: #B14DFF;
+QLineEdit, QPlainTextEdit, QTextEdit, QSpinBox {
+    background-color: #1D1927;
     color: #FFFFFF;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    padding: 6px 12px;
+    selection-background-color: #B14DFF;
+    selection-color: #0D0B12;
+}
+QLineEdit:focus, QPlainTextEdit:focus, QTextEdit:focus, QSpinBox:focus {
+    border-color: #B14DFF;
 }
 
-/* Checkbox / radio indicators. The generic QWidget rule above paints the
-   indicator box the same color as the page, so a ticked and an unticked
-   box looked identical — bit us live (2026-09-11): the Finished page's
-   "Restart now" state was unreadable, as were "Require strong passwords"
-   and "Use the same password for the administrator account" on Users.
-   Draw them explicitly: dark box with a brand-purple border, filled solid
-   purple when checked. */
+QComboBox {
+    background-color: #1D1927;
+    color: #FFFFFF;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    padding: 6px 12px;
+}
+QComboBox:focus { border-color: #B14DFF; }
+QComboBox QAbstractItemView {
+    background-color: #1D1927;
+    color: #FFFFFF;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    selection-background-color: #B14DFF;
+    selection-color: #0D0B12;
+}
+
+/* Quiet secondary buttons: the page's one purple action lives in the QML
+   top bar (Next), so nothing in the content area shouts. */
+QPushButton {
+    background-color: transparent;
+    color: #FFFFFF;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    padding: 6px 16px;
+    min-width: 80px;
+    font-weight: 700;
+}
+QPushButton:hover { background-color: #1D1927; border-color: rgba(255, 255, 255, 0.28); }
+QPushButton:pressed { background-color: #171423; }
+QPushButton:disabled { color: rgba(255, 255, 255, 0.28); border-color: rgba(255, 255, 255, 0.09); }
+
+/* Progress draws: a thin 6px bar that fills, no text on it. */
+QProgressBar {
+    background-color: #1D1927;
+    color: transparent;
+    border: none;
+    border-radius: 3px;
+    max-height: 6px;
+    text-align: center;
+}
+QProgressBar::chunk {
+    background-color: #B14DFF;
+    border-radius: 3px;
+}
+
+QCheckBox, QRadioButton {
+    color: rgba(255, 255, 255, 0.85);
+    background-color: transparent;
+    spacing: 8px;
+}
 QCheckBox::indicator, QRadioButton::indicator {
     width: 16px;
     height: 16px;
-    border: 1px solid #B14DFF;
-    background-color: #171423;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    background-color: #1D1927;
 }
-QCheckBox::indicator { border-radius: 3px; }
+QCheckBox::indicator { border-radius: 4px; }
 QRadioButton::indicator { border-radius: 8px; }
+QCheckBox::indicator:hover, QRadioButton::indicator:hover { border-color: #B14DFF; }
 QCheckBox::indicator:checked, QRadioButton::indicator:checked {
     background-color: #B14DFF;
+    border-color: #B14DFF;
 }
 QCheckBox::indicator:disabled, QRadioButton::indicator:disabled {
-    border-color: #2a2438;
+    border-color: rgba(255, 255, 255, 0.09);
 }
+
+QScrollBar:vertical { background: transparent; width: 10px; border: none; margin: 0; }
+QScrollBar::handle:vertical { background: rgba(255, 255, 255, 0.15); border-radius: 5px; min-height: 24px; }
+QScrollBar::handle:vertical:hover { background: rgba(255, 255, 255, 0.28); }
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; border: none; background: none; }
+QScrollBar:horizontal { background: transparent; height: 10px; border: none; margin: 0; }
+QScrollBar::handle:horizontal { background: rgba(255, 255, 255, 0.15); border-radius: 5px; min-width: 24px; }
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0px; border: none; background: none; }
+
+QListView, QTreeView, QTableView {
+    background-color: #171423;
+    color: #FFFFFF;
+    alternate-background-color: #1D1927;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 10px;
+}
+QListView::item:selected, QTreeView::item:selected, QTableView::item:selected {
+    background-color: #B14DFF;
+    color: #0D0B12;
+}
+QHeaderView::section {
+    background-color: #171423;
+    color: rgba(255, 255, 255, 0.55);
+    border: none;
+    padding: 4px 8px;
+}
+
+/* Partition page: the "Current:" / "After:" bar labels are painted by the
+   partition module's own views from the palette, so they ignored the
+   QWidget colour and rendered dark-on-dark (seen live 2026-09-11). Target
+   the views by class name. */
+PartitionLabelsView, PartitionBarsView {
+    color: #FFFFFF;
+    background-color: transparent;
+    border: none;
+}
+
+QToolTip {
+    background-color: #1D1927;
+    color: #FFFFFF;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    padding: 6px 10px;
+}
+
+QGroupBox {
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 12px;
+    margin-top: 12px;
+    padding-top: 8px;
+}
+QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 12px;
+    padding: 0 6px;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+QTabWidget::pane { border: 1px solid rgba(255, 255, 255, 0.09); border-radius: 10px; }
+QTabBar::tab {
+    background: transparent;
+    color: rgba(255, 255, 255, 0.55);
+    padding: 6px 14px;
+    border-bottom: 2px solid transparent;
+}
+QTabBar::tab:selected { color: #FFFFFF; border-bottom-color: #B14DFF; }

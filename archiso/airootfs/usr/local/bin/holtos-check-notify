@@ -14,9 +14,9 @@ if out="$(/usr/local/bin/holtos-update-check)"; then
     tag="${out%% *}"
     notes="$(curl -fsSL "https://api.github.com/repos/$REPO/releases/tags/$tag" 2>/dev/null \
         | jq -r '.body // empty' 2>/dev/null | head -c 300)"
-    body="Right-click the HoltOS tray icon → Apply Update."
+    body="Right-click the HoltOS tray icon and choose Update to install it."
     [ -n "$notes" ] && body="$notes"$'\n\n'"$body"
     notify-send -i "$ICON" "HoltOS $tag available" "$body"
 elif [ "${1:-}" = "--verbose" ]; then
-    notify-send -i "$ICON" "HoltOS is up to date"
+    notify-send -i "$ICON" "Everything's fine." "HoltOS is up to date."
 fi

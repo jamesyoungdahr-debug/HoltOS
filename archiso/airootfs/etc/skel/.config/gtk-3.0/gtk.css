@@ -1,9 +1,17 @@
-/* Brand purple accent for GTK3 apps (yad, etc.) — overriding these two
-   semantic color variables is the same mechanism KDE's own GTK-sync tool
-   uses, so it cascades through selection highlights, default buttons, and
-   progress bars without having to target every widget by hand. */
+/* HoltOS Glass, opaque twin for GTK (GTK can't blur): brand tokens mapped
+   onto GTK's semantic colour names — the same mechanism KDE's own GTK-sync
+   uses, so it cascades through selection highlights, default buttons and
+   progress bars without targeting every widget by hand. */
+@define-color theme_bg_color #0D0B12;
+@define-color theme_base_color #171423;
+@define-color theme_fg_color #FFFFFF;
+@define-color theme_text_color #FFFFFF;
 @define-color theme_selected_bg_color #B14DFF;
-@define-color theme_selected_fg_color #FFFFFF;
+@define-color theme_selected_fg_color #0D0B12;
+@define-color borders rgba(255,255,255,0.09);
+@define-color warning_color #FFB84D;
+@define-color error_color #FFB84D;
+@define-color success_color #28E0C8;
 
 progressbar > trough > progress {
     background-color: #B14DFF;
@@ -11,5 +19,5 @@ progressbar > trough > progress {
 
 button.suggested-action {
     background-color: #B14DFF;
-    color: #FFFFFF;
+    color: #0D0B12;
 }

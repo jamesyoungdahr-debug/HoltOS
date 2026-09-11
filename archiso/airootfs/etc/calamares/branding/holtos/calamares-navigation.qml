@@ -47,6 +47,9 @@ Rectangle {
     readonly property color nextIdleColor: Branding.styleString( Branding.SidebarBackgroundCurrent )
     readonly property color nextHoverColor: "#c46eff"
 
+    // HoltOS Glass: hairline under the bar.
+    Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Qt.rgba(1, 1, 1, 0.09); z: 5 }
+
     RowLayout {
         anchors.fill: parent
         spacing: 1
@@ -68,7 +71,9 @@ Rectangle {
                     anchors.centerIn: parent
                     text: qsTr("Back")
                     color: !ViewManager.backEnabled ? navigationBar.disabledTextColor : Branding.styleString( Branding.SidebarText )
-                    font.pointSize: 9
+                    font.family: "Nunito"
+                    font.weight: Font.Bold
+                    font.pixelSize: 14
                 }
 
                 onClicked: { if ( ViewManager.backEnabled ) ViewManager.back(); }
@@ -114,7 +119,9 @@ Rectangle {
                     anchors.centerIn: parent
                     text: qsTr("Cancel")
                     color: !ViewManager.quitEnabled ? navigationBar.disabledTextColor : Branding.styleString( Branding.SidebarText )
-                    font.pointSize: 9
+                    font.family: "Nunito"
+                    font.weight: Font.Bold
+                    font.pixelSize: 14
                 }
 
                 onClicked: { if ( ViewManager.quitEnabled ) ViewManager.quit(); }
@@ -138,9 +145,10 @@ Rectangle {
                 Text {
                     anchors.centerIn: parent
                     text: nextArea.isLastPage ? qsTr("Done") : qsTr("Next")
-                    color: ( !nextArea.isLastPage && !ViewManager.nextEnabled ) ? navigationBar.disabledTextColor : Branding.styleString( Branding.SidebarTextCurrent )
-                    font.pointSize: 9
-                    font.bold: true
+                    color: ( !nextArea.isLastPage && !ViewManager.nextEnabled ) ? navigationBar.disabledTextColor : "#0D0B12"
+                    font.family: "Nunito"
+                    font.weight: Font.Bold
+                    font.pixelSize: 15
                 }
 
                 onClicked: {

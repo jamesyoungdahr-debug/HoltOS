@@ -1,10 +1,9 @@
-/* Horizontal step list along the bottom of the window, replacing
-   Calamares' default vertical left-side step list. Adapted from the
-   KaOS branding component's calamares-sidebar.qml (a real, shipped
-   reference for the "sidebar: qml,bottom" branding.desc option) —
-   simplified (no step-underline indicator image) and recolored to the
-   HoltOS palette via the branding.desc style: keys.
-*/
+/* Horizontal step list along the bottom of the window (branding.desc
+   "sidebar: qml,bottom"), adapted from KaOS's shipped calamares-sidebar.qml.
+   HoltOS Glass, opaque twin: holt-surface bar with a hairline top border,
+   step names as mono eyebrows (JetBrains Mono, uppercase, 2.2px tracking),
+   the current step in ink with a 2px purple bar and a 10% purple tint,
+   the rest at ink-55 (branding.desc SidebarText). */
 import io.calamares.ui 1.0
 import io.calamares.core 1.0
 
@@ -17,23 +16,36 @@ Rectangle {
     height: 48
     width: parent.width
 
+    Rectangle { anchors.top: parent.top; width: parent.width; height: 1; color: Qt.rgba(1, 1, 1, 0.09); z: 5 }
+
     RowLayout {
         anchors.fill: parent
-        spacing: 2
+        spacing: 0
 
         Repeater {
             model: ViewManager
             Rectangle {
+                readonly property bool isCurrent: index == ViewManager.currentStepIndex
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                color: Branding.styleString( index == ViewManager.currentStepIndex ? Branding.SidebarBackgroundCurrent : Branding.SidebarBackground )
+                color: isCurrent ? Qt.rgba(177 / 255, 77 / 255, 1, 0.10) : "transparent"
+
+                Rectangle {
+                    anchors.top: parent.top
+                    width: parent.width
+                    height: 2
+                    color: Branding.styleString( Branding.SidebarBackgroundCurrent )
+                    visible: isCurrent
+                }
 
                 Text {
                     anchors.centerIn: parent
-                    color: Branding.styleString( index == ViewManager.currentStepIndex ? Branding.SidebarTextCurrent : Branding.SidebarText )
-                    text: display
-                    font.pointSize: index == ViewManager.currentStepIndex ? 10 : 9
-                    font.bold: index == ViewManager.currentStepIndex
+                    color: isCurrent ? Branding.styleString( Branding.SidebarTextCurrent ) : Branding.styleString( Branding.SidebarText )
+                    text: display.toUpperCase()
+                    font.family: "JetBrains Mono"
+                    font.pixelSize: 11
+                    font.letterSpacing: 2.2
+                    font.weight: isCurrent ? Font.DemiBold : Font.Normal
                 }
             }
         }

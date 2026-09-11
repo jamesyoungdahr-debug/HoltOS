@@ -53,6 +53,6 @@ if [ "$status" -ne 0 ]; then
         --button="Close:0"
 else
     yad --image="$ICON" --title="HoltOS Updater" --window-icon="$ICON" \
-        --text="Update complete." --button="Close:0"
+        --text="Done. Everything's up to date." --button="Close:0"
 fi
 rm -f "$logfile"

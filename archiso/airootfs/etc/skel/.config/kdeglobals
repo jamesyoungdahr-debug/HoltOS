@@ -2,5 +2,13 @@
 LookAndFeelPackage=org.holtos.desktop
 
 [General]
-ColorScheme=BreezeDark
+ColorScheme=HoltOS
 AccentColor=177,77,255
+font=Nunito,10,-1,5,400,0,0,0,0,0
+menuFont=Nunito,10,-1,5,400,0,0,0,0,0
+toolBarFont=Nunito,10,-1,5,400,0,0,0,0,0
+smallestReadableFont=Nunito,8,-1,5,400,0,0,0,0,0
+fixed=JetBrains Mono,10,-1,5,400,0,0,0,0,0
+
+[WM]
+activeFont=Nunito,10,-1,5,700,0,0,0,0,0

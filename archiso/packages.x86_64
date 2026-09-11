@@ -46,6 +46,11 @@ limine-entry-tool
 
 # KDE Plasma desktop
 plasma-desktop
+# HoltOS Glass type: Nunito (display/body) + JetBrains Mono (eyebrows,
+# paths, numbers) — used by the installer QML/QSS, the SDDM theme, and the
+# Plasma defaults. Both are in extra.
+ttf-nunito
+ttf-jetbrains-mono
 sddm
 konsole
 dolphin

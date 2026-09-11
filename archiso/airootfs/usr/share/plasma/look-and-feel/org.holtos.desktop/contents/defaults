@@ -2,14 +2,37 @@
 widgetStyle=Breeze
 
 [kdeglobals][General]
-ColorScheme=BreezeDark
+ColorScheme=HoltOS
 AccentColor=177,77,255
+font=Nunito,10,-1,5,400,0,0,0,0,0
+menuFont=Nunito,10,-1,5,400,0,0,0,0,0
+toolBarFont=Nunito,10,-1,5,400,0,0,0,0,0
+smallestReadableFont=Nunito,8,-1,5,400,0,0,0,0,0
+fixed=JetBrains Mono,10,-1,5,400,0,0,0,0,0
 
 [kdeglobals][Icons]
 Theme=breeze-dark
+
+[plasmarc][Theme]
+name=default
 
 [Wallpaper]
 Image=HoltOS
 
 [kcminputrc][Mouse]
 cursorTheme=breeze_cursors
+
+[kwinrc][org.kde.kdecoration2]
+library=org.kde.breeze
+theme=Breeze
+
+# HoltOS Glass: the panel, Kickoff and other Plasma popups become glass
+# (translucent over the pool-rings wallpaper) only if KWin's Blur and
+# Background Contrast effects are on — with them off, "translucent" is
+# just see-through, which is worse than opaque.
+[kwinrc][Plugins]
+blurEnabled=true
+contrastEnabled=true
+
+[ksplashrc][KSplash]
+Theme=org.holtos.desktop

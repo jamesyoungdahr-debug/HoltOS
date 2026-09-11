@@ -1,10 +1,18 @@
-// HoltOS boot splash — script plugin (the "spinner" plugin this Plymouth
-// build ships isn't compiled with a spinner renderer at all; script is
-// the built-in plugin that actually exists, and lets us draw our own
-// brand colors/mark plus a Windows-style ring spinner instead).
+// HoltOS boot splash — Plymouth "script" plugin (this build ships no
+// "spinner" renderer). HoltOS Glass, principle 04: the ring under the
+// otter DRAWS over 1.6 s on the ease-out curve and then holds — it never
+// spins. Ground is holt-deep with the faint ambient purple glow; the only
+// text is the wordmark (the lockup PNG).
 
 Window.SetBackgroundTopColor(0.051, 0.043, 0.071);
 Window.SetBackgroundBottomColor(0.051, 0.043, 0.071);
+
+// Ambient glow, top-right — z below everything else.
+glow.image = Image("glow.png");
+glow.sprite = Sprite(glow.image);
+glow.sprite.SetPosition(Window.GetWidth() * 0.70 - glow.image.GetWidth() / 2,
+                        -Window.GetHeight() * 0.08 - glow.image.GetHeight() / 2, 100);
+glow.sprite.SetOpacity(0.9);
 
 logo.image = Image("watermark.png");
 logo.sprite = Sprite(logo.image);
@@ -12,30 +20,49 @@ logo.x = Window.GetWidth() / 2 - logo.image.GetWidth() / 2;
 logo.y = Window.GetHeight() / 2 - logo.image.GetHeight() / 2 - 60;
 logo.sprite.SetPosition(logo.x, logo.y, 10000);
 
-// Windows-11-style ring of dots below the mark: fixed positions, opacity
-// swept around the ring each frame so the "lit" dot appears to travel.
+// Ring of dots below the mark. Instead of sweeping a lit dot around
+// (a spinner), the dots light up in order as the ring "draws": progress
+// runs 0 → 1 over ~1.6 s with an ease-out curve, then stays complete.
 dot.image = Image("dot.png");
-dot.count = 8;
+dot.count = 12;
 dot.radius = 34;
 ring.center_x = Window.GetWidth() / 2;
 ring.center_y = logo.y + logo.image.GetHeight() + 90;
 
 for (i = 0; i < dot.count; i++) {
-    dots[i].angle = 2 * Math.Pi * i / dot.count;
+    dots[i].angle = 2 * Math.Pi * i / dot.count - Math.Pi / 2;
     dots[i].x = ring.center_x + dot.radius * Math.Cos(dots[i].angle) - dot.image.GetWidth() / 2;
     dots[i].y = ring.center_y + dot.radius * Math.Sin(dots[i].angle) - dot.image.GetHeight() / 2;
     dots[i].sprite = Sprite(dot.image);
     dots[i].sprite.SetPosition(dots[i].x, dots[i].y, 10000);
+    dots[i].sprite.SetOpacity(0.12);
 }
 
+// Wordmark, centred near the bottom.
+lockup.image = Image("lockup.png");
+lockup.sprite = Sprite(lockup.image);
+lockup.sprite.SetPosition(Window.GetWidth() / 2 - lockup.image.GetWidth() / 2,
+                          Window.GetHeight() - lockup.image.GetHeight() - 56, 10000);
+lockup.sprite.SetOpacity(0.85);
+
 global.t = 0;
+draw.frames = 80;   // refresh runs ~50/s → 1.6 s
 
 fun refresh_callback() {
     global.t++;
-    phase = global.t / 8;
+    p = global.t / draw.frames;
+    if (p > 1) p = 1;
+    // ease-out cubic
+    q = 1 - p;
+    eased = 1 - q * q * q;
+    lit = eased * dot.count;
     for (i = 0; i < dot.count; i++) {
-        lit = Math.Cos(dots[i].angle - phase);
-        opacity = 0.2 + 0.8 * Math.Max(0, lit);
+        if (i + 1 <= lit)
+            opacity = 1.0;
+        else if (i < lit)
+            opacity = 0.12 + 0.88 * (lit - i);
+        else
+            opacity = 0.12;
         dots[i].sprite.SetOpacity(opacity);
     }
 }

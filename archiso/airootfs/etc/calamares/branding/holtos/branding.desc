@@ -42,6 +42,6 @@ navigation: qml,top
 # ignored.
 style:
    SidebarBackground:        "#171423"
-   SidebarText:               "#FFFFFF"
+   SidebarText:               "#8C8C8C"
    SidebarBackgroundCurrent:  "#B14DFF"
    SidebarTextCurrent:        "#FFFFFF"
