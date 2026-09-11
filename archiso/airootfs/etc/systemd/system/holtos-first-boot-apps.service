@@ -3,6 +3,8 @@ Description=Install The Den / The Den Client on first boot, if a release exists
 After=network-online.target
 Wants=network-online.target
 ConditionPathExists=!/var/lib/holtos/first-boot-apps-done
+# Installed system only — never on the live medium (which has /run/archiso).
+ConditionPathExists=!/run/archiso
 
 [Service]
 Type=oneshot

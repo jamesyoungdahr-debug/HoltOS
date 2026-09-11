@@ -2,6 +2,8 @@
 Description=Sync Sonarr/Radarr/Prowlarr API keys into dashboard.env
 After=sonarr.service radarr.service prowlarr.service
 Wants=sonarr.service radarr.service prowlarr.service
+# Installed system only — never on the live medium (which has /run/archiso).
+ConditionPathExists=!/run/archiso
 
 [Service]
 Type=oneshot

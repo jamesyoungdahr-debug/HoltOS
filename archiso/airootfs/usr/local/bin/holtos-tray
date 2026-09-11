@@ -22,6 +22,7 @@
 # properly and works under both X11 and Wayland in a Plasma session.
 # PySide6 is already a dependency (for The Den Client), so this adds no
 # new packages.
+import os
 import subprocess
 import sys
 import threading
@@ -44,6 +45,14 @@ try:
 except Exception as exc:  # pragma: no cover - diagnostic path only
     log(f"holtos-tray: failed to import PySide6: {exc}")
     sys.exit(1)
+
+# The updater is for the INSTALLED system only. This autostart entry is
+# copied onto the live medium too (same airootfs), and there it would sit
+# in the live session's tray offering to update a read-only squashfs. The
+# live medium is the one environment where /run/archiso exists.
+if os.path.exists("/run/archiso"):
+    log("holtos-tray: live medium detected (/run/archiso), not starting")
+    sys.exit(0)
 
 ICON_PATH = "/usr/share/icons/hicolor/scalable/apps/holtos-logo.svg"
 CHECK_INTERVAL_SECONDS = 21600  # 6h, same cadence as the old version
