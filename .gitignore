@@ -13,3 +13,7 @@ secrets/
 **/*.env
 !**/*.env.example
 archiso/airootfs/var/lib/holtos/
+
+# The Den / The Den Client release trees fetched by build-vendor-apps.sh for
+# every build — regenerable, and installed into the image at build time.
+archiso/airootfs/opt/holtos-vendor/

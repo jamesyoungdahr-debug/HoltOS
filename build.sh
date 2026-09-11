@@ -21,6 +21,11 @@ fi
 mkdir -p archiso/airootfs/var/lib/holtos
 git rev-parse HEAD > archiso/airootfs/var/lib/holtos/deployed-commit
 
+# Ship The Den + The Den Client inside the image (installed at build time by
+# customize_airootfs.sh) — see build-vendor-apps.sh. A build without them is
+# not a HoltOS build, so this is fatal, not best-effort.
+./build-vendor-apps.sh
+
 # Git Bash's own /c/... paths and WSL2's /mnt/c/... paths use the same
 # layout under the drive letter, just a different mount prefix — real bug
 # hit trying to run this on a machine other than the one it was first

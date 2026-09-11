@@ -23,17 +23,20 @@ systemctl mask systemd-firstboot.service
 systemctl enable NetworkManager.service
 systemctl enable sddm.service
 
-# systemd only honors real symlinks in *.wants/ directories. This profile
-# used to ship plain FILES there (copies of the units — git on Windows
-# can't store symlinks, so releng-reference's symlinks flattened into
-# copies on the way in), and systemd silently ignored every one of them:
-# confirmed live 2026-09-11, holtos-first-boot-apps and
-# homelab-sync-arr-keys had never run on the installed system and
-# `systemctl list-dependencies multi-user.target` didn't list them.
+# systemd only honors real symlinks in *.wants/ directories, and git on
+# Windows can't store symlinks (the releng wants/ entries flattened into
+# plain files that systemd silently ignored — confirmed live 2026-09-11).
 # Enabling here creates proper symlinks at image-build time instead.
 systemctl enable choose-mirror.service livecd-alsa-unmuter.service
-systemctl enable holtos-first-boot-apps.service
 systemctl enable holtos-pacman-keyring-init.service
+
+# Install The Den + The Den Client from the release trees build-vendor-apps.sh
+# staged under /opt/holtos-vendor (see that script). Runs the same install
+# code the tray updater uses, so a later "Update The Den" is an in-place
+# update of exactly this layout. Fatal if the trees are missing: a HoltOS
+# image without The Den is a broken build, not a warning.
+[ -f /opt/holtos-vendor/manifest ] || { echo "customize_airootfs: /opt/holtos-vendor/manifest missing — run build-vendor-apps.sh (build.sh does)" >&2; exit 1; }
+bash /usr/local/bin/holtos-update-apply vendor
 
 # A non-root live user, auto-logged into Plasma — the standard pattern for
 # Calamares-based live distros (CachyOS, EndeavourOS, Manjaro all do this),

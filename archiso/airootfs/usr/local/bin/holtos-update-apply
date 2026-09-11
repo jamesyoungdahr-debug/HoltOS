@@ -143,11 +143,16 @@ rollback_config() {
 # needing a full build toolchain on the installed system for what's really
 # just "copy files + venv + pip install", which the PKGBUILD's package()
 # does too.
+# booted — true when a real systemd is running (sd_booted(3) semantics).
+# False inside the image-build chroot (customize_airootfs.sh → `vendor`
+# below), where `systemctl enable` still works (it just writes symlinks)
+# but daemon-reload / --now / restart cannot.
+booted() { [ -d /run/systemd/system ]; }
+
 update_the_den() {
     local target_tag="${1:-}"
     local repo="jamesyoungdahr-debug/the-den"
-    local app_dir="/opt/the-den"
-    local new_commit latest_tag src_dir first_install=0
+    local new_commit latest_tag src_dir
 
     echo "==> Looking up the latest The Den release..."
     if ! IFS=$'\t' read -r new_commit latest_tag < <(resolve_release "$repo" "$target_tag"); then
@@ -155,11 +160,22 @@ update_the_den() {
         return 1
     fi
 
-    [ -d "$app_dir" ] || first_install=1
-
     echo "==> Downloading The Den $latest_tag..."
     src_dir="$(mktemp -d)"
     download_release "$repo" "$latest_tag" "$src_dir"
+    install_the_den "$src_dir" "$latest_tag" "$new_commit"
+    rm -rf "$src_dir"
+}
+
+# install_the_den <src_dir> <tag> <commit> — installs (first time) or
+# updates (in place) The Den from an already-extracted release tree. Shared
+# by update_the_den (tray updater, downloads first) and `vendor` (image
+# build, uses the tree build-vendor-apps.sh staged under /opt/holtos-vendor).
+install_the_den() {
+    local src_dir="$1" latest_tag="$2" new_commit="$3"
+    local app_dir="/opt/the-den"
+    local first_install=0
+    [ -d "$app_dir" ] || first_install=1
 
     if [ "$first_install" -eq 1 ]; then
         echo "==> Setting up The Den for the first time..."
@@ -182,6 +198,14 @@ Exec=xdg-open http://127.0.0.1:8686
 Icon=the-den
 Categories=AudioVideo;Video;
 DESKTOP
+        # The same airootfs is the live medium too — keep the service
+        # off there (same /run/archiso gate as the tray and the
+        # first-boot units; the live session is a read-only squashfs).
+        mkdir -p /etc/systemd/system/the-den.service.d
+        cat > /etc/systemd/system/the-den.service.d/holtos-live.conf <<DROPIN
+[Unit]
+ConditionPathExists=!/run/archiso
+DROPIN
     fi
 
     echo "==> Syncing application files..."
@@ -189,7 +213,6 @@ DESKTOP
     rsync -a --delete "$src_dir/migrations/" "$app_dir/migrations/"
     cp "$src_dir/requirements.txt" "$app_dir/requirements.txt"
     cp "$src_dir/alembic.ini" "$app_dir/alembic.ini"
-    rm -rf "$src_dir"
 
     if [ "$first_install" -eq 1 ]; then
         echo "==> Creating Python virtual environment..."
@@ -202,17 +225,26 @@ DESKTOP
     ( cd "$app_dir" && DATABASE_URL="sqlite:////var/lib/the-den/den.db" \
         runuser -u the-den -- "$app_dir/.venv/bin/python" -m alembic upgrade head )
 
-    systemctl daemon-reload
+    if booted; then
+        systemctl daemon-reload
+        if [ "$first_install" -eq 1 ]; then
+            echo "==> Enabling and starting The Den..."
+            systemctl enable --now the-den
+        else
+            echo "==> Restarting The Den..."
+            systemctl restart the-den
+        fi
+    else
+        # Image build: enable only (symlink); it starts on the installed
+        # system's first boot.
+        echo "==> Enabling The Den (image build — starts on first boot)..."
+        systemctl enable the-den
+    fi
     if [ "$first_install" -eq 1 ]; then
-        echo "==> Enabling and starting The Den..."
-        systemctl enable --now the-den
         echo "==> Running with placeholder settings from the-den.env.example"
         echo "    (empty TMDB_API_KEY, default qBittorrent credentials) —"
         echo "    edit /etc/the-den/the-den.env and restart it once you have"
         echo "    real values: systemctl restart the-den"
-    else
-        echo "==> Restarting The Den..."
-        systemctl restart the-den
     fi
 
     log_history the-den "$latest_tag" "$new_commit"
@@ -232,8 +264,7 @@ DESKTOP
 update_the_den_client() {
     local target_tag="${1:-}"
     local repo="jamesyoungdahr-debug/the-den-client"
-    local app_dir="/opt/the-den-client"
-    local new_commit latest_tag src_dir first_install=0
+    local new_commit latest_tag src_dir
 
     echo "==> Looking up the latest The Den Client release..."
     if ! IFS=$'\t' read -r new_commit latest_tag < <(resolve_release "$repo" "$target_tag"); then
@@ -241,11 +272,20 @@ update_the_den_client() {
         return 1
     fi
 
-    [ -d "$app_dir" ] || first_install=1
-
     echo "==> Downloading The Den Client $latest_tag..."
     src_dir="$(mktemp -d)"
     download_release "$repo" "$latest_tag" "$src_dir"
+    install_the_den_client "$src_dir" "$latest_tag" "$new_commit"
+    rm -rf "$src_dir"
+}
+
+# install_the_den_client <src_dir> <tag> <commit> — same split as
+# install_the_den: shared by the tray updater and the image-build `vendor`.
+install_the_den_client() {
+    local src_dir="$1" latest_tag="$2" new_commit="$3"
+    local app_dir="/opt/the-den-client"
+    local first_install=0
+    [ -d "$app_dir" ] || first_install=1
 
     echo "==> Syncing application files..."
     install -dm755 "$app_dir"
@@ -258,10 +298,32 @@ update_the_den_client() {
         install -Dm644 "$src_dir/assets/logo.svg" /usr/share/icons/hicolor/scalable/apps/the-den-client.svg
     fi
 
-    rm -rf "$src_dir"
-
     log_history the-den-client "$latest_tag" "$new_commit"
     echo "==> The Den Client updated to $latest_tag"
+}
+
+# vendor — image-build entry point (customize_airootfs.sh, inside the
+# mkarchiso chroot): install both apps from the release trees that
+# build-vendor-apps.sh staged under /opt/holtos-vendor, record them in
+# history.log, and remove the staging trees so they don't ship in the ISO.
+vendor_install() {
+    local manifest=/opt/holtos-vendor/manifest line app tag commit lines
+    [ -f "$manifest" ] || { echo "vendor: $manifest missing (run build-vendor-apps.sh)" >&2; return 1; }
+    # Read the whole manifest up front: the installers below run pip,
+    # alembic, rsync... any of which could otherwise swallow the loop's
+    # stdin and silently skip the next line.
+    mapfile -t lines < "$manifest"
+    for line in "${lines[@]}"; do
+        IFS=$'\t' read -r app tag commit <<< "$line"
+        [ -n "$app" ] || continue
+        echo "==> Vendoring $app $tag..."
+        case "$app" in
+            the-den)        install_the_den        "/opt/holtos-vendor/$app" "$tag" "$commit" ;;
+            the-den-client) install_the_den_client "/opt/holtos-vendor/$app" "$tag" "$commit" ;;
+            *) echo "vendor: unknown app '$app' in manifest" >&2; return 1 ;;
+        esac
+    done
+    rm -rf /opt/holtos-vendor
 }
 
 update_system() {
@@ -281,7 +343,7 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 if [ "$#" -eq 0 ]; then
-    echo "Usage: holtos-update-apply <config|the-den|the-den-client|rollback|system> ..." >&2
+    echo "Usage: holtos-update-apply <config|the-den|the-den-client|rollback|system|vendor> ..." >&2
     exit 1
 fi
 
@@ -297,6 +359,7 @@ for item in "$@"; do
         system) update_system || failed+=("$item") ;;
         the-den) update_the_den || failed+=("$item") ;;
         the-den-client) update_the_den_client || failed+=("$item") ;;
+        vendor) vendor_install || failed+=("$item") ;;
         *) echo "Unknown item: $item" >&2; failed+=("$item") ;;
     esac
 done

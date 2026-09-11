@@ -76,13 +76,13 @@ yad
 libnotify
 breeze-gtk
 
-# The Den (jamesyoungdahr-debug/the-den) — a companion movie/TV library
-# manager, and The Den Client (jamesyoungdahr-debug/the-den-client), its
-# native KDE desktop app. Both are separately-maintained repos pulled in
-# and updated via holtos-update-apply (update_the_den/update_the_den_client)
-# rather than baked into this image — neither has a tagged release yet, so
-# there's nothing to vendor at build time. python: the-den's own venv +
-# alembic migrations. pyside6/kirigami/qqc2-desktop-style: the client's
+# The Den (jamesyoungdahr-debug/the-den) — the movie/TV library manager
+# HoltOS exists to run — and The Den Client (jamesyoungdahr-debug/
+# the-den-client), its native KDE desktop app. Both are separately-
+# maintained repos whose latest tagged release is baked into this image at
+# build time (build-vendor-apps.sh → customize_airootfs.sh →
+# `holtos-update-apply vendor`) and updated in place afterwards by the same
+# code path from the tray. python: the-den's own venv + alembic migrations. pyside6/kirigami/qqc2-desktop-style: the client's
 # runtime, no separate venv needed (it has no pip dependencies of its own).
 # pyside6 is also what holtos-tray (the updater's tray icon) is built on
 # now — see that script's own header for why (yad's tray mode is

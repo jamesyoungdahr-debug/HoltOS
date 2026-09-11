@@ -10,7 +10,6 @@
 Description=Initialize the pacman keyring on the installed system if it is missing
 ConditionPathExists=!/run/archiso
 After=time-sync.target
-Before=holtos-first-boot-apps.service
 
 [Service]
 Type=oneshot
