@@ -1,0 +1,23 @@
+# Backstop for homelab-cleanup-live.sh's chroot-time `pacman-key --init`:
+# on the first install from a clean-machine build (2026-09-11) that init
+# only got as far as writing gpg.conf — no master key, no pubring — so the
+# installed system could not install or update a single package. The same
+# two commands run on the booted system work every time, so run them here
+# on first boot whenever the pubring is missing. Skipped on the live medium
+# (/run/archiso exists there; archiso's own pacman-init.service owns the
+# live keyring). Enabled at build time in root/customize_airootfs.sh.
+[Unit]
+Description=Initialize the pacman keyring on the installed system if it is missing
+ConditionPathExists=!/run/archiso
+ConditionPathExists=!/etc/pacman.d/gnupg/pubring.gpg
+After=time-sync.target
+Before=holtos-first-boot-apps.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/pacman-key --init
+ExecStart=/usr/bin/pacman-key --populate archlinux
+
+[Install]
+WantedBy=multi-user.target

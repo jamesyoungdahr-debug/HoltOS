@@ -113,3 +113,25 @@ QListView::item:selected, QTreeView::item:selected {
     background-color: #B14DFF;
     color: #FFFFFF;
 }
+
+/* Checkbox / radio indicators. The generic QWidget rule above paints the
+   indicator box the same color as the page, so a ticked and an unticked
+   box looked identical — bit us live (2026-09-11): the Finished page's
+   "Restart now" state was unreadable, as were "Require strong passwords"
+   and "Use the same password for the administrator account" on Users.
+   Draw them explicitly: dark box with a brand-purple border, filled solid
+   purple when checked. */
+QCheckBox::indicator, QRadioButton::indicator {
+    width: 16px;
+    height: 16px;
+    border: 1px solid #B14DFF;
+    background-color: #171423;
+}
+QCheckBox::indicator { border-radius: 3px; }
+QRadioButton::indicator { border-radius: 8px; }
+QCheckBox::indicator:checked, QRadioButton::indicator:checked {
+    background-color: #B14DFF;
+}
+QCheckBox::indicator:disabled, QRadioButton::indicator:disabled {
+    border-color: #2a2438;
+}

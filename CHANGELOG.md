@@ -5,6 +5,42 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+- **First full VM test of the clean-machine build (2026-09-11)** — the
+  handoff's steps 1-4 all done for real: pipeline from clean, fresh
+  Erase-Disk install, Limine menu watched rendering (wallpaper, palette,
+  snapshot entries), a snapshot created from the tray script, booted into
+  it (read-only root, SDDM comes up, container stack correctly can't
+  start — a rescue environment, not a rollback), and six snapshot cycles
+  confirming 5-snapshot retention evicts subvolume + ESP copy + Limine
+  entry together. Confirmed working: tray icon (Wayland/PySide6), sudo,
+  Btrfs `@` root with zstd, both limine.conf copies, all 13 stack
+  services, generated secrets, installer content-area stylesheet.
+  **Four real bugs found**, three fixed here:
+  - Installed system had **no usable pacman keyring** ("keyring is not
+    writable") despite the earlier `pacman-key --init` fix. archiso's
+    `etc-pacman.d-gnupg.mount` (tmpfs for the live medium) rides into the
+    install, and gnupg's socket units pull it in by name on every boot,
+    hiding the on-disk keyring — which was itself incomplete because the
+    chroot-time init failed silently. `homelab-cleanup-live.sh` now removes
+    both archiso units from the target and logs init failures; new
+    `holtos-pacman-keyring-init.service` re-runs init/populate on first
+    boot if no pubring exists.
+  - `holtos-first-boot-apps` and `homelab-sync-arr-keys` **never ran**:
+    their `*.wants/` entries were plain files (Windows git can't store the
+    releng symlinks), which systemd ignores. Same for archiso's
+    `choose-mirror`/`livecd-alsa-unmuter`. All four now `systemctl enable`d
+    in `customize_airootfs.sh`; the fake wants files are gone.
+  - Finished page's Done did not restart: Calamares' stock
+    `restartNowMode` is `user-unchecked`, and the dark stylesheet made the
+    checkbox invisible. Added `finished.conf` (`user-checked`) and explicit
+    `QCheckBox`/`QRadioButton` indicator styling.
+  - **Not fixed (needs a decision): the updater cannot reach the HoltOS
+    repo** — it is private, so anonymous `git ls-remote`/release-tarball
+    download fail (`holtos-update-check` exits 128), exactly the failure
+    the-den hit before it was made public.
+  - Cosmetic, not fixed: Calamares' partition-bar labels render dark on
+    dark (painted via palette, not stylesheet); the slideshow page has a
+    white frame around the slide.
 - **First genuinely clean-state run of the build pipeline** (fresh Windows
   machine, fresh clone, no pre-existing container images or `local-repo/`)
   found two real bugs, both fixed:

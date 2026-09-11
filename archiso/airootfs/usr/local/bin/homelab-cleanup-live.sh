@@ -47,5 +47,28 @@ pacman -Rns --noconfirm calamares
 # holtos-update-apply's `system` item runs, so this would have quietly
 # broken the whole "System Packages" updater path for every real install.
 # Fixed by just initializing it for real here, once, on the actual target.
-pacman-key --init
-pacman-key --populate archlinux
+# Live-tested 2026-09-11 on the first install from a clean-machine build:
+# the init below was NOT enough on its own — the installed system STILL had
+# no usable keyring ("keyring is not writable"). Two separate causes, both
+# confirmed on the booted target:
+#   1. archiso's own etc-pacman.d-gnupg.mount (a tmpfs over
+#      /etc/pacman.d/gnupg, meant for the live medium only) rides along
+#      into the install verbatim, and gnupg's socket units for that
+#      directory (gpg-agent-pacman.d-gnupg.socket etc., via
+#      RequiresMountsFor=) pull that mount unit in by name on every boot —
+#      so whatever the chroot wrote to disk sits hidden under an empty
+#      tmpfs. pacman-init.service is the matching archiso-only unit.
+#   2. Even underneath that tmpfs the on-disk directory only had
+#      gpg.conf/gpg-agent.conf: the master-key generation half of
+#      `pacman-key --init` did not complete inside Calamares' chroot (this
+#      script has no set -e, so it failed silently). The exact same two
+#      commands run on the booted system worked first time.
+# So: drop both archiso units from the target, still attempt the init here
+# (harmless, and loud on failure now), and let
+# holtos-pacman-keyring-init.service (etc/systemd/system/) finish the job on
+# first boot if the chroot attempt left no pubring behind.
+rm -f /etc/systemd/system/etc-pacman.d-gnupg.mount \
+      /etc/systemd/system/pacman-init.service \
+      /etc/systemd/system/multi-user.target.wants/pacman-init.service
+{ pacman-key --init && pacman-key --populate archlinux; } \
+    || echo "WARNING: pacman-key init/populate failed in chroot; holtos-pacman-keyring-init.service will retry on first boot" >&2

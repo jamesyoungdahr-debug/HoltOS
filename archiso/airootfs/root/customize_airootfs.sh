@@ -24,6 +24,18 @@ systemctl enable NetworkManager.service
 systemctl enable sddm.service
 systemctl enable podman.socket
 
+# systemd only honors real symlinks in *.wants/ directories. This profile
+# used to ship plain FILES there (copies of the units — git on Windows
+# can't store symlinks, so releng-reference's symlinks flattened into
+# copies on the way in), and systemd silently ignored every one of them:
+# confirmed live 2026-09-11, holtos-first-boot-apps and
+# homelab-sync-arr-keys had never run on the installed system and
+# `systemctl list-dependencies multi-user.target` didn't list them.
+# Enabling here creates proper symlinks at image-build time instead.
+systemctl enable choose-mirror.service livecd-alsa-unmuter.service
+systemctl enable holtos-first-boot-apps.service homelab-sync-arr-keys.service
+systemctl enable holtos-pacman-keyring-init.service
+
 # A non-root live user, auto-logged into Plasma — the standard pattern for
 # Calamares-based live distros (CachyOS, EndeavourOS, Manjaro all do this),
 # so the live session boots straight to a usable desktop with our installer
