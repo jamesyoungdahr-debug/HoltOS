@@ -143,6 +143,43 @@ rollback_config() {
 # needing a full build toolchain on the installed system for what's really
 # just "copy files + venv + pip install", which the PKGBUILD's package()
 # does too.
+# pkgbuild_depends <PKGBUILD> — prints the package names from the file's
+# depends=(...) array, one per line, version constraints stripped. Handles
+# the array spanning several lines. Prints nothing if there is none.
+pkgbuild_depends() {
+    [ -f "$1" ] || return 0
+    # awk rather than a sed range: a sed range only starts looking for the
+    # closing ")" on the line AFTER the start line, so a one-line
+    # depends=(...) ran on into makedepends and package() — seen live
+    # 2026-09-11, pacman was asked to install "package {".
+    awk '/^depends=\(/ { f = 1 } f { print } f && /\)/ { f = 0 }' "$1" \
+        | sed -e 's/^depends=//' -e "s/[()'\"]//g" -e 's/#.*//' \
+        | tr ' ' '\n' | sed -e 's/[<>=].*//' | grep -v '^$' || true
+}
+
+# install_pkgbuild_depends <PKGBUILD> <label> — pacman -S --needed every
+# package the app's PKGBUILD depends on. No-op when nothing is missing, and
+# skipped in the image-build chroot (see install_the_den's comment).
+install_pkgbuild_depends() {
+    local pkgbuild="$1" label="$2" deps missing=()
+    mapfile -t deps < <(pkgbuild_depends "$pkgbuild")
+    [ "${#deps[@]}" -gt 0 ] || return 0
+    local d
+    for d in "${deps[@]}"; do
+        pacman -Qq "$d" >/dev/null 2>&1 || missing+=("$d")
+    done
+    [ "${#missing[@]}" -gt 0 ] || return 0
+    if ! booted; then
+        echo "==> WARNING: $label needs ${missing[*]} — not installed in the image (add to packages.x86_64)" >&2
+        return 0
+    fi
+    echo "==> Installing system packages $label needs: ${missing[*]}"
+    pacman -S --noconfirm --needed "${missing[@]}" || {
+        echo "==> Could not install ${missing[*]} — $label update aborted before touching any files" >&2
+        return 1
+    }
+}
+
 # booted — true when a real systemd is running (sd_booted(3) semantics).
 # False inside the image-build chroot (customize_airootfs.sh → `vendor`
 # below), where `systemctl enable` still works (it just writes symlinks)
@@ -177,16 +214,54 @@ install_the_den() {
     local first_install=0
     [ -d "$app_dir" ] || first_install=1
 
+    # OS-level dependencies: whatever this release's own PKGBUILD declares
+    # in depends=(...). Installed with pacman before anything else changes,
+    # so a release that grows a new system dependency (v0.2.0's built-in
+    # torrent client needs libtorrent-rasterbar's Python bindings — no PyPI
+    # wheel for the shipped CPython) works on an existing install. Real
+    # outage 2026-09-11: updating v0.1.0 → v0.2.0 died with "No module
+    # named libtorrent" because nothing installed it. Skipped at image
+    # build (no keyring in the chroot); build-vendor-apps.sh checks the
+    # same list against packages.x86_64 and fails the build if one is
+    # missing, so a fresh image always has them.
+    install_pkgbuild_depends "$src_dir/PKGBUILD" "The Den" || return 1
+
+    # The deploy/ files (service unit, sysusers, tmpfiles) are re-installed
+    # on EVERY update, not just the first: a release can add directories
+    # (v0.2.0 added downloads/ and state/) or change the unit. Only the env
+    # file is left alone after first install — it holds the user's values.
+    echo "==> Installing service files..."
+    install -Dm644 "$src_dir/deploy/the-den-sysusers.conf" /usr/lib/sysusers.d/the-den.conf
+    install -Dm644 "$src_dir/deploy/the-den-tmpfiles.conf" /usr/lib/tmpfiles.d/the-den.conf
+    install -Dm644 "$src_dir/deploy/the-den.service" /usr/lib/systemd/system/the-den.service
+    systemd-sysusers the-den.conf
+    systemd-tmpfiles --create the-den.conf
+    install -dm755 "$app_dir"
+    if [ -f /etc/the-den/the-den.env ]; then
+        # Carry settings the new release introduced into the existing env
+        # file with the release's own default values, and never touch keys
+        # the user already has. Necessary, not cosmetic: v0.2.0 added
+        # STATE_DIR, and without it the app fell back to a relative "state"
+        # under root-owned /opt/the-den and died with PermissionError
+        # (seen live 2026-09-11 right after the libtorrent fix).
+        local new_lines
+        new_lines="$(grep -E '^[A-Z_]+=' "$src_dir/deploy/the-den.env.example" \
+            | grep -vF -f <(grep -oE '^[A-Z_]+=' /etc/the-den/the-den.env) || true)"
+        if [ -n "$new_lines" ]; then
+            echo "==> New settings in $latest_tag, added to /etc/the-den/the-den.env with release defaults:"
+            echo "$new_lines" | sed 's/^/    /'
+            {
+                echo
+                echo "# Added by the HoltOS updater for The Den $latest_tag (release defaults; edit as needed)"
+                echo "$new_lines"
+            } >> /etc/the-den/the-den.env
+        fi
+    else
+        install -Dm640 "$src_dir/deploy/the-den.env.example" /etc/the-den/the-den.env
+    fi
+
     if [ "$first_install" -eq 1 ]; then
         echo "==> Setting up The Den for the first time..."
-        install -Dm644 "$src_dir/deploy/the-den-sysusers.conf" /usr/lib/sysusers.d/the-den.conf
-        install -Dm644 "$src_dir/deploy/the-den-tmpfiles.conf" /usr/lib/tmpfiles.d/the-den.conf
-        systemd-sysusers the-den.conf
-        systemd-tmpfiles --create the-den.conf
-        install -dm755 "$app_dir"
-        [ -f /etc/the-den/the-den.env ] || \
-            install -Dm640 "$src_dir/deploy/the-den.env.example" /etc/the-den/the-den.env
-        install -Dm644 "$src_dir/deploy/the-den.service" /usr/lib/systemd/system/the-den.service
         cp /usr/share/icons/hicolor/scalable/apps/holtos-logo.svg \
            /usr/share/icons/hicolor/scalable/apps/the-den.svg 2>/dev/null || true
         cat > /usr/share/applications/the-den.desktop <<DESKTOP
@@ -216,7 +291,12 @@ DROPIN
 
     if [ "$first_install" -eq 1 ]; then
         echo "==> Creating Python virtual environment..."
-        python -m venv "$app_dir/.venv"
+        python -m venv --system-site-packages "$app_dir/.venv"
+    elif grep -q '^include-system-site-packages = false' "$app_dir/.venv/pyvenv.cfg" 2>/dev/null; then
+        # venvs made by older HoltOS releases were sealed off from system
+        # site-packages; flip the flag in place rather than rebuild them.
+        echo "==> Opening the virtual environment to system site-packages..."
+        sed -i 's/^include-system-site-packages = false/include-system-site-packages = true/' "$app_dir/.venv/pyvenv.cfg"
     fi
     echo "==> Installing Python dependencies..."
     "$app_dir/.venv/bin/python" -m pip install --no-cache-dir -q -r "$app_dir/requirements.txt"
@@ -286,6 +366,8 @@ install_the_den_client() {
     local app_dir="/opt/the-den-client"
     local first_install=0
     [ -d "$app_dir" ] || first_install=1
+
+    install_pkgbuild_depends "$src_dir/PKGBUILD" "The Den Client" || return 1
 
     echo "==> Syncing application files..."
     install -dm755 "$app_dir"

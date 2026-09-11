@@ -102,9 +102,16 @@ breeze-gtk
 # in Qt6 itself but not this separate platform plugin package, so it was
 # silently missing the whole time despite pyside6 nominally "supporting"
 # Wayland.
+# libtorrent-rasterbar: The Den >= v0.2.0 embeds its own torrent client on
+# libtorrent's Python bindings, which come from this OS package (no PyPI
+# wheel for the shipped CPython) — the-den's PKGBUILD depends on it and
+# its venv is created with --system-site-packages to see it. Real outage
+# 2026-09-11: the tray updater moved an install to v0.2.0 and the-den
+# died with "No module named libtorrent" because this was missing.
 python
 pyside6
 qt6-wayland
+libtorrent-rasterbar
 kirigami
 qqc2-desktop-style
 
