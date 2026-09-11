@@ -5,6 +5,21 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+- **First genuinely clean-state run of the build pipeline** (fresh Windows
+  machine, fresh clone, no pre-existing container images or `local-repo/`)
+  found two real bugs, both fixed:
+  - Git for Windows defaults `core.autocrlf=true`, so every text file
+    checked out with CRLF; `build-aur-packages.sh` died inside the
+    container on `set -euo pipefail` (`pipefail: invalid option name`),
+    and every script/unit file under `airootfs/` would have shipped
+    broken into the ISO the same way. Added `.gitattributes`
+    (`* text=auto eol=lf`) so checkouts are LF regardless of local git
+    settings.
+  - The `archlinux` base image has a populated keyring but no local
+    master key, so `archlinux-keyring`'s upgrade hook failed during
+    `podman build` ("There is no secret key available to sign with"),
+    leaving newer packager keys untrusted. Both Containerfiles now run
+    `pacman-key --init && pacman-key --populate archlinux` first.
 - Branding audit (every asset referenced by branding.desc, the
   look-and-feel package, SDDM, Plymouth, Konsole, os-release, the
   `.desktop` launchers, the updater scripts, and both boot menus was
