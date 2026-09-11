@@ -314,6 +314,27 @@ DROPIN
             echo "==> Restarting The Den..."
             systemctl restart the-den
         fi
+        # A restart that crashes right back is not a successful update.
+        # Real case 2026-09-11: v0.1.0 → v0.2.0 restarted into a Python
+        # import error and the tray still said "Done"; the user found out
+        # from the browser's "connection refused". Wait for the service AND
+        # its port, and on failure surface the journal in the dialog.
+        echo "==> Waiting for The Den to come up..."
+        local i up=0
+        for i in $(seq 1 30); do
+            if systemctl is-active --quiet the-den && curl -fsS -o /dev/null --max-time 2 http://127.0.0.1:8686/; then
+                up=1; break
+            fi
+            if systemctl is-failed --quiet the-den; then break; fi
+            sleep 1
+        done
+        if [ "$up" -ne 1 ]; then
+            echo "==> The Den did not come back after the update ($(systemctl is-active the-den)). Last log lines:" >&2
+            journalctl -u the-den -n 15 --no-pager -o cat 2>/dev/null | grep -v '^\s*[~^]' | tail -12 >&2
+            log_history the-den "$latest_tag (FAILED to start)" "$new_commit"
+            return 1
+        fi
+        echo "==> The Den is up on http://127.0.0.1:8686"
     else
         # Image build: enable only (symlink); it starts on the installed
         # system's first boot.
