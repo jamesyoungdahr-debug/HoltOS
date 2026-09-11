@@ -43,8 +43,13 @@ or a bug as it is checked, in boot order:
   tokens), selected via skel `Kvantum/kvantum.kvconfig` and
   `widgetStyle=kvantum`. **Confirmed on screen** on the installed VM:
   Dolphin and Konsole translucent with the blurred pool rings behind.
-  Titlebars stay opaque holt-surface (Breeze decoration can't blur). To
-  check next: Dolphin view-label contrast looked low in the first shot.
+  **Title bars are glass too**: Klassy (AUR, in local-repo/) with
+  etc/skel/.config/klassy/klassyrc — 70%/60% opacity, blur behind, bold
+  centred title, poor-contrast guard on; **confirmed on screen** on the
+  VM (Konsole's title visible through Dolphin's). KWin blur strength
+  raised to 11 via etc/xdg/kwinrc. The "dim Dolphin labels" seen earlier
+  were an artifact of launching apps over SSH without the KDE platform
+  theme; launched from the session they are white Nunito — readable.
 
 Contrast to check per §7 of the brief: ink-55 (#8C8C8C) step names on
 `#171423`; ink at 85% on deep; error amber on the glass card.

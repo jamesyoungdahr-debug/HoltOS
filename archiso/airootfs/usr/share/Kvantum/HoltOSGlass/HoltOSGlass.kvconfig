@@ -36,6 +36,9 @@ menubar_mouse_tracking=true
 toolbutton_style=0
 click_behavior=0
 translucent_windows=true
+# Never dim text in inactive windows: over glass, dimmed labels fall below
+# readable contrast (seen in Dolphin on the VM, 2026-09-11).
+no_inactiveness=true
 blurring=true
 popup_blurring=true
 opaque=kaffeine,kmplayer,subtitlecomposer,kdenlive,vlc,smplayer,smplayer2,avidemux,avidemux2_qt4,avidemux3_qt4,avidemux3_qt5,kamoso,QtCreator,VirtualBox,VirtualBoxVM,trojita,dragon,digikam,lyx
