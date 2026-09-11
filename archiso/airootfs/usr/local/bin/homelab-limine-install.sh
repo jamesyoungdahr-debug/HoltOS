@@ -99,7 +99,7 @@ wallpaper_style: stretched
 backdrop: 0D0B12
 term_palette: 0D0B12;B14DFF;28E0C8;F4EBFF;171423;B14DFF;28E0C8;F4EBFF
 
-/homelab-os
+/HoltOS
     protocol: linux
     path: boot():/boot/vmlinuz-linux
     cmdline: root=UUID=${ROOT_UUID} rootflags=${ROOTFLAGS} rw quiet splash
@@ -118,7 +118,7 @@ printf '%s\n' "$LIMINE_CONF_CONTENT" > "${ESP}/EFI/BOOT/limine.conf"
 efibootmgr --create \
     --disk "/dev/${ESP_DISK}" \
     --part "${ESP_PARTNUM}" \
-    --label "homelab-os" \
+    --label "HoltOS" \
     --loader '\EFI\limine\BOOTX64.EFI' \
     --unicode || true
 

@@ -78,7 +78,7 @@ fi
 # retention-trimmed) log — one boot entry per retained snapshot, oldest
 # first. Rewritten wholesale between the two marker lines every time
 # (simpler and more robust than trying to insert/remove single entries in
-# place), leaving everything outside the markers — the main /homelab-os
+# place), leaving everything outside the markers — the main /HoltOS
 # entry, wallpaper/theme lines, see homelab-limine-install.sh — untouched.
 #
 # Written to BOTH copies of limine.conf (/EFI/limine/ and /EFI/BOOT/,
