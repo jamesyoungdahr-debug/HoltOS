@@ -62,7 +62,7 @@ All verified on a second fresh install from a rebuilt ISO unless noted.
    hiding the on-disk keyring — which was itself incomplete because the
    chroot-time init failed silently. `homelab-cleanup-live.sh` now
    removes both archiso units; new `holtos-pacman-keyring-init.service`
-   re-runs init on first boot if no pubring exists. **Verified:**
+   re-runs init on first boot if no master secret key exists. **Verified:**
    `pacman -S tree` works on a fresh install; the backstop's condition
    was unmet (chroot init succeeded once the tmpfs unit was gone).
 5. **`holtos-first-boot-apps` and `homelab-sync-arr-keys` had never

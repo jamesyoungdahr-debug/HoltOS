@@ -128,8 +128,9 @@ same way, in the one `aur-builder` container.
   hardcode it back.
 - **ISO built, but Hyper-V won't attach it.** That's the ACL issue
   `build.sh`'s last step already handles automatically
-  (`icacls ... /grant "Authenticated Users:(R)"`) — if you're inspecting
-  a `.iso` that `build.sh` didn't finish writing (e.g. the process was
+  (`icacls ... //grant "Authenticated Users:(R)"` — the doubled slash is
+  required from Git Bash, which otherwise rewrites `/grant` into a path)
+  — if you're inspecting a `.iso` that `build.sh` didn't finish writing (e.g. the process was
   killed mid-build), that step never ran; re-run the build rather than
   trying to fix permissions on a partial file.
 - **`podman build`/`podman run` needs `sudo` inside WSL2** in every
