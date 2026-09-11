@@ -107,3 +107,8 @@ pyside6
 qt6-wayland
 kirigami
 qqc2-desktop-style
+
+# HoltOS Glass windows: Kvantum is the one Qt widget style that can make
+# application windows translucent and ask KWin to blur behind them
+# (usr/share/Kvantum/HoltOSGlass). Breeze cannot.
+kvantum

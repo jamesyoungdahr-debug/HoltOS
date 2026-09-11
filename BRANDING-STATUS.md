@@ -18,10 +18,13 @@ or a bug as it is checked, in boot order:
   machine stayed usable). Fixed; **confirmed on screen** via
   `sddm-greeter-qt6 --test-mode` on the installed VM: glass card with the
   blurred pool rings + otter behind it, gradient avatar, purple Log in,
-  quiet Restart / Shut down. Not yet seen as the real greeter after a boot.
+  quiet Restart / Shut down. **Confirmed as the real greeter** after a reboot
+  of the installed VM (lockup, `HOLTOS-VM` eyebrow, otter at 7% in the corner).
 - KSplash `org.holtos.desktop`: naming the package in kdeglobals does NOT
-  select the splash; added `etc/xdg/ksplashrc`. `ksplashqml --test` was
-  inconclusive (dimmed desktop) — verify on the next real login.
+  select the splash; added `etc/xdg/ksplashrc`. Still NOT confirmed: a
+  real login on the VM went to the desktop between two 2-second captures,
+  and `ksplashqml --test` only showed a dimmed desktop. Needs a slower
+  machine or a video capture to see.
 - Plasma: **confirmed on screen** — HoltOS palette applied (kdeglobals
   carries the full HoltOS `[Colors:*]` groups), Nunito on panel/clock/
   labels, pool-rings wallpaper, translucent+blurred panel, lock screen
@@ -34,6 +37,14 @@ or a bug as it is checked, in boot order:
   Calamares paints them with a hardcoded `Qt::black`
   (PartitionLabelsView.cpp), unfixable from QSS — needs a Calamares patch.
 - Updater copy ("Everything's fine.") — not yet seen.
+- **Glass application windows** (added on request, beyond the brief):
+  Kvantum theme `HoltOSGlass` (KvSimplicityDark's SVG with window/dialog
+  backgrounds at holt-surface 70% / 84%, blur on, palette mapped to the
+  tokens), selected via skel `Kvantum/kvantum.kvconfig` and
+  `widgetStyle=kvantum`. **Confirmed on screen** on the installed VM:
+  Dolphin and Konsole translucent with the blurred pool rings behind.
+  Titlebars stay opaque holt-surface (Breeze decoration can't blur). To
+  check next: Dolphin view-label contrast looked low in the first shot.
 
 Contrast to check per §7 of the brief: ink-55 (#8C8C8C) step names on
 `#171423`; ink at 85% on deep; error amber on the glass card.

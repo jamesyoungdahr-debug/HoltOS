@@ -1,5 +1,6 @@
 [KDE]
 LookAndFeelPackage=org.holtos.desktop
+widgetStyle=kvantum
 
 [General]
 ColorScheme=HoltOS
