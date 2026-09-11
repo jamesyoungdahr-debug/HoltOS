@@ -1,0 +1,19 @@
+# System-wide KWin defaults for HoltOS Glass (users' ~/.config/kwinrc
+# overrides these). Blur and Background Contrast are on by default in
+# Plasma 6; what the defaults don't do is blur STRONGLY enough for the
+# glass panels/windows to read as glass rather than merely see-through.
+# BlurStrength is 1-15 (default 5); NoiseStrength 0-14 adds a little
+# grain so large flat glass areas don't band.
+[Effect-blur]
+BlurStrength=11
+NoiseStrength=2
+
+[Plugins]
+blurEnabled=true
+contrastEnabled=true
+
+# HoltOS Glass title bars: Klassy (usr/share/... via local-repo/) with the
+# translucent, blurred configuration in etc/skel/.config/klassy/klassyrc.
+[org.kde.kdecoration2]
+library=org.kde.klassy
+theme=Klassy

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Builds local-repo/ — the AUR packages (calamares, zfs-dkms, zfs-utils,
-# limine-mkinitcpio-hook, limine-entry-tool) archiso/pacman.conf's
+# limine-mkinitcpio-hook, limine-entry-tool, klassy) archiso/pacman.conf's
 # [homelab] repo serves during the actual ISO build (build.sh). Run this
 # once before the first build.sh, and again any time those packages need
 # updating — it's safe to rerun, repo-add just refreshes the database.

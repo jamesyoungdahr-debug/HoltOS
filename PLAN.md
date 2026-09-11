@@ -106,3 +106,21 @@ Requires Step 0's repo-visibility decision.
 
 Only after Step 5: R720 PERC to HBA mode, iDRAC virtual media, UEFI
 boot — see `README.md`.
+
+## Step 7 — Hardware detection at install (added 2026-09-11, built, needs real hardware)
+
+Implemented: `homelab-detect-hardware.sh` (Calamares `detect-hardware`
+step, after cleanup-live) scans PCI in the target; if an NVIDIA GPU is
+present it installs `nvidia-open-dkms` + `nvidia-utils` from packages
+staged on the ISO at build time (`customize_airootfs.sh` →
+`/usr/share/holtos/drivers/nvidia/`), DKMS builds the module in the
+chroot, and `nvidia_drm.modeset=1` is appended to the Limine command
+line (main entry and snapshot entries). Vulkan (AMD/Intel) and VA-API
+drivers are always in the image. Everything is logged to
+`/var/lib/holtos/hardware.log`.
+
+**Check (Liam, real NVIDIA machine):** fresh install → `hardware.log`
+lists the GPU and "installed: nvidia-open-dkms ...", `lsmod | grep
+nvidia`, Plasma Wayland session starts, `cat /proc/cmdline` shows
+`nvidia_drm.modeset=1`. The Hyper-V VM can only prove the "no NVIDIA —
+nothing to install" path.

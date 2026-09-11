@@ -1,5 +1,5 @@
 # Builds the AUR packages our archiso profile needs (calamares, zfs-dkms,
-# zfs-utils, limine-mkinitcpio-hook, limine-entry-tool — none of which are
+# zfs-utils, limine-mkinitcpio-hook, limine-entry-tool, klassy — none of which are
 # in the official Arch repos) into local-repo/, which pacman.conf then
 # treats as an extra repo during the actual ISO build. See
 # build-aur-packages.sh, which runs inside a container from this image.

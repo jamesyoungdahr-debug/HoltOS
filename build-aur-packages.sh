@@ -13,7 +13,7 @@ chown builder:builder /tmp/pkgout
 su - builder -c "gpg --keyserver keyserver.ubuntu.com --recv-keys 6AD860EED4598027" || \
 su - builder -c "gpg --keyserver hkps://keys.openpgp.org --recv-keys 6AD860EED4598027"
 
-for pkg in calamares zfs-dkms zfs-utils limine-mkinitcpio-hook limine-entry-tool; do
+for pkg in calamares zfs-dkms zfs-utils limine-mkinitcpio-hook limine-entry-tool klassy; do
     echo "=== Building ${pkg} ==="
     rm -rf "/tmp/build-${pkg}"
     su - builder -c "git clone https://aur.archlinux.org/${pkg}.git /tmp/build-${pkg}"

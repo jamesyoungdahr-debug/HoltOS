@@ -23,8 +23,8 @@ Image=HoltOS
 cursorTheme=breeze_cursors
 
 [kwinrc][org.kde.kdecoration2]
-library=org.kde.breeze
-theme=Breeze
+library=org.kde.klassy
+theme=Klassy
 
 # HoltOS Glass: the panel, Kickoff and other Plasma popups become glass
 # (translucent over the pool-rings wallpaper) only if KWin's Blur and

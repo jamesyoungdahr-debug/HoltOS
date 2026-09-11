@@ -1,0 +1,38 @@
+# HoltOS Glass window decoration — Klassy (AUR, built into local-repo/ by
+# build-aur-packages.sh). Only the keys that differ from Klassy's defaults;
+# based on its own "Glassy Klassy" preset with the opacity raised for
+# readability: title text is ink on holt-surface at 70% (active) / 60%
+# (inactive) with KWin blur behind, and Klassy's poor-contrast guard on so
+# a light wallpaper can never wash the title out. Corners 10px (radius-md),
+# maximized windows keep the glass (opaque twin is Breeze's scheme colour).
+[Windeco]
+OverrideActiveTitleBarOpacity=true
+OverrideInactiveTitleBarOpacity=true
+ActiveTitleBarOpacity=70
+InactiveTitleBarOpacity=60
+BlurTransparentTitleBars=true
+ApplyOpacityToHeader=true
+OpaqueMaximizedTitleBars=false
+MatchTitleBarToApplicationColor=false
+AdjustBackgroundColorOnPoorContrastActive=true
+AdjustBackgroundColorOnPoorContrastInactive=true
+PoorBackgroundContrastThresholdActive=1.1
+PoorBackgroundContrastThresholdInactive=1.1
+BoldTitle=true
+TitleAlignment=AlignCenterFullWidth
+DrawTitleBarSeparator=true
+DrawBackgroundGradient=false
+DrawBorderOnMaximizedWindows=false
+RoundAllCornersWhenNoBorders=true
+WindowCornerRadius=10
+ButtonCornerRadius=SameAsWindow
+ButtonShape=ShapeIntegratedRoundedRectangle
+ButtonIconColorsActive=TitleBarText
+ButtonIconColorsInactive=TitleBarText
+ButtonBackgroundColorsActive=AccentNegativeClose
+ButtonBackgroundColorsInactive=AccentNegativeClose
+ShadowSizeActive=ShadowLarge
+ShadowSizeInactive=ShadowLarge
+ShadowStrengthActive=255
+ShadowStrengthInactive=128
+UseTitleBarColorForAllBorders=true

@@ -30,6 +30,27 @@ systemctl enable sddm.service
 systemctl enable choose-mirror.service livecd-alsa-unmuter.service
 systemctl enable holtos-pacman-keyring-init.service
 
+# Stage the NVIDIA driver packages on the ISO WITHOUT installing them:
+# homelab-detect-hardware.sh installs them into the target at install
+# time only if an NVIDIA GPU is present (no network needed then). The
+# dependency set is resolved against THIS image, so nothing already in
+# packages.x86_64 is duplicated. The [homelab] local repo is only
+# reachable at build time from the host, so the download uses a
+# pacman.conf without it — and with signature checking off: the chroot
+# has no pacman keyring (creating one here proved unreliable — see
+# homelab-cleanup-live.sh), the files come straight from the HTTPS
+# mirrors, and they are only STAGED here, not installed.
+echo "==> Staging NVIDIA driver packages for install-time detection..."
+sed -e '/^\[homelab\]/,$d' \
+    -e 's/^SigLevel .*/SigLevel = Never/' \
+    -e 's/^LocalFileSigLevel .*/LocalFileSigLevel = Never/' \
+    /etc/pacman.conf > /tmp/pacman-stage.conf
+mkdir -p /usr/share/holtos/drivers/nvidia
+pacman -Syw --noconfirm --config /tmp/pacman-stage.conf \
+    --cachedir /usr/share/holtos/drivers/nvidia nvidia-open-dkms nvidia-utils
+rm -f /usr/share/holtos/drivers/nvidia/*.sig /tmp/pacman-stage.conf
+echo "    staged: $(ls /usr/share/holtos/drivers/nvidia | tr '\n' ' ')"
+
 # Install The Den + The Den Client from the release trees build-vendor-apps.sh
 # staged under /opt/holtos-vendor (see that script). Runs the same install
 # code the tray updater uses, so a later "Update The Den" is an in-place

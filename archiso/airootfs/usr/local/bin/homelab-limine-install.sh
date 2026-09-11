@@ -67,6 +67,12 @@ cp /boot/initramfs-linux.img "${ESP}/boot/initramfs-linux.img"
 # system's actual files live there.
 ROOTFLAGS="subvol=@"
 
+# Extra kernel parameters decided at install time by
+# homelab-detect-hardware.sh (e.g. nvidia_drm.modeset=1 when an NVIDIA GPU
+# was found and its driver installed). Empty or missing file = nothing.
+CMDLINE_EXTRA="$(tr '\n' ' ' < /var/lib/holtos/kernel-cmdline-extra 2>/dev/null || true)"
+CMDLINE_EXTRA="${CMDLINE_EXTRA% }"
+
 # HoltOS-branded wallpaper for the Limine menu itself — reuses the same
 # raster image already used as the installed system's KDE desktop
 # wallpaper (see usr/share/plasma/look-and-feel/org.holtos.desktop), so
@@ -102,7 +108,7 @@ term_palette: 0D0B12;B14DFF;28E0C8;F4EBFF;171423;B14DFF;28E0C8;F4EBFF
 /HoltOS
     protocol: linux
     path: boot():/boot/vmlinuz-linux
-    cmdline: root=UUID=${ROOT_UUID} rootflags=${ROOTFLAGS} rw quiet splash
+    cmdline: root=UUID=${ROOT_UUID} rootflags=${ROOTFLAGS} rw quiet splash${CMDLINE_EXTRA:+ $CMDLINE_EXTRA}
     module_path: boot():/boot/initramfs-linux.img
 
 #### HOLTOS SNAPSHOTS START ####

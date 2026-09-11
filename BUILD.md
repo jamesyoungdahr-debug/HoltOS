@@ -36,7 +36,7 @@ fetches the latest tagged release of The Den and The Den Client into
 them inside the mkarchiso chroot — so a build needs network access to
 GitHub and PyPI as well as the pacman mirrors.)
 
-1. **Build `local-repo/`** — five AUR packages this profile needs that
+1. **Build `local-repo/`** — six AUR packages this profile needs that
    aren't in the official Arch repos, built once (and rebuilt only when
    you want to update them).
 2. **Build the `archiso-image` container** — the environment `mkarchiso`
@@ -55,7 +55,8 @@ This builds a small `aur-builder` container (see
 `build-aur-packages.sh` inside it, which:
 
 - clones and `makepkg -s`'s **calamares**, **zfs-dkms**, **zfs-utils**,
-  **limine-mkinitcpio-hook**, and **limine-entry-tool** straight from the
+  **limine-mkinitcpio-hook**, **limine-entry-tool**, and **klassy** (the
+  glass window decoration) straight from the
   AUR,
 - imports the OpenZFS release GPG key first (zfs-dkms's source tarball is
   signed with it, and it isn't in the default keyring),
@@ -66,7 +67,7 @@ This builds a small `aur-builder` container (see
 
 Expect this to take a while — calamares alone pulls in a real Qt6/KF6
 build. `local-repo/` is gitignored; you only need to rerun this when you
-want newer versions of these five packages, not on every ISO build.
+want newer versions of these six packages, not on every ISO build.
 
 ### 2. Build the `archiso-image` container
 
@@ -115,7 +116,7 @@ something else, with no record of what.
 carrying calamares alongside the other four — the uniform, one-script,
 one-image treatment below is what that comment always implied; the extra
 images were never actually necessary, just how it happened to get built
-the first time. `build-aur-packages.sh` now builds all five packages the
+the first time. `build-aur-packages.sh` now builds all six packages the
 same way, in the one `aur-builder` container.
 
 ## Common failure: "it built something, but the ISO won't boot / won't install"

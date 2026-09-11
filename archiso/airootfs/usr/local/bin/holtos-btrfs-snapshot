@@ -40,6 +40,9 @@ done
 : "${ESP:?Could not find a mounted EFI System Partition under /boot/efi, /efi, or /boot}"
 
 ROOT_UUID="$(findmnt -no UUID /)"
+# Same install-time extras homelab-limine-install.sh put on the main entry.
+CMDLINE_EXTRA="$(tr '\n' ' ' < /var/lib/holtos/kernel-cmdline-extra 2>/dev/null || true)"
+CMDLINE_EXTRA="${CMDLINE_EXTRA% }"
 NAME="$(date -u +%Y%m%dT%H%M%SZ)-${LABEL}"
 
 echo "==> Snapshotting root as ${NAME}..."
@@ -96,7 +99,7 @@ block="$(mktemp)"
         echo "/HoltOS snapshot: ${snap_label} (${ts})"
         echo "    protocol: linux"
         echo "    path: boot():/holtos-snapshots/${snap_name}/vmlinuz-linux"
-        echo "    cmdline: root=UUID=${ROOT_UUID} rootflags=subvol=@snapshots/${snap_name} rw quiet"
+        echo "    cmdline: root=UUID=${ROOT_UUID} rootflags=subvol=@snapshots/${snap_name} rw quiet${CMDLINE_EXTRA:+ $CMDLINE_EXTRA}"
         echo "    module_path: boot():/holtos-snapshots/${snap_name}/initramfs-linux.img"
     done < "$SNAP_LOG"
     echo
