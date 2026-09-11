@@ -5,6 +5,22 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+- **Second fresh install from a rebuilt ISO confirmed every fix from the
+  first VM run**: pacman keyring present and `pacman -S` works (backstop
+  unit's condition unmet — the chroot init succeeded once the tmpfs unit
+  was gone); `holtos-first-boot-apps` and `homelab-sync-arr-keys` ran on
+  first boot, and first-boot-apps installed The Den v0.1.0-alpha (sysusers,
+  venv, pip, alembic, service active) and The Den Client end to end;
+  Finished page's "Restart now" visible, ticked, and Done rebooted the
+  machine; Limine entry and EFI label read `HoltOS`.
+- Limine boot entry and `efibootmgr` label renamed from the pre-rename
+  `homelab-os` to `HoltOS`.
+- The updater tray, `holtos-first-boot-apps`, and `homelab-sync-arr-keys`
+  are now gated on `/run/archiso` not existing, so none of them start on
+  the live ISO (the tray was appearing in the live session). Committed
+  after the last ISO build — not yet verified in a built image.
+- Direction change: the container stack is being removed and The Den
+  vendored into the image at build time — see `PLAN.md`.
 - **First full VM test of the clean-machine build (2026-09-11)** — the
   handoff's steps 1-4 all done for real: pipeline from clean, fresh
   Erase-Disk install, Limine menu watched rendering (wallpaper, palette,

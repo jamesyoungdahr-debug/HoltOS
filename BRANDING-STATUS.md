@@ -3,6 +3,18 @@
 Working log for the "brand Arch into HoltOS" effort. Updated as each step
 lands. See `CHANGELOG.md` for the user-facing version of this same work.
 
+## 2026-09-11 — first full clean-machine build + two fresh installs
+
+Everything below this heading that was marked "not yet tested" has now
+been seen live unless listed here. Confirmed on screen: Limine menu
+(wallpaper, palette, snapshot entries — screenshots in the session
+handoff), Plymouth otter + ring, SDDM background, Plasma dark + accent +
+wallpaper, Konsole scheme, installer top/bottom bars, content-area
+stylesheet, tray icon under Wayland, branded syslinux splash added (was
+still stock Arch). Two installer items remain cosmetic-only: partition-bar
+labels render dark-on-dark, and the slideshow page has a white frame. See
+`HANDOFF.md` for the full bug list and `PLAN.md` for what's next.
+
 ## Limine branding + boot-environment snapshots — implemented, NOT yet tested
 
 Requested after (and deferred until) the full code review below. Two
