@@ -13,10 +13,16 @@ cd "$(dirname "$0")"
 WSL_ROOT="/mnt$(pwd)"
 mkdir -p local-repo
 
+# Must be set BEFORE the first wsl call, not just before `podman run`: Git
+# Bash rewrites any argument that looks like a POSIX path (/mnt/c/...)
+# into a Windows path before handing it to a native exe like wsl.exe, so
+# without this the Containerfile and build-context paths below arrive
+# inside WSL mangled and `podman build` fails to find either.
+export MSYS_NO_PATHCONV=1
+
 wsl -d Ubuntu -- sudo podman build -t aur-builder \
     -f "${WSL_ROOT}/containers/aur-builder.Containerfile" "${WSL_ROOT}"
 
-export MSYS_NO_PATHCONV=1
 wsl -d Ubuntu -- sudo podman run --rm \
     -v "${WSL_ROOT}/build-aur-packages.sh:/build-aur-packages.sh:Z" \
     -v "${WSL_ROOT}/local-repo:/tmp/pkgout:Z" \

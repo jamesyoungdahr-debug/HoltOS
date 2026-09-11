@@ -65,13 +65,16 @@ want newer versions of these five packages, not on every ISO build.
 ### 2. Build the `archiso-image` container
 
 ```bash
-wsl -d Ubuntu -- sudo podman build -t archiso-image \
+MSYS_NO_PATHCONV=1 wsl -d Ubuntu -- sudo podman build -t archiso-image \
   -f "/mnt$(pwd)/containers/archiso-image.Containerfile" "/mnt$(pwd)"
 ```
 
 (Run from Git Bash at the repo root, same path-derivation trick
 `build.sh` uses — see that script's own comment for why it's derived
-rather than hardcoded.) This is just Arch's own base image plus the
+rather than hardcoded. The `MSYS_NO_PATHCONV=1` prefix is not optional:
+Git Bash otherwise rewrites the `/mnt/c/...` arguments into Windows
+paths before `wsl.exe` ever sees them, and `podman build` inside WSL
+then can't find the Containerfile or the build context.) This is just Arch's own base image plus the
 `archiso` package — nothing else. Only needs rebuilding if you want to
 pick up newer Arch/archiso releases.
 
