@@ -5,6 +5,22 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+- **Updater: apps' OS dependencies are installed with the update.**
+  Real outage 2026-09-11: the tray moved a v0.1.0 install of The Den to
+  v0.2.0, whose built-in torrent client needs `libtorrent-rasterbar`'s
+  Python bindings, and the service died with "No module named
+  libtorrent". `holtos-update-apply` now reads `depends=(...)` from the
+  release's own PKGBUILD and `pacman -S --needed`s what's missing before
+  touching any files (a failed install aborts the update); the venv is
+  created with `--system-site-packages` (older venvs are opened in
+  place); deploy files (unit, sysusers, tmpfiles) are re-installed on
+  every update; settings a new release introduces are appended to
+  `/etc/the-den/the-den.env` with the release defaults (v0.2.0's
+  `STATE_DIR` — without it the app fell back to a relative path and hit
+  PermissionError). `build-vendor-apps.sh` fails the build if a vendored
+  app's depends aren't in `packages.x86_64`; `libtorrent-rasterbar` added.
+  Still broken upstream: The Den v0.2.0 reads `libtorrent.version`, which
+  Arch's 2.1 bindings don't have — fixed in the-den's repo, needs a tag.
 - **The container stack is gone** (PLAN.md step 1): the twelve Podman
   Quadlets, their launchers/icons, the Authentik blueprints, the
   `/var/mnt/tank` tmpfiles tree, secrets generation + the Calamares
