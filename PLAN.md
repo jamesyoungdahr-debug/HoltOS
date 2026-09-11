@@ -17,14 +17,14 @@ in `holtos-test` and the listed check — don't batch steps.
       release-tarball downloads; HoltOS is private, so every updater path
       except per-service `podman pull` is broken today. Either make the
       repo public (what was done for the-den) or add token support.
-- [ ] **Plex: stays or goes?** The Den manages the library; something
-      still has to play it.
+- [x] **Plex: goes** — removed with the rest of the stack on 2026-09-11.
+      Trivial to re-add as a single unit later if playback needs it.
 - [ ] **Snapshot semantics.** Booting a snapshot is a read-only rescue
       boot, not a rollback. Decide: document it as such, or add a
       "restore this snapshot" action (`btrfs subvolume snapshot` the
       read-only one to a new `@`, `set-default`, update Limine).
 
-## Step 1 — Strip the container stack
+## Step 1 — Strip the container stack — DONE 2026-09-11 (commit 8de9375)
 
 Remove, in one commit, everything that only existed for the stack:
 
@@ -50,7 +50,7 @@ Remove, in one commit, everything that only existed for the stack:
 **Check:** fresh install boots to SDDM, `systemctl --failed` is empty,
 no leftover `.container` units, `journalctl -p err -b` is quiet.
 
-## Step 2 — Vendor The Den into the image at build time
+## Step 2 — Vendor The Den into the image at build time — DONE 2026-09-11 (verification: see HANDOFF.md)
 
 Goal: a fresh install has The Den and The Den Client present and running
 from first boot with no network dependency, and the updater still

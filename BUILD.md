@@ -30,6 +30,12 @@ the AUR — no accounts, no API keys.
 
 ## The three things that have to happen, in order
 
+(Plus a fourth `build.sh` does for you every run: `build-vendor-apps.sh`
+fetches the latest tagged release of The Den and The Den Client into
+`archiso/airootfs/opt/holtos-vendor/`, and `customize_airootfs.sh` installs
+them inside the mkarchiso chroot — so a build needs network access to
+GitHub and PyPI as well as the pacman mirrors.)
+
 1. **Build `local-repo/`** — five AUR packages this profile needs that
    aren't in the official Arch repos, built once (and rebuilt only when
    you want to update them).

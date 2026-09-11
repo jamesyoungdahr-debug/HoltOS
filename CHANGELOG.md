@@ -5,6 +5,23 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+- **The container stack is gone** (PLAN.md step 1): the twelve Podman
+  Quadlets, their launchers/icons, the Authentik blueprints, the
+  `/var/mnt/tank` tmpfiles tree, secrets generation + the Calamares
+  credential capture, the arr-keys sync, `podman` on the installed
+  system, and the per-service/Authentik updater items. HoltOS is now the
+  base OS plus The Den.
+- **The Den and The Den Client ship inside the image** (PLAN.md step 2):
+  `build-vendor-apps.sh` (run by `build.sh`) fetches their latest tagged
+  release; `customize_airootfs.sh` installs both in the build chroot via
+  `holtos-update-apply vendor`, the same code the tray updater uses (now
+  split into `install_the_den`/`install_the_den_client` taking a local
+  tree, with `systemctl --now`/`daemon-reload` skipped when not booted).
+  `the-den.service` gets a `!/run/archiso` drop-in so it stays off the
+  live medium. `holtos-first-boot-apps` is retired.
+- Keyring backstop now gates on "no master secret key" via an
+  `ExecCondition` instead of the pubring file (which `pacman-key --init`
+  writes before generating the key).
 - **Second fresh install from a rebuilt ISO confirmed every fix from the
   first VM run**: pacman keyring present and `pacman -S` works (backstop
   unit's condition unmet — the chroot init succeeded once the tmpfs unit
