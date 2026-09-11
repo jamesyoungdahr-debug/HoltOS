@@ -47,8 +47,12 @@ ls -la out/*.iso
 # VMMS service then can't open it as a VM DVD attachment ("Access is
 # denied"). Grant read to Authenticated Users so Start-VM works without a
 # manual icacls fix after every rebuild. (unset so icacls, a native Windows
-# exe, gets a real Windows path instead of the literal POSIX one)
+# exe, gets a real Windows path instead of the literal POSIX one — but that
+# same conversion then also rewrites the /grant switch itself into
+# "C:/Program Files/Git/grant" (real failure, exit 87 "Invalid parameter",
+# hit on the first clean-machine build); the doubled slash is Git Bash's
+# documented escape for a literal leading-slash argument.)
 unset MSYS_NO_PATHCONV
 for iso in out/*.iso; do
-    icacls "$iso" /grant "Authenticated Users:(R)" > /dev/null
+    icacls "$iso" //grant "Authenticated Users:(R)" > /dev/null
 done
