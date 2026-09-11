@@ -50,6 +50,24 @@ for app in "${APPS[@]}"; do
     curl -fsSL "https://github.com/$repo/archive/refs/tags/${tag}.tar.gz" \
         | tar -xzf - -C "$VENDOR_DIR/$app" --strip-components=1
     printf '%s\t%s\t%s\n' "$app" "$tag" "$commit" >> "$VENDOR_DIR/manifest"
+
+    # The app's own PKGBUILD says which OS packages it needs, and the image
+    # must carry them: the vendor step runs in the mkarchiso chroot, which
+    # has no pacman keyring, so it cannot install anything itself. Fail the
+    # build now rather than ship an app that dies on first boot with a
+    # missing module (The Den v0.2.0 + libtorrent-rasterbar, seen live
+    # 2026-09-11). Same parse as holtos-update-apply's pkgbuild_depends().
+    if [ -f "$VENDOR_DIR/$app/PKGBUILD" ]; then
+        while read -r dep; do
+            [ -n "$dep" ] || continue
+            if ! grep -qxF "$dep" archiso/packages.x86_64; then
+                echo "build-vendor-apps: $app $tag depends on '$dep' but archiso/packages.x86_64 does not list it — add it and rebuild" >&2
+                exit 1
+            fi
+        done < <(awk '/^depends=\(/ { f = 1 } f { print } f && /\)/ { f = 0 }' "$VENDOR_DIR/$app/PKGBUILD" \
+                    | sed -e 's/^depends=//' -e "s/[()'\"]//g" -e 's/#.*//' \
+                    | tr ' ' '\n' | sed -e 's/[<>=].*//' | grep -v '^$')
+    fi
 done
 
 echo "Vendored into $VENDOR_DIR:"
