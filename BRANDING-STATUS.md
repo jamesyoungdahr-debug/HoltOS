@@ -9,20 +9,30 @@ Everything in this section is implemented and committed but has not been
 looked at on a real boot yet. Update each line to "confirmed on screen"
 or a bug as it is checked, in boot order:
 
-- Limine: pool-rings wallpaper (was corner otter) — not yet seen.
-- Plymouth: ring draws over 1.6 s then holds, ambient glow, wordmark — not yet seen.
-- SDDM: custom `holtos` QML theme (glass card, MultiEffect blur, opaque
-  twin under software rendering). Highest risk: a QML error here gives a
-  blank greeter; fallback is `Current=breeze` in `etc/sddm.conf.d/holtos.conf`
-  over SSH — not yet seen.
-- KSplash `org.holtos.desktop`: otter + drawn ring + lockup — not yet seen.
-- Plasma: `HoltOS.colors`, Nunito/JetBrains Mono fonts, KWin Blur +
-  Background Contrast, translucent default panel (layout script
-  `panel.opacity = "translucent"` — unverified API), pool-rings wallpaper,
-  Konsole/GTK tokens — not yet seen.
-- Installer: Glass QSS, mono step bar, Nunito nav, deep slideshow with
-  drawn dots; the two old cosmetic bugs (partition-bar labels,
-  slideshow white frame) should be gone — not yet seen.
+- Limine: pool-rings wallpaper — **confirmed on screen** (first Glass install's reboot).
+- Plymouth: ring draws + glow **confirmed on screen** (live boot). The wordmark
+  rendered as boxes — the lockup PNG had been rasterised without Nunito
+  in the container; re-rendered (commit 138f2d4), not yet seen in a build.
+- SDDM: custom `holtos` theme. First build FAILED to load (`font.pixelSize:
+  10.5` — Qt wants an int; SDDM fell back to its built-in theme, so the
+  machine stayed usable). Fixed; **confirmed on screen** via
+  `sddm-greeter-qt6 --test-mode` on the installed VM: glass card with the
+  blurred pool rings + otter behind it, gradient avatar, purple Log in,
+  quiet Restart / Shut down. Not yet seen as the real greeter after a boot.
+- KSplash `org.holtos.desktop`: naming the package in kdeglobals does NOT
+  select the splash; added `etc/xdg/ksplashrc`. `ksplashqml --test` was
+  inconclusive (dimmed desktop) — verify on the next real login.
+- Plasma: **confirmed on screen** — HoltOS palette applied (kdeglobals
+  carries the full HoltOS `[Colors:*]` groups), Nunito on panel/clock/
+  labels, pool-rings wallpaper, translucent+blurred panel, lock screen
+  branded. KWin Blur/Background Contrast are Plasma 6 defaults (no keys
+  needed). The layout script's `panel.opacity` did not produce a
+  `panelOpacity` key — likely not an API; adaptive default looks right.
+- Installer: **confirmed on screen** — mono step bar with purple marker,
+  Nunito nav, raised inputs, hairline buttons, deep slideshow with drawn
+  dots (white frame gone). Partition-bar first-line labels are STILL dark:
+  Calamares paints them with a hardcoded `Qt::black`
+  (PartitionLabelsView.cpp), unfixable from QSS — needs a Calamares patch.
 - Updater copy ("Everything's fine.") — not yet seen.
 
 Contrast to check per §7 of the brief: ink-55 (#8C8C8C) step names on

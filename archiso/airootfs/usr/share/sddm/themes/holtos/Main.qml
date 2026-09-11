@@ -108,9 +108,9 @@ Item {
             fillMode: Image.PreserveAspectFit
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            anchors.rightMargin: -30
-            anchors.bottomMargin: -50
-            opacity: 0.09
+            anchors.rightMargin: -80
+            anchors.bottomMargin: -70
+            opacity: 0.07
             asynchronous: true
         }
     }
@@ -237,7 +237,7 @@ Item {
                         text: (sddm.hostName || "holtos").toUpperCase()
                         color: Qt.rgba(1, 1, 1, 0.42)
                         font.family: "JetBrains Mono"
-                        font.pixelSize: 10.5
+                        font.pixelSize: 11
                         font.letterSpacing: 2.2
                     }
                 }

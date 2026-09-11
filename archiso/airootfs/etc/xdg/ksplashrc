@@ -1,0 +1,7 @@
+# System-wide default splash: naming org.holtos.desktop in kdeglobals
+# (LookAndFeelPackage) does NOT set the splash theme — only applying the
+# package through the look-and-feel KCM writes ksplashrc, and a fresh
+# install never does that. Confirmed live 2026-09-11: ksplashrc was unset
+# on a fresh install and the stock Breeze splash ran.
+[KSplash]
+Theme=org.holtos.desktop
