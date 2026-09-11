@@ -25,7 +25,7 @@ logo.sprite.SetPosition(logo.x, logo.y, 10000);
 // runs 0 → 1 over ~1.6 s with an ease-out curve, then stays complete.
 dot.image = Image("dot.png");
 dot.count = 12;
-dot.radius = 34;
+dot.radius = 46;
 ring.center_x = Window.GetWidth() / 2;
 ring.center_y = logo.y + logo.image.GetHeight() + 90;
 
