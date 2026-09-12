@@ -145,11 +145,20 @@ Windows with WSL2 Ubuntu + podman:
 
 The image is a standard archiso hybrid ISO. Any raw/"DD image" write
 works: `dd`, balenaEtcher, Rufus in **DD image mode** (not ISO mode).
-Ventoy is supported too: the installer's `locate-airootfs` step finds
-the ISO wherever Ventoy exposed it (`/dev/mapper/ventoy`) before
-unpacking, so Ventoy's normal mode should work; use GRUB2 mode if the
-live session fails to come up at all. If the installer still reports
-that `airootfs.sfs` cannot be found, its log shows every device it tried.
+Ventoy works too (normal mode).
+
+**Runs from RAM when it can.** archiso's initramfs defaults to
+`copytoram=auto`: booted from anything but an optical drive, on a
+machine whose available memory exceeds the image size plus 2 GiB
+(roughly 4 GB of RAM for this image), the whole squashfs is copied into
+RAM at boot and the stick is unmounted — the live session and the
+installer then run entirely from memory, and the stick can even be
+removed. With less RAM it runs from the stick directly. The installer's
+`locate-airootfs` step (right before unpackfs) handles both cases, plus
+Ventoy's mapped device and an unmounted stick; if it still cannot find
+`airootfs.sfs`, its log lists every device it tried. Force one
+behaviour with `copytoram=y` or `copytoram=n` on the kernel command
+line (press `e` on the boot entry).
 
 ## What's been validated
 

@@ -1,18 +1,22 @@
 #!/usr/bin/env bash
 # Calamares shellprocess (dontChroot: true — runs in the LIVE session),
 # right before unpackfs. unpackfs.conf hard-codes the live medium's
-# squashfs at /run/archiso/bootmnt/arch/x86_64/airootfs.sfs — the path
-# the archiso initramfs hook mounts it at when booted from a plainly
-# written (dd / Rufus DD mode / Etcher) USB stick or a DVD. Booted other
-# ways the file ends up somewhere else and Calamares failed with
-# "airootfs.sfs missing" on the very first real-hardware attempt
-# (2026-09-11, Ventoy). Cases handled here:
-#   - copytoram: the hook copies the sfs to /run/archiso/copytoram/ and
-#     unmounts bootmnt;
-#   - Ventoy and other loop-style boots: the ISO is exposed as a block
-#     device (/dev/mapper/ventoy, /dev/loop*) that is not, or no longer,
-#     mounted at bootmnt;
-#   - a labelled HOLTOS_* medium that is simply not mounted.
+# squashfs at /run/archiso/bootmnt/arch/x86_64/airootfs.sfs — where the
+# archiso initramfs hook mounts the medium. The very first real-hardware
+# install (2026-09-11, USB stick) failed with "airootfs.sfs missing"
+# because of the hook's copytoram=auto DEFAULT: when the medium is not
+# an optical drive and MemAvailable exceeds the image size + 2 GiB, it
+# copies the sfs to /run/archiso/copytoram/, then UNMOUNTS and REMOVES
+# /run/archiso/bootmnt. Every USB boot on a machine with enough RAM hits
+# this; the VM never did because it boots from a virtual DVD. Also note
+# mkarchiso empties the airootfs' /boot, so the kernel unpackfs.conf
+# copies from the medium is otherwise only in /usr/lib/modules/.
+# Cases handled here, in order:
+#   - copytoram: link the RAM copy of the sfs and the kernel from
+#     /usr/lib/modules (works even if the stick was pulled);
+#   - the ISO exposed as a block device (Ventoy's /dev/mapper/ventoy,
+#     loop devices, a HOLTOS_* labelled stick/DVD) that is not mounted;
+#   - the medium already mounted elsewhere (e.g. by a file manager).
 # Whatever is found is mounted or symlinked so unpackfs.conf's fixed
 # paths resolve. Fails loudly, listing what it looked at, so the
 # Calamares log (and the error dialog) shows the real reason.
@@ -34,15 +38,22 @@ echo "    cmdline: $(cat /proc/cmdline)"
 findmnt "$BOOTMNT" 2>/dev/null || echo "    $BOOTMNT is not a mountpoint"
 ls -la /run/archiso 2>/dev/null | sed 's/^/    /'
 
-# Case 1: copytoram — the sfs is already in RAM; the kernel is still in
-# the live root's /boot (mkarchiso copies it out of airootfs/boot, it
-# does not remove it).
+# Case 1: copytoram — the sfs is already in RAM. The kernel: mkarchiso
+# empties /boot in the airootfs, but the linux package's own copy at
+# /usr/lib/modules/<running kernel>/vmlinuz is still there (it is what
+# mkinitcpio's pacman hook normally copies to /boot).
 if [ -f /run/archiso/copytoram/airootfs.sfs ]; then
     echo "==> copytoram boot: linking /run/archiso/copytoram/airootfs.sfs into $BOOTMNT"
     mkdir -p "$BOOTMNT/arch/x86_64" "$BOOTMNT/arch/boot/x86_64"
     ln -sf /run/archiso/copytoram/airootfs.sfs "$BOOTMNT/$SFS_REL"
-    [ -f "$BOOTMNT/$KERNEL_REL" ] || ln -sf /boot/vmlinuz-linux "$BOOTMNT/$KERNEL_REL"
+    if [ ! -f "$BOOTMNT/$KERNEL_REL" ]; then
+        kernel="/usr/lib/modules/$(uname -r)/vmlinuz"
+        [ -f "$kernel" ] || kernel=/boot/vmlinuz-linux
+        ln -sf "$kernel" "$BOOTMNT/$KERNEL_REL"
+        echo "    kernel: $kernel"
+    fi
     have_medium && { echo "    ok"; exit 0; }
+    echo "    RAM copy present but kernel not found — trying the medium itself"
 fi
 
 # Case 2: a block device carrying the ISO (Ventoy's dm-mapped ISO first,

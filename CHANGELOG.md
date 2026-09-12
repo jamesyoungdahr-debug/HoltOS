@@ -5,16 +5,28 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
-- **Installer works from Ventoy.** The first real-hardware install
-  (2026-09-11, Ventoy stick) failed in unpackfs with "airootfs.sfs
-  missing": `unpackfs.conf` hard-codes
-  `/run/archiso/bootmnt/arch/x86_64/airootfs.sfs`, which is only where a
-  dd-written stick lands. New `shellprocess@locate-airootfs`
+- **Installer works from a USB stick on machines with enough RAM.** The
+  first real-hardware install (2026-09-11, Ventoy stick, then GRUB2
+  mode — both the same) failed in unpackfs with "airootfs.sfs missing".
+  Root cause is not Ventoy: current mkinitcpio-archiso defaults to
+  `copytoram=auto`, which on a non-optical medium with MemAvailable >
+  image + 2 GiB copies the squashfs into RAM and then unmounts *and
+  removes* `/run/archiso/bootmnt` — the fixed path `unpackfs.conf`
+  reads from. The Hyper-V VM never hit it because it boots from a
+  virtual DVD, which auto excludes. New `shellprocess@locate-airootfs`
   (`homelab-locate-airootfs.sh`, live session, right before unpackfs)
-  links the copytoram copy, or mounts `/dev/mapper/ventoy`, loop
-  devices, a `HOLTOS_*` labelled medium, or bind-mounts an
+  links the RAM copy plus the kernel from `/usr/lib/modules/` (mkarchiso
+  empties the airootfs' `/boot`), or else mounts `/dev/mapper/ventoy`,
+  loop devices, a `HOLTOS_*` labelled medium, or bind-mounts an
   already-mounted copy; if nothing is found it fails with `lsblk` output
-  and a hint. Not yet verified on the Ventoy stick — needs a rebuild.
+  and a hint. The automatic RAM check is kept: it is exactly the "load
+  into RAM when there is enough memory, else run from the stick"
+  behaviour wanted. Verified on real hardware: pending.
+- **Live medium compressed with zstd instead of xz** (squashfs level 19,
+  initramfs too): the live session decompresses every file it reads, and
+  zstd decompresses several times faster than xz, so the live desktop
+  and the installer are noticeably snappier from USB; the image grows
+  by roughly 10-15 %.
 - **Build fix: NVIDIA staging no longer kills the image build.** Inside
   the mkarchiso chroot pacman cannot map the staging cache dir to a
   mount point, so `CheckSpace` aborted the download with a bogus "not
