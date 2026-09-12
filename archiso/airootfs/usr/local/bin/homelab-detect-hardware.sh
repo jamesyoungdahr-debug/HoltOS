@@ -57,6 +57,26 @@ else
     echo "## No NVIDIA GPU — nothing to install" >> "$LOG"
 fi
 
+# --- AMD / Intel (Mesa is in the image; nothing to install) --------------
+# Log what the in-image stack actually reports for this GPU so a real
+# machine's hardware.log answers "is hardware decode/Vulkan there?" without
+# anyone having to run the tools by hand. Strix Halo (Ryzen AI Max, RDNA
+# 3.5, gfx1151) is the first real AMD target (Liam, 2026-09-12): amdgpu +
+# RADV + VA-API through Mesa cover it, and Plasma gets HDR/VRR from
+# amdgpu's KMS. This runs in the chroot before first boot, so the DRM
+# node may not be usable yet; every probe is best-effort.
+if lspci -n -d 1002: 2>/dev/null | grep -qE ' 03(00|02): '; then
+    {
+        echo "## AMD GPU present (Mesa RADV + VA-API from the image)"
+        lspci -nn -d 1002: | grep -E 'VGA|Display|3D' || true
+        command -v vainfo >/dev/null && (vainfo --display drm 2>/dev/null | grep -E 'Driver version|VAProfile' | head -20 || echo "vainfo: no usable DRM node in the install chroot (check after first boot)")
+        command -v vulkaninfo >/dev/null && (vulkaninfo --summary 2>/dev/null | grep -E 'deviceName|driverName|apiVersion' | head -6 || echo "vulkaninfo: not usable in the install chroot (check after first boot)")
+    } >> "$LOG" 2>&1 || true
+fi
+if lspci -n -d 8086: 2>/dev/null | grep -qE ' 03(00|02): '; then
+    { echo "## Intel GPU present (Mesa ANV + VA-API from the image)"; lspci -nn -d 8086: | grep -E 'VGA|Display' || true; } >> "$LOG" 2>&1 || true
+fi
+
 # The staged packages are only useful at install time; don't carry
 # hundreds of MB of somebody else's driver on every installed system.
 rm -rf "$DRIVERS"

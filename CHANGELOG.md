@@ -5,6 +5,33 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.0.3-alpha] - 2026-09-12
+
+Same day as 0.0.2-alpha. Everything below was built and verified in the
+Hyper-V VM during the afternoon; this is the first release the updater
+can deliver whole to an existing install.
+
+- **Every HoltOS component updates from HoltOS' own sources** (Liam,
+  2026-09-12: "we shouldn't be updating from any Arch sources but our
+  own"). The config update used to copy only the `homelab-*.sh` install
+  scripts; it now syncs a whitelist of everything HoltOS owns on an
+  installed system from the release tarball — the `holtos-*` tools,
+  `holtos-*.service` units (new ones enabled), autostart entries,
+  `kwinrc`/About/splash defaults, `os-release`, the pacman hook, the SDDM
+  and Plymouth themes, Kvantum theme, colour scheme, icons, look-and-feel,
+  wallpapers, skel — then re-themes Limine, rescans other OSes and
+  regenerates the snapshot submenu. The Limine font is committed to the
+  repo pre-converted (`tools/convert-limine-font.sh`) instead of being
+  built from the `terminus-font` Arch package, and the theming moved to
+  `homelab-limine-theme.sh` so it can be reapplied. HoltOS-built packages
+  (glass forks, Calamares, Limine tools, ZFS) are published as a pacman
+  repository on the GitHub release tagged `packages`
+  (`tools/publish-packages.sh`); `[homelab]` in pacman.conf lists it after
+  the build-time file:// server, and the config update adds it to older
+  installs, so `pacman -Syu` picks up new fork builds from HoltOS.
+- **Hardware log for AMD/Intel GPUs**: detection now records the GPU and
+  what VA-API (`vainfo`) and Vulkan (`vulkaninfo`) report, for the Strix
+  Halo test; `libva-utils` and `vulkan-tools` added.
 - **The boot menu looks like HoltOS now** (Liam: "make Limine more
   modern"). Limine 12's theming keys, all set by
   `homelab-limine-install.sh`: `interface_branding` shows "HoltOS

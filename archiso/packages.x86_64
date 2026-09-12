@@ -43,9 +43,6 @@ linux-headers
 # is redundant with our own homelab-limine-install.sh anyway.
 limine
 limine-entry-tool
-# terminus-font: source of the Limine menu font (ter-124b, converted to a
-# raw bitmap at build time in customize_airootfs.sh).
-terminus-font
 
 # KDE Plasma desktop
 plasma-desktop
@@ -185,3 +182,8 @@ vulkan-radeon
 vulkan-intel
 intel-media-driver
 libva-mesa-driver
+# libva-utils (vainfo) and vulkan-tools (vulkaninfo): what
+# homelab-detect-hardware.sh logs for AMD/Intel GPUs into hardware.log,
+# and what a support check runs first on a real machine (Strix Halo).
+libva-utils
+vulkan-tools

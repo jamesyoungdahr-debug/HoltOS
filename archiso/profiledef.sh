@@ -5,7 +5,7 @@ iso_name="holtos"
 iso_label="HOLTOS_$(date --date="@${SOURCE_DATE_EPOCH:-$(date +%s)}" +%Y%m)"
 iso_publisher="HoltOS <https://github.com/jamesyoungdahr-debug/HoltOS>"
 iso_application="HoltOS Live/Install Medium"
-iso_version="0.0.2-alpha"
+iso_version="0.0.3-alpha"
 install_dir="arch"
 buildmodes=('iso')
 bootmodes=('bios.syslinux'
@@ -25,6 +25,7 @@ file_permissions=(
   ["/usr/local/bin/homelab-limine-install.sh"]="0:0:755"
   ["/usr/local/bin/homelab-fix-mkinitcpio.sh"]="0:0:755"
   ["/usr/local/bin/homelab-limine-sync.sh"]="0:0:755"
+  ["/usr/local/bin/homelab-limine-theme.sh"]="0:0:755"
   ["/usr/local/bin/homelab-cleanup-live.sh"]="0:0:755"
   ["/usr/local/bin/homelab-detect-hardware.sh"]="0:0:755"
   ["/usr/local/bin/homelab-locate-airootfs.sh"]="0:0:755"
