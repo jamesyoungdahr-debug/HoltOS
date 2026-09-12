@@ -1,9 +1,19 @@
 #!/usr/bin/env bash
 # Builds local-repo/ — the AUR packages (calamares, zfs-dkms, zfs-utils,
-# limine-mkinitcpio-hook, limine-entry-tool, klassy) archiso/pacman.conf's
-# [homelab] repo serves during the actual ISO build (build.sh). Run this
-# once before the first build.sh, and again any time those packages need
-# updating — it's safe to rerun, repo-add just refreshes the database.
+# limine-mkinitcpio-hook, limine-entry-tool, klassy) and HoltOS' own
+# packages (packaging/*) that archiso/pacman.conf's [homelab] repo serves
+# during the actual ISO build (build.sh). Run this once before the first
+# build.sh, and again any time those packages need updating — it's safe to
+# rerun, repo-add just refreshes the database.
+#
+# Rebuilding everything takes a long time (calamares, zfs). To rebuild a
+# subset:
+#   AUR_PKGS=none HOLTOS_PKGS=holtos-glass-effect ./build-local-repo.sh
+#
+# HoltOS' own packages are built from GitHub unless HOLTOS_SRC points at a
+# directory containing local checkouts of the same names (default: the
+# parent of this repo, i.e. C:\projects\holtos-glass-effect next to
+# C:\projects\holtos), so local, unpushed work can go straight into an ISO.
 #
 # Run from Git Bash on Windows, same as build.sh — see that script's own
 # comment for why the WSL-side path is derived rather than hardcoded.
@@ -11,6 +21,8 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 WSL_ROOT="/mnt$(pwd)"
+HOLTOS_SRC="${HOLTOS_SRC:-$(cd .. && pwd)}"
+WSL_SRC="/mnt${HOLTOS_SRC}"
 mkdir -p local-repo
 
 # Must be set BEFORE the first wsl call, not just before `podman run`: Git
@@ -24,7 +36,12 @@ wsl -d Ubuntu -- sudo podman build -t aur-builder \
     -f "${WSL_ROOT}/containers/aur-builder.Containerfile" "${WSL_ROOT}"
 
 wsl -d Ubuntu -- sudo podman run --rm \
+    -e "AUR_PKGS=${AUR_PKGS:-}" \
+    -e "HOLTOS_PKGS=${HOLTOS_PKGS:-}" \
+    -e "HOLTOS_SRC=${WSL_SRC}" \
     -v "${WSL_ROOT}/build-aur-packages.sh:/build-aur-packages.sh:Z" \
+    -v "${WSL_ROOT}/packaging:/pkgbuilds:Z" \
+    -v "${WSL_SRC}:/src:Z" \
     -v "${WSL_ROOT}/local-repo:/tmp/pkgout:Z" \
     aur-builder \
     bash /build-aur-packages.sh

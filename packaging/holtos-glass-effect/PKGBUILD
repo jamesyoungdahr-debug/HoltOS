@@ -1,0 +1,42 @@
+# HoltOS Glass — the KWin blur effect HoltOS owns (fork of KWin 6.7's blur
+# plus features ported from Better Blur). Source lives in its own repo:
+# https://github.com/jamesyoungdahr-debug/holtos-glass-effect
+#
+# Built by build-aur-packages.sh into local-repo/ like the AUR packages.
+# For local development set HOLTOS_SRC to a directory containing a
+# checkout named holtos-glass-effect (build-local-repo.sh mounts
+# ../ there by default) and the PKGBUILD clones from that instead of
+# GitHub, so an uncommitted-to-GitHub tree can be built into an ISO.
+pkgname=holtos-glass-effect
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="HoltOS Glass: KWin background blur effect with force-blur, rounded corners and contrast control"
+arch=(x86_64)
+url="https://github.com/jamesyoungdahr-debug/holtos-glass-effect"
+license=(GPL-3.0-or-later)
+depends=(kwin libxcb kdecoration kcmutils kconfig kcoreaddons ki18n kwindowsystem libepoxy qt6-base)
+# vulkan-headers, wayland, libdrm, qt6-declarative: KWinConfig.cmake find_dependency()s them.
+makedepends=(git cmake extra-cmake-modules qt6-tools qt6-declarative vulkan-headers wayland libdrm pkgconf)
+_src="${HOLTOS_SRC:+file://${HOLTOS_SRC}/${pkgname}}"
+source=("${pkgname}::git+${_src:-${url}.git}")
+sha256sums=('SKIP')
+# No -debug split package: nothing in the image consumes it.
+options=(!debug)
+
+pkgver() {
+    cd "${pkgname}"
+    printf '%s.r%s.%s' "$(grep -oP 'set\(PROJECT_VERSION "\K[^"]+' CMakeLists.txt)" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+build() {
+    cmake -B build -S "${pkgname}" \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DHOLTOSGLASS_WAYLAND=ON \
+        -DHOLTOSGLASS_X11=OFF
+    cmake --build build
+}
+
+package() {
+    DESTDIR="${pkgdir}" cmake --install build
+}

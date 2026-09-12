@@ -1,0 +1,116 @@
+HoltOS — running context file (plain text, kept current by the agent)
+=====================================================================
+Last updated: 2026-09-12 (early morning)
+Read this first when resuming. Newest state at the top of each section.
+
+WHAT HOLTOS IS
+--------------
+Arch-based archiso + Calamares + Limine distro with KDE Plasma 6.7.
+Repo: C:\projects\holtos  (GitHub jamesyoungdahr-debug/HoltOS, private, branch master)
+Docs in repo: README.md, BUILD.md, PLAN.md, HANDOFF.md, CHANGELOG.md, BRANDING-STATUS.md
+Owner: Liam (GitHub jamesyoungdahr-debug, git user Vectorly)
+
+CURRENT STATE (2026-09-12)
+--------------------------
+- ISO build 8 is the current good image: out/holtos-0.0.1-alpha-x86_64.iso
+  Copies on the Desktop: holtos-0.0.1-alpha-x86_64-zstd.iso (build 8),
+  holtos-0.0.1-alpha-x86_64.iso (build 7).
+- Real hardware: build 7/8 boot from a Ventoy stick and install. Confirmed
+  by Liam ("the build works").
+- The earlier real-hardware failure ("airootfs.sfs missing") was archiso's
+  copytoram=auto default (image copied to RAM, boot mount removed), fixed
+  by the installer step shellprocess@locate-airootfs. Not Ventoy's fault.
+- Live medium is zstd-compressed now (faster live session from USB).
+- master is pushed through e31b4b3. Uncommitted in the working tree:
+  build-aur-packages.sh / build-local-repo.sh (HoltOS packages phase),
+  packaging/holtos-glass-effect/PKGBUILD, this file.
+
+IN PROGRESS: "FORK KDE" — HOLTOS-OWNED GLASS
+--------------------------------------------
+Liam does not like the current glass look (Klassy 70 % title bars, Kvantum
+70 % windows, KWin blur 11) and wants full control, so the desktop chrome
+is being forked into HoltOS-owned code built by our pipeline:
+
+1. holtos-glass-effect  (C:\projects\holtos-glass-effect, git, local only,
+   NOT yet on GitHub). A KWin effect forked from KWin 6.7.5's built-in
+   blur (src/plugins/blur) and built OUT OF TREE against the installed
+   KWin headers (Arch's kwin package ships them). Plugin id "holtosglass";
+   config group [Effect-holtosglass]; replaces stock blur
+   (kwinrc: blurEnabled=false, holtosglassEnabled=true).
+   Status: DONE (milestone 1, 2026-09-12 06:28): the unmodified fork
+   builds and packages — local-repo/holtos-glass-effect-0.1.0.r5-*.pkg
+   (build attempt 5; fixes on the way: stale pacman db, Vulkan/wayland/
+   libdrm makedepends, link libxcb, K_PLUGIN_CLASS inside namespace).
+   Feature port in progress in the working tree (kcfg written, blur.h
+   members, colour matrix with brightness+tint, reconfigure reads all).
+   Planned features (port from Better Blur / kwin-effects-forceblur,
+   whose upstream stopped at Plasma 6.4 so it cannot be used directly):
+     - force blur behind EVERY window (not only apps that ask), incl.
+       decorations, menus; exclude list by window class
+     - brightness / contrast / saturation of the blurred background
+     - TINT: blend a colour (ink #171423) into the blur so text on
+       translucent windows stays readable on any wallpaper
+     - corner radius for windows without a decoration radius
+     - later: static/fake blur (blur wallpaper once, low GPU cost)
+   Reference sources: C:\projects\forks\kwin\kwin-6.7.5 (extracted parts),
+   C:\projects\forks\forceblur-ref (Better Blur v1.5.0 + main).
+   Key API facts learned: shader colorMatrix is applied as
+   color * matrix (translation in the LAST ROW of QMatrix4x4);
+   "#include \"sdf.glsl\"" in shaders resolves to :/opengl/sdf.glsl inside
+   the kwin process (fine out of tree); BorderRadius(qreal) ctor exists
+   (scene/borderradius.h); KWin 6.7 already rounds blur to the
+   decoration's border radius.
+
+2. holtos-window-decoration (C:\projects\holtos-window-decoration, full
+   clone of Klassy at tag v6.7.2, matches Plasma 6.7). Plan: rebrand
+   (plugin org.kde.klassy -> HoltOS id, name "HoltOS Glass"), bake in
+   HoltOS defaults (opacity, blur, corner radius, buttons), own the
+   desktoptheme (Plasma panel style) it ships. Not started beyond clone.
+   Settings kcfg: libbreezecommon/breezesettingsdata.kcfg.
+   KCM id kcm_klassydecoration; plugin OUTPUT_NAME org.kde.klassy
+   (kdecoration/CMakeLists.txt).
+
+3. Window contents stay on our Kvantum theme (HoltOSGlass, already ours)
+   with lower opacity once the tint in (1) guarantees readability.
+
+Build pipeline for the forks: build-local-repo.sh now also builds
+packaging/*/PKGBUILD ("HoltOS packages") with sources cloned from
+GitHub, or from local checkouts next to the holtos repo when
+HOLTOS_SRC is set (default ../ = C:\projects). Subset builds:
+  AUR_PKGS=none HOLTOS_PKGS=holtos-glass-effect ./build-local-repo.sh
+Logs: out/build-glass-effect-N.log. The builder image's package db was
+stale (404s) -> script now runs pacman -Syu first.
+
+NEXT STEPS (in order)
+---------------------
+1. [DONE 2026-09-12] holtos-glass-effect builds and packages into local-repo/.
+2. Port the features listed above (kcfg entries, blur.cpp, KCM .ui).
+3. Add the package to archiso/packages.x86_64, set /etc/xdg/kwinrc
+   (blurEnabled=false, holtosglassEnabled=true, [Effect-holtosglass]
+   defaults), rebuild ISO, test in VM holtos-test (install build 8 there
+   first — its live session is at the installer's Summary page / locked;
+   password liveuser).
+4. Klassy fork: rebrand + defaults + package (packaging/holtos-window-decoration).
+5. Create GitHub repos for both forks (public, so PKGBUILDs can clone
+   anonymously), push, switch PKGBUILDs' default source to GitHub.
+6. Then the other asks still open: "About this computer" page and power
+   options in System Settings; hardware-level optimisation (CPU/GPU
+   tuning, zram, AMD/Intel specifics); release v0.0.2-alpha (PLAN step 5).
+
+OPEN DECISIONS (Liam)
+---------------------
+- HoltOS repo visibility (updater needs anonymous access) — still private.
+- Snapshot semantics (rescue boot vs rollback).
+- Real NVIDIA machine test for hardware detection (PLAN step 7).
+
+HOW TO DRIVE THE TEST VM (Hyper-V "holtos-test")
+-------------------------------------------------
+Scratchpad C:\Users\Liam\AppData\Local\Temp\claude\C--projects-holtos\
+05bebaf1-5fd7-4a84-ab52-ae1495f17844\scratchpad\ has vmctl.sh
+(shot <png> | slow <text> | key <vk-code, Return=13> | keydown/keyup |
+click x y | dblclick x y | state), vm-attach-start.ps1 (attach newest
+out/*.iso, boot), vm-shutdown.ps1, vm-net.ps1 on|off. Run the .ps1 files
+elevated via Start-Process -Verb RunAs. Synthetic double-click does not
+open desktop icons; launch Calamares from Konsole: pkexec calamares.
+Installer coordinates at 1024x768: Next (977,145) on early pages,
+(977,61) once the window grows on Summary; Erase disk radio (20,351/361).
