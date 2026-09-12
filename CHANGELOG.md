@@ -5,6 +5,16 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+- **Installer works from Ventoy.** The first real-hardware install
+  (2026-09-11, Ventoy stick) failed in unpackfs with "airootfs.sfs
+  missing": `unpackfs.conf` hard-codes
+  `/run/archiso/bootmnt/arch/x86_64/airootfs.sfs`, which is only where a
+  dd-written stick lands. New `shellprocess@locate-airootfs`
+  (`homelab-locate-airootfs.sh`, live session, right before unpackfs)
+  links the copytoram copy, or mounts `/dev/mapper/ventoy`, loop
+  devices, a `HOLTOS_*` labelled medium, or bind-mounts an
+  already-mounted copy; if nothing is found it fails with `lsblk` output
+  and a hint. Not yet verified on the Ventoy stick — needs a rebuild.
 - **Build fix: NVIDIA staging no longer kills the image build.** Inside
   the mkarchiso chroot pacman cannot map the staging cache dir to a
   mount point, so `CheckSpace` aborted the download with a bogus "not

@@ -141,6 +141,16 @@ Windows with WSL2 Ubuntu + podman:
 ./build.sh               # every time — vendors The Den, builds the ISO into out/
 ```
 
+## Writing the ISO to a USB stick
+
+The image is a standard archiso hybrid ISO. Any raw/"DD image" write
+works: `dd`, balenaEtcher, Rufus in **DD image mode** (not ISO mode).
+Ventoy is supported too: the installer's `locate-airootfs` step finds
+the ISO wherever Ventoy exposed it (`/dev/mapper/ventoy`) before
+unpacking, so Ventoy's normal mode should work; use GRUB2 mode if the
+live session fails to come up at all. If the installer still reports
+that `airootfs.sfs` cannot be found, its log shows every device it tried.
+
 ## What's been validated
 
 See `HANDOFF.md` for the current verified/unverified state. As of
