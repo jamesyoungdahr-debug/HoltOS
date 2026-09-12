@@ -1,0 +1,15 @@
+[Unit]
+Description=HoltOS: delete root subvolumes left behind by a snapshot restore
+# holtos-btrfs-restore renames the running @ to @.old-<ts> and cannot
+# delete it while it is mounted; this finishes the job on the next boot.
+# Never on the live medium.
+ConditionPathExists=!/run/archiso
+After=local-fs.target
+Wants=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/holtos-btrfs-restore --cleanup
+
+[Install]
+WantedBy=multi-user.target

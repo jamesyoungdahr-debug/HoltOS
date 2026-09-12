@@ -104,8 +104,14 @@ The root filesystem is **Btrfs** (`@`, `@home`, `@cache`, `@log`,
 `@snapshots`) with a 1024 MiB ESP. `holtos-btrfs-snapshot` takes a
 read-only snapshot plus an ESP kernel copy and a Limine boot entry before
 every config/system update (and on demand from the tray), keeping the
-last five. Booting a snapshot entry gives a read-only rescue root — it is
-not a rollback.
+last five. Booting a snapshot entry gives a read-only rescue root.
+**Restoring** one is a real rollback: `holtos-btrfs-restore <name>` (tray:
+"Restore Snapshot...", or the prompt that appears when you boot a
+snapshot entry) keeps the current root as a `pre-restore` snapshot, swaps
+`@` for a writable copy of the chosen snapshot, puts that snapshot's
+kernel back as the main boot files, carries the snapshot/history logs
+over, and deletes the replaced root on the next boot. Only the root
+subvolume is restored; `@home`, `@log` and `@cache` are untouched.
 
 ## The Den
 
@@ -124,12 +130,10 @@ release's `.example`).
 A tray icon (`holtos-tray`) checks every 6 h for a new **tagged** HoltOS
 release and offers: update The Den / The Den Client, the config scripts,
 or system packages (`pacman -Syu`); roll back the config to the previous
-release; view history; create a snapshot now. Config/app updates are
-downloaded as GitHub release tarballs — never raw commits.
-
-> **Note:** the updater does anonymous `git ls-remote` and tarball
-> downloads. While this repo is private, the HoltOS config/rollback paths
-> cannot reach it (the-den and the-den-client are public). See `PLAN.md`.
+release; view history; create a snapshot now; restore a snapshot.
+Config/app updates are downloaded as GitHub release tarballs — never raw
+commits. The updater does anonymous `git ls-remote` and tarball
+downloads, which is why this repo is public.
 
 ## Building the ISO
 

@@ -20,10 +20,10 @@ in `holtos-test` and the listed check — don't batch steps.
       `holtos-update-check` then exits 1 (up to date).
 - [x] **Plex: goes** — removed with the rest of the stack on 2026-09-11.
       Trivial to re-add as a single unit later if playback needs it.
-- [ ] **Snapshot semantics.** Booting a snapshot is a read-only rescue
-      boot, not a rollback. Decide: document it as such, or add a
-      "restore this snapshot" action (`btrfs subvolume snapshot` the
-      read-only one to a new `@`, `set-default`, update Limine).
+- [x] **Snapshot semantics: real rollback** (Liam, 2026-09-12). Built as
+      `holtos-btrfs-restore` + tray "Restore Snapshot..." + snapshot-boot
+      notice; see CHANGELOG [Unreleased]. Booting a snapshot entry stays a
+      read-only rescue root, with the restore one click away.
 
 ## Step 1 — Strip the container stack — DONE 2026-09-11 (commit 8de9375)
 

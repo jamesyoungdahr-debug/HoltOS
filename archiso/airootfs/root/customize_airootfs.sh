@@ -35,6 +35,9 @@ systemctl enable bluetooth.service
 # Enabling here creates proper symlinks at image-build time instead.
 systemctl enable choose-mirror.service livecd-alsa-unmuter.service
 systemctl enable holtos-pacman-keyring-init.service
+# Finishes a snapshot restore on the next boot (deletes the replaced root
+# subvolume, which cannot be removed while it is the running root).
+systemctl enable holtos-btrfs-restore-cleanup.service
 
 # Stage the NVIDIA driver packages on the ISO WITHOUT installing them:
 # homelab-detect-hardware.sh installs them into the target at install

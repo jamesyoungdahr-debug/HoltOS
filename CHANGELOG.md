@@ -5,6 +5,26 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+- **Snapshots can be restored — a real rollback** (PLAN.md step 0's last
+  open decision, Liam 2026-09-12). New `holtos-btrfs-restore <name>`
+  (root) makes a retained read-only snapshot the system: it first keeps
+  the current root as a `<ts>-pre-restore` snapshot (ESP kernel copy +
+  Limine entry, subject to the usual 5-snapshot retention), renames `@`
+  to `@.old-<ts>`, creates a writable `@` from the snapshot, restores
+  that snapshot's kernel/initramfs as the ESP's main boot files, carries
+  the current `snapshots.log` / `history.log` / `kernel-cmdline-extra`
+  into the new root (the snapshot's own copies are frozen at its time),
+  regenerates the Limine menu, and logs a `restore` line. The replaced
+  root is deleted by the new boot-time
+  `holtos-btrfs-restore-cleanup.service`. Works from the live `@` or
+  from a booted snapshot (`--current`) because it operates on the Btrfs
+  top level (subvolid=5) it mounts itself. Only `@` is restored; `@home`,
+  `@log`, `@cache` stay. UI: tray "Restore Snapshot..." (list, confirm,
+  progress, reboot offer) and a login-time notice when the session is a
+  booted snapshot, offering to restore it. `holtos-btrfs-snapshot` gained
+  `--regen` (retention + Limine rewrite only) and `SNAP_LOG` /
+  `SNAPSHOTS_DIR` overrides for that. README updated.
+
 ## [0.0.2-alpha] - 2026-09-12
 
 First release carrying the 2026-09-11/12 work: the container stack is

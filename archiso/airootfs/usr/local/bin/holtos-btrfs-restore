@@ -1,0 +1,181 @@
+#!/usr/bin/env bash
+# Restores a HoltOS Btrfs snapshot as the system: the read-only snapshot
+# holtos-btrfs-snapshot took becomes the new @ root subvolume, so the next
+# boot of the normal "HoltOS" Limine entry runs that state — a real
+# rollback, not the read-only rescue boot the snapshot entries give.
+#
+#   holtos-btrfs-restore <snapshot-name>   restore that snapshot (see
+#                                          /var/lib/holtos/snapshots.log)
+#   holtos-btrfs-restore --current         restore the snapshot you are
+#                                          booted into right now
+#   holtos-btrfs-restore --cleanup         delete leftover @.old-* roots
+#                                          (run at boot by
+#                                          holtos-btrfs-restore-cleanup.service)
+#
+# How it works (the standard Btrfs rollback dance, done against the
+# filesystem's TOP LEVEL, subvolid=5, which this script mounts itself so
+# it works identically whether the running root is the live @ or a
+# read-only booted snapshot):
+#   1. snapshot the CURRENT @ read-only as <ts>-pre-restore, with its
+#      kernel copied to the ESP and a Limine entry, so the state being
+#      replaced is itself one click away (and evicted by the normal
+#      5-snapshot retention later);
+#   2. rename @ -> @.old-<ts> (allowed while mounted), then
+#      `btrfs subvolume snapshot` the chosen read-only snapshot to a NEW,
+#      writable @;
+#   3. put the ESP's main kernel/initramfs back to the copy taken with
+#      that snapshot, so kernel and /usr/lib/modules match again;
+#   4. carry the CURRENT snapshots.log / history.log / kernel-cmdline-extra
+#      into the new @ (the snapshot's own copies are frozen at its time
+#      and would forget every snapshot taken since — including the
+#      pre-restore one);
+#   5. regenerate the Limine snapshot menu; the @.old-* root is deleted
+#      on the next boot (it is the running root right now).
+# Only @ is touched: @home, @log, @cache stay as they are, same as every
+# other Btrfs rollback tool. Reboot to finish.
+set -euo pipefail
+
+SNAP_ROOT_MNT=/run/holtos/btrfs-top
+KEEP_SAFETY=1   # always take the pre-restore snapshot
+
+if [ "$(id -u)" -ne 0 ]; then
+    echo "holtos-btrfs-restore must run as root (use: pkexec holtos-btrfs-restore ...)" >&2
+    exit 1
+fi
+
+arg="${1:-}"
+[ -n "$arg" ] || { sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'; exit 1; }
+
+# Same ESP auto-detection as holtos-btrfs-snapshot / homelab-limine-install.sh.
+for candidate in /boot/efi /efi /boot; do
+    if mountpoint -q "$candidate" 2>/dev/null && [ -d "$candidate/EFI" -o -w "$candidate" ]; then
+        ESP="$candidate"
+        break
+    fi
+done
+: "${ESP:?Could not find a mounted EFI System Partition under /boot/efi, /efi, or /boot}"
+
+# findmnt gives "/dev/sda2[/@]" on a normal boot and
+# "/dev/sda2[/@snapshots/<name>]" when booted into a snapshot entry.
+ROOT_SRC="$(findmnt -no SOURCE /)"
+ROOT_DEV="${ROOT_SRC%%[*}"
+ROOT_SUBVOL="${ROOT_SRC#*[}"; ROOT_SUBVOL="${ROOT_SUBVOL%]}"
+[ "$(findmnt -no FSTYPE /)" = "btrfs" ] || { echo "root is not Btrfs — nothing to restore" >&2; exit 1; }
+
+mount_top() {
+    mkdir -p "$SNAP_ROOT_MNT"
+    if ! mountpoint -q "$SNAP_ROOT_MNT"; then
+        mount -o subvolid=5,rw "$ROOT_DEV" "$SNAP_ROOT_MNT"
+    fi
+}
+umount_top() { mountpoint -q "$SNAP_ROOT_MNT" && umount "$SNAP_ROOT_MNT" || true; }
+trap umount_top EXIT
+
+if [ "$arg" = "--cleanup" ]; then
+    mount_top
+    shopt -s nullglob
+    for old in "$SNAP_ROOT_MNT"/@.old-*; do
+        echo "==> Deleting leftover root ${old##*/}..."
+        btrfs subvolume delete "$old" || echo "    (still busy, will retry next boot)"
+    done
+    exit 0
+fi
+
+if [ "$arg" = "--current" ]; then
+    case "$ROOT_SUBVOL" in
+        /@snapshots/*) NAME="${ROOT_SUBVOL#/@snapshots/}" ;;
+        *) echo "Not booted into a snapshot (root is ${ROOT_SUBVOL}); name the snapshot to restore instead." >&2; exit 1 ;;
+    esac
+else
+    NAME="$arg"
+fi
+
+mount_top
+TOP="$SNAP_ROOT_MNT"
+SNAP="${TOP}/@snapshots/${NAME}"
+[ -d "$SNAP" ] || { echo "No such snapshot: ${NAME} (see snapshots.log)" >&2; exit 1; }
+[ "$(btrfs property get -ts "$SNAP" ro 2>/dev/null)" = "ro=true" ] || { echo "${NAME} is not a read-only snapshot — refusing" >&2; exit 1; }
+[ -f "${ESP}/holtos-snapshots/${NAME}/vmlinuz-linux" ] || { echo "No kernel copy for ${NAME} on the ESP — refusing (cannot guarantee a bootable result)" >&2; exit 1; }
+
+# The logs that describe the system live in @ (/var/lib is not its own
+# subvolume). Read the ones from the CURRENT @ — the newest truth — never
+# from a read-only booted snapshot's /var/lib.
+CUR_LIB="${TOP}/@/var/lib/holtos"
+mkdir -p "$CUR_LIB"
+TS="$(date -u +%Y%m%dT%H%M%SZ)"
+SAFETY="${TS}-pre-restore"
+
+echo "==> Restoring snapshot ${NAME} as the system root"
+
+if [ "$KEEP_SAFETY" -eq 1 ]; then
+    echo "==> Keeping the current system as snapshot ${SAFETY} first..."
+    btrfs subvolume snapshot -r "${TOP}/@" "${TOP}/@snapshots/${SAFETY}"
+    mkdir -p "${ESP}/holtos-snapshots/${SAFETY}"
+    cp "${ESP}/boot/vmlinuz-linux" "${ESP}/holtos-snapshots/${SAFETY}/vmlinuz-linux"
+    cp "${ESP}/boot/initramfs-linux.img" "${ESP}/holtos-snapshots/${SAFETY}/initramfs-linux.img"
+    printf '%s\t%s\t%s\n' "$(date -u +%FT%TZ)" "pre-restore" "$SAFETY" >> "${CUR_LIB}/snapshots.log"
+    chmod 644 "${CUR_LIB}/snapshots.log"
+fi
+
+echo "==> Swapping in ${NAME} as the new root subvolume..."
+mv "${TOP}/@" "${TOP}/@.old-${TS}"
+btrfs subvolume snapshot "$SNAP" "${TOP}/@"
+
+echo "==> Restoring that snapshot's kernel/initramfs as the main boot files..."
+cp "${ESP}/holtos-snapshots/${NAME}/vmlinuz-linux" "${ESP}/boot/vmlinuz-linux"
+cp "${ESP}/holtos-snapshots/${NAME}/initramfs-linux.img" "${ESP}/boot/initramfs-linux.img"
+
+echo "==> Merging the update/snapshot logs into the restored root..."
+NEW_LIB="${TOP}/@/var/lib/holtos"
+OLD_LIB="${TOP}/@.old-${TS}/var/lib/holtos"
+mkdir -p "$NEW_LIB"
+# Both logs are append-only audit trails keyed by a UTC timestamp in the
+# first column, so the union of the replaced root's copy and the
+# snapshot's copy, sorted, is the complete history (a plain copy of
+# either side loses lines: the snapshot's is frozen at its time, the
+# replaced root's may itself have been restored past some entries).
+for f in snapshots.log history.log; do
+    cat "${OLD_LIB}/${f}" "${NEW_LIB}/${f}" 2>/dev/null | sort -u > "${NEW_LIB}/${f}.merged"
+    mv "${NEW_LIB}/${f}.merged" "${NEW_LIB}/${f}"
+done
+# snapshots.log must only list subvolumes that still exist (retention on
+# either side may have evicted some).
+while IFS=$'\t' read -r ts label name; do
+    [ -n "$name" ] && [ -d "${TOP}/@snapshots/${name}" ] && printf '%s\t%s\t%s\n' "$ts" "$label" "$name"
+done < "${NEW_LIB}/snapshots.log" > "${NEW_LIB}/snapshots.log.merged"
+mv "${NEW_LIB}/snapshots.log.merged" "${NEW_LIB}/snapshots.log"
+# The kernel command-line extras are a property of THIS machine's
+# hardware, not of the snapshot: keep the replaced root's.
+[ -f "${OLD_LIB}/kernel-cmdline-extra" ] && cp "${OLD_LIB}/kernel-cmdline-extra" "${NEW_LIB}/kernel-cmdline-extra"
+printf '%s\t%s\t%s\t%s\n' "$(date -u +%FT%TZ)" "restore" "$NAME" "-" >> "${NEW_LIB}/history.log"
+chmod 644 "${NEW_LIB}/history.log" "${NEW_LIB}/snapshots.log" 2>/dev/null || true
+
+# If the restored root predates the pre-restore snapshot line above (it
+# does: we copied the log from the old @, which already had it), the
+# Limine menu regenerated from it lists both the restored snapshot and
+# the safety one. Retention applies as usual.
+echo "==> Regenerating the Limine snapshot menu..."
+SNAP_LOG="${NEW_LIB}/snapshots.log" SNAPSHOTS_DIR="${TOP}/@snapshots" \
+    /usr/local/bin/holtos-btrfs-snapshot --regen
+
+# Delete the replaced root now ONLY when it is not the running root
+# (booted from a snapshot entry: @ was never mounted). btrfs happily
+# deletes a mounted subvolume — verified the hard way on 2026-09-12: the
+# live session lost every binary the moment it was done ("cannot execute:
+# required file not found") — so on a normal boot the replaced root stays
+# as @.old-<ts> and holtos-btrfs-restore-cleanup.service removes it on
+# the next boot.
+if [ "$ROOT_SUBVOL" != "/@" ]; then
+    btrfs subvolume delete "${TOP}/@.old-${TS}" && echo "==> Old root removed"
+else
+    echo "==> Old root kept as @.old-${TS} until the next boot (it is the running system)"
+fi
+
+# Everything above must be on disk before anyone reboots or pulls the
+# plug: the log copies and the rename are ordinary writes that otherwise
+# sit in Btrfs's current transaction for up to 30 s (a forced power-off
+# right after the first live test lost exactly those).
+btrfs filesystem sync "$TOP"
+sync
+
+echo "==> Restore staged: ${NAME} is now the HoltOS root. Reboot to finish."

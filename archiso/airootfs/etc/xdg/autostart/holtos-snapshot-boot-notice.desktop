@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=HoltOS Snapshot Notice
+Comment=When booted into a snapshot, offers to restore it as the system
+Exec=/usr/local/bin/holtos-snapshot-boot-notice
+Icon=holtos-logo
+NoDisplay=true

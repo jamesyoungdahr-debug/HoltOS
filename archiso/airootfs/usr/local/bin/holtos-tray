@@ -102,6 +102,7 @@ def main():
     menu.addAction("Update History", lambda: run("/usr/local/bin/holtos-update-history"))
     menu.addSeparator()
     menu.addAction("Create Snapshot Now", lambda: run("/usr/local/bin/holtos-snapshot-now"))
+    menu.addAction("Restore Snapshot...", lambda: run("/usr/local/bin/holtos-restore-snapshot"))
     menu.addSeparator()
     menu.addAction("Quit", app.quit)
     tray.setContextMenu(menu)

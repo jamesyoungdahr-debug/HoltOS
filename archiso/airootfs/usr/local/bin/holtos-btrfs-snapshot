@@ -20,10 +20,21 @@
 # an existing ext4 install.
 set -euo pipefail
 
+# `--regen` skips taking a snapshot and only runs retention + the Limine
+# menu rewrite from the log. holtos-btrfs-restore uses it after it has
+# added/removed snapshots itself (a restore runs with a possibly READ-ONLY
+# root — a booted snapshot — so it points SNAP_LOG/SNAPSHOTS_DIR at the
+# top-level Btrfs mount it holds instead of the running root's paths).
 KEEP=5
-LABEL="${1:?Usage: holtos-btrfs-snapshot <label>}"
-SNAP_LOG=/var/lib/holtos/snapshots.log
-SNAPSHOTS_DIR=/.snapshots
+REGEN_ONLY=0
+if [ "${1:-}" = "--regen" ]; then
+    REGEN_ONLY=1
+    LABEL=regen
+else
+    LABEL="${1:?Usage: holtos-btrfs-snapshot <label> | --regen}"
+fi
+SNAP_LOG="${SNAP_LOG:-/var/lib/holtos/snapshots.log}"
+SNAPSHOTS_DIR="${SNAPSHOTS_DIR:-/.snapshots}"
 
 if [ "$(id -u)" -ne 0 ]; then
     echo "holtos-btrfs-snapshot must run as root (use: pkexec holtos-btrfs-snapshot ...)" >&2
@@ -41,22 +52,26 @@ done
 
 ROOT_UUID="$(findmnt -no UUID /)"
 # Same install-time extras homelab-limine-install.sh put on the main entry.
-CMDLINE_EXTRA="$(tr '\n' ' ' < /var/lib/holtos/kernel-cmdline-extra 2>/dev/null || true)"
+CMDLINE_EXTRA="$(tr '\n' ' ' < "$(dirname "$SNAP_LOG")/kernel-cmdline-extra" 2>/dev/null || true)"
 CMDLINE_EXTRA="${CMDLINE_EXTRA% }"
-NAME="$(date -u +%Y%m%dT%H%M%SZ)-${LABEL}"
 
-echo "==> Snapshotting root as ${NAME}..."
-mkdir -p "$SNAPSHOTS_DIR"
-btrfs subvolume snapshot -r / "${SNAPSHOTS_DIR}/${NAME}"
+if [ "$REGEN_ONLY" -eq 0 ]; then
+    NAME="$(date -u +%Y%m%dT%H%M%SZ)-${LABEL}"
 
-echo "==> Copying current kernel/initramfs to the ESP..."
-mkdir -p "${ESP}/holtos-snapshots/${NAME}"
-cp /boot/vmlinuz-linux "${ESP}/holtos-snapshots/${NAME}/vmlinuz-linux"
-cp /boot/initramfs-linux.img "${ESP}/holtos-snapshots/${NAME}/initramfs-linux.img"
+    echo "==> Snapshotting root as ${NAME}..."
+    mkdir -p "$SNAPSHOTS_DIR"
+    btrfs subvolume snapshot -r / "${SNAPSHOTS_DIR}/${NAME}"
 
-mkdir -p "$(dirname "$SNAP_LOG")"
-printf '%s\t%s\t%s\n' "$(date -u +%FT%TZ)" "$LABEL" "$NAME" >> "$SNAP_LOG"
-chmod 644 "$SNAP_LOG"
+    echo "==> Copying current kernel/initramfs to the ESP..."
+    mkdir -p "${ESP}/holtos-snapshots/${NAME}"
+    cp /boot/vmlinuz-linux "${ESP}/holtos-snapshots/${NAME}/vmlinuz-linux"
+    cp /boot/initramfs-linux.img "${ESP}/holtos-snapshots/${NAME}/initramfs-linux.img"
+
+    mkdir -p "$(dirname "$SNAP_LOG")"
+    printf '%s\t%s\t%s\n' "$(date -u +%FT%TZ)" "$LABEL" "$NAME" >> "$SNAP_LOG"
+    chmod 644 "$SNAP_LOG"
+fi
+[ -f "$SNAP_LOG" ] || : > "$SNAP_LOG"
 
 # Retention: evict the oldest entries beyond KEEP — both the Btrfs
 # subvolume and its ESP kernel copy — then drop them from the log too.
@@ -127,4 +142,6 @@ else
     echo "==> WARNING: no limine.conf with HOLTOS SNAPSHOTS markers found under ${ESP} — skipping Limine entry (was Limine installed by an older version of homelab-limine-install.sh?)" >&2
 fi
 
-echo "==> Snapshot created: ${NAME}"
+if [ "$REGEN_ONLY" -eq 0 ]; then
+    echo "==> Snapshot created: ${NAME}"
+fi

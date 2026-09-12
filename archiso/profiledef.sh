@@ -46,4 +46,7 @@ file_permissions=(
   ["/usr/local/bin/holtos-rollback-config"]="0:0:755"
   ["/usr/local/bin/holtos-btrfs-snapshot"]="0:0:755"
   ["/usr/local/bin/holtos-snapshot-now"]="0:0:755"
+  ["/usr/local/bin/holtos-btrfs-restore"]="0:0:755"
+  ["/usr/local/bin/holtos-restore-snapshot"]="0:0:755"
+  ["/usr/local/bin/holtos-snapshot-boot-notice"]="0:0:755"
 )

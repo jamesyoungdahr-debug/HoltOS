@@ -1,0 +1,61 @@
+#!/bin/bash
+# Tray entry "Restore Snapshot...": pick one of the retained snapshots and
+# make it the system root (holtos-btrfs-restore), then offer a reboot.
+# Same yad progress/result pattern as holtos-rollback-config.
+ICON=/usr/share/icons/hicolor/scalable/apps/holtos-logo.svg
+SNAP_LOG=/var/lib/holtos/snapshots.log
+
+if [ ! -s "$SNAP_LOG" ]; then
+    yad --info --title="HoltOS Updater" --window-icon="$ICON" \
+        --text="No snapshots yet. Snapshots are taken before every config/system update, or from \"Create Snapshot Now\"." \
+        --button="Close:0"
+    exit 0
+fi
+
+# Newest first; columns: name (hidden key), when, label.
+rows=()
+while IFS=$'\t' read -r ts label name; do
+    [ -n "$name" ] || continue
+    rows=("$name" "$ts" "$label" "${rows[@]}")
+done < "$SNAP_LOG"
+
+choice="$(yad --list --title="HoltOS Updater" --image="$ICON" --window-icon="$ICON" \
+    --text="<b>Restore a snapshot as the system</b>\nThe current system is kept as a new snapshot first.\nOnly the root filesystem is restored; your home folder is untouched." \
+    --width=560 --height=320 --center \
+    --column="name:HD" --column="When (UTC)" --column="Taken before" \
+    --print-column=1 --separator="" \
+    "${rows[@]}" \
+    --button="Restore:0" --button="Cancel:1")"
+rc=$?
+[ "$rc" -eq 0 ] && [ -n "$choice" ] || exit 0
+
+yad --question --title="HoltOS Updater" --image=dialog-warning --window-icon="$ICON" \
+    --text="Restore <b>${choice}</b> and make it the system root?\n\nEverything installed or changed on the root filesystem since then is undone after the next reboot (files in /home are kept)." \
+    --button="Restore:0" --button="Cancel:1"
+[ $? -eq 0 ] || exit 0
+
+logfile="$(mktemp)"
+pkexec /usr/local/bin/holtos-btrfs-restore "$choice" 2>&1 | tee "$logfile" \
+    | stdbuf -oL sed -u 's/^==> /#/' \
+    | yad --progress --pulsate --auto-close --auto-kill \
+        --title="HoltOS Updater" --image="$ICON" --window-icon="$ICON" \
+        --text="Restoring snapshot..." --width=420 --center \
+        --no-buttons
+
+status=${PIPESTATUS[0]}
+if [ "$status" -ne 0 ]; then
+    detail="$(tail -8 "$logfile")"
+    yad --image=dialog-error --title="HoltOS Updater" --window-icon="$ICON" \
+        --width=520 --wrap \
+        --text="Restore failed (exit $status):\n\n${detail}" \
+        --button="Close:0"
+    rm -f "$logfile"
+    exit "$status"
+fi
+rm -f "$logfile"
+
+yad --question --title="HoltOS Updater" --image="$ICON" --window-icon="$ICON" \
+    --text="Snapshot restored. Reboot now to finish?" \
+    --button="Reboot:0" --button="Later:1"
+[ $? -eq 0 ] && systemctl reboot
+exit 0
