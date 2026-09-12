@@ -61,6 +61,11 @@ plasma-nm
 # battery widget and the Power KCM), and a task manager.
 kinfocenter
 power-profiles-daemon
+# python-gobject: powerprofilesctl (the daemon's CLI) is a Python script
+# importing gi.repository; without it the command tracebacks (seen live
+# 2026-09-12, build 9). The Plasma applet talks D-Bus directly and does
+# not need it, but the CLI is what scripts and support checks use.
+python-gobject
 plasma-systemmonitor
 ark
 print-manager

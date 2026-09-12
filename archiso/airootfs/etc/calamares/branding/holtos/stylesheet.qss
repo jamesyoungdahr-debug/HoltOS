@@ -130,12 +130,22 @@ QHeaderView::section {
     padding: 4px 8px;
 }
 
-/* Partition page: the "Current:" / "After:" bar labels are painted by the
-   partition module's own views from the palette, so they ignored the
-   QWidget colour and rendered dark-on-dark (seen live 2026-09-11). Target
-   the views by class name. */
-PartitionLabelsView, PartitionBarsView {
-    color: #FFFFFF;
+/* Partition page: the "Current:" / "After:" legend under each bar is
+   painted by PartitionLabelsView::drawLabel with HARDCODED pens —
+   Qt::black for the partition name, Qt::gray for the size line
+   (calamares src/modules/partition/gui/PartitionLabelsView.cpp) — so no
+   colour rule can reach it; the class-name rule tried on 2026-09-11 was
+   still dark-on-dark in build 9 (2026-09-12). The one thing a stylesheet
+   CAN change is the view's background, so the legend sits on a light
+   glass chip where black + grey text read. Verified: pending (next
+   install after this change). */
+PartitionLabelsView {
+    background-color: rgba(255, 255, 255, 0.88);
+    border: none;
+    border-radius: 8px;
+    padding: 4px;
+}
+PartitionBarsView {
     background-color: transparent;
     border: none;
 }
