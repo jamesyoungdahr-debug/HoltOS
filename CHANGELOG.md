@@ -56,6 +56,14 @@ All notable changes to HoltOS are logged here. Format loosely follows
   `assets/`; icon cache and desktop database are refreshed. Drafted by
   the local model. Verified in the VM: an in-place v0.4.4 update
   replaced the image-build placeholder icon and created the missing files.
+- **Login screen session picker.** The HoltOS greeter now shows "Session"
+  chips (Plasma / HoltOS Game Mode) whenever more than one session is
+  installed, preselecting SDDM's remembered last session. Drafted by the
+  local model; verified on screen in the VM.
+- **Installed systems no longer show the live medium's motd** ("Double-click
+  Install HoltOS..."); the Calamares cleanup step writes a one-line
+  welcome instead. Written by hand after two failed handoffs (the model
+  garbled the ANSI escape).
 - **README credits** everything HoltOS forks or ships, and notes that
   HoltOS was built with help from AI (Claude Fable 5.1 via Claude Code).
 

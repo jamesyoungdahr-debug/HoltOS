@@ -72,3 +72,10 @@ rm -f /etc/systemd/system/etc-pacman.d-gnupg.mount \
       /etc/systemd/system/multi-user.target.wants/pacman-init.service
 { pacman-key --init && pacman-key --populate archlinux; } \
     || echo "WARNING: pacman-key init/populate failed in chroot; holtos-pacman-keyring-init.service will retry on first boot" >&2
+
+# unpackfs copies the live ISO's /etc/motd onto the target verbatim, and it
+# ends with 'Double-click "Install HoltOS" on the desktop to launch the
+# installer' -- wrong on an installed system (seen live 2026-09-12 at the
+# Konsole/SSH login). Replace it with a one-liner. /etc/issue is fine as
+# is ("HoltOS \r (\l)").
+printf 'Welcome to \033[38;2;177;77;255mHoltOS\033[0m -- your media and gaming box. The Den runs as a service; open "The Den" from the app menu.\n\n' > /etc/motd

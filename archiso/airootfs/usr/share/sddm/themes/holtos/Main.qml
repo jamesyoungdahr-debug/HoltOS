@@ -14,7 +14,7 @@
    SDDM API used (Theme-API 2.0): sddm.login(user, password, sessionIndex),
    sddm.loginFailed/loginSucceeded, sddm.canReboot/reboot(),
    sddm.canPowerOff/powerOff(), sddm.hostName, userModel.lastUser /
-   model role "name", sessionModel.lastIndex, config.<theme.conf keys>.
+   model role "name", sessionModel.lastIndex/count/role "name", config.<theme.conf keys>.
 */
 import QtQuick
 import QtQuick.Controls.Basic
@@ -40,8 +40,12 @@ Item {
     property bool showUsernameField: false
     property string errorText: ""
 
+    // Chosen session (Plasma or HoltOS Game Mode); defaults to SDDM's
+    // remembered last session, which holtos-session-apply keeps sane.
+    property int sessionIndex: sessionModel.lastIndex >= 0 ? sessionModel.lastIndex : 0
+
     function currentSession() {
-        return sessionModel.lastIndex >= 0 ? sessionModel.lastIndex : 0
+        return root.sessionIndex
     }
 
     function doLogin() {
@@ -313,6 +317,60 @@ Item {
                     verticalAlignment: Text.AlignVCenter
                 }
                 onClicked: root.doLogin()
+            }
+
+            // Session picker: only shown when there is a choice (Plasma and
+            // HoltOS Game Mode). Drafted by the local model.
+            Column {
+                id: sessionPicker
+                width: parent.width
+                spacing: 8
+                visible: sessionModel.count > 1
+
+                Text {
+                    text: "SESSION"
+                    color: Qt.rgba(1, 1, 1, 0.42)
+                    font.family: "Nunito"
+                    font.pixelSize: 11
+                    font.letterSpacing: 1.5
+                }
+
+                Flow {
+                    width: parent.width
+                    spacing: 8
+
+                    Repeater {
+                        model: sessionModel
+                        delegate: Rectangle {
+                            id: chip
+                            required property int index
+                            required property string name
+                            readonly property bool selected: root.sessionIndex === index
+                            radius: 8
+                            height: 28
+                            width: label.implicitWidth + 24
+                            color: selected ? root.current : root.raised
+                            border.width: 1
+                            border.color: selected ? root.current : root.hairlineStrong
+
+                            Text {
+                                id: label
+                                anchors.centerIn: parent
+                                text: name
+                                color: selected ? root.deep : Qt.rgba(1, 1, 1, 0.75)
+                                font.family: "Nunito"
+                                font.weight: Font.Bold
+                                font.pixelSize: 12
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.sessionIndex = index
+                            }
+                        }
+                    }
+                }
             }
 
             Text {
