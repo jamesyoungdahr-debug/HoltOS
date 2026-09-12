@@ -115,9 +115,17 @@ NEXT STEPS (in order)
 4. Klassy fork: rebrand + defaults + package (packaging/holtos-window-decoration).
 5. Create GitHub repos for both forks (public, so PKGBUILDs can clone
    anonymously), push, switch PKGBUILDs' default source to GitHub.
-6. Then the other asks still open: "About this computer" page and power
-   options in System Settings; hardware-level optimisation (CPU/GPU
-   tuning, zram, AMD/Intel specifics); release v0.0.2-alpha (PLAN step 5).
+6. "About this computer" + power options: STARTED (commit 5cabfe4,
+   unverified): kinfocenter (About this System) + etc/xdg/kcm-about-
+   distrorc, power-profiles-daemon (enabled), plasma-systemmonitor added
+   to packages.x86_64. Finding in the VM: the Power Management KCM
+   (powerdevil) was already installed and its daemon active — what was
+   missing is the power *profiles* daemon and the About page. Verify in
+   the next ISO. Still open after that: hardware-level optimisation
+   (CPU/GPU tuning, zram, AMD/Intel specifics); release v0.0.2-alpha
+   (PLAN step 5).
+   Image integration for the forks is committed too (7f28901: kwinrc,
+   packages.x86_64, Kvantum 55/72 %), also unbuilt/unverified.
 
 OPEN DECISIONS (Liam)
 ---------------------
