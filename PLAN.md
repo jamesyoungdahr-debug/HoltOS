@@ -144,6 +144,14 @@ in this step can be done before that decision; only this check waits.
   repo. Verified on the VM's existing install.
 - Next: real hardware feedback from the Strix Halo box (boot menu look,
   restore flow, Display page HDR/VRR, `hardware.log` vainfo/vulkaninfo).
+- HoltOS is a **media and gaming/entertainment focused** distro (Liam,
+  2026-09-12). The feature list and build order for that live in
+  `docs/holtos-must-haves-and-plan.md`: Steam + Proton + Proton GE,
+  a gamescope Game Mode session with a two-way switch and boot-into
+  option (The Den keeps running — it is a system service), a HoltOS app
+  store over Flathub with a curated front page, controllers/CEC,
+  performance defaults, then the media player decision and storage
+  wizard. Network Shares (SMB/NFS with automount, GUI) is done.
 
 **Open cosmetic:** Plasma's Disks & Devices popup opens over the
 installer in the live session for the live medium's own optical disc.

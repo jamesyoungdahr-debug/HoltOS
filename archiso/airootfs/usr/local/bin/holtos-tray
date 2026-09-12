@@ -105,6 +105,8 @@ def main():
     menu.addAction("Restore Snapshot...", lambda: run("/usr/local/bin/holtos-restore-snapshot"))
     menu.addAction("Rescan Boot Menu", lambda: run("/usr/local/bin/holtos-rescan-bootmenu"))
     menu.addSeparator()
+    menu.addAction("Network Shares...", lambda: run("/usr/local/bin/holtos-shares"))
+    menu.addSeparator()
     menu.addAction("Quit", app.quit)
     tray.setContextMenu(menu)
 

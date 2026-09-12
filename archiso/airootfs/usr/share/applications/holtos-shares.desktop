@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Network Shares
+GenericName=Mount SMB and NFS shares
+Comment=Add Windows/Samba and NFS shares that mount automatically under /mnt/shares
+Exec=/usr/local/bin/holtos-shares
+Icon=holtos-logo
+Terminal=false
+Categories=System;Network;Settings;
+Keywords=samba;smb;nfs;share;mount;network;drive;nas;

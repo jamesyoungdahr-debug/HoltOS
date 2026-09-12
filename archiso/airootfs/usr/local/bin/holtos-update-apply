@@ -121,6 +121,7 @@ update_config() {
         usr/local/bin/homelab-*.sh
         etc/systemd/system/holtos-*.service
         etc/xdg/autostart/holtos-*.desktop
+        usr/share/applications/holtos-*.desktop
         etc/xdg/kwinrc
         etc/xdg/kcm-about-distrorc
         etc/xdg/ksplashrc

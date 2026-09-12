@@ -5,6 +5,21 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+- **Network Shares** (Liam, 2026-09-12: "make it simple to mount a share,
+  NFS/Samba, and have it automount, with an easy GUI"). New
+  `holtos-shares` (PySide6 window: list with mounted state, Add / Edit /
+  Remove / Mount / Unmount / Open, connection test) over `holtos-share`
+  (root backend via pkexec): each share is `/etc/holtos/shares/<name>.conf`
+  plus a root-only credentials file for SMB, from which it writes a
+  systemd `.mount` + `.automount` pair — mounts on first access under
+  `/mnt/shares/<name>`, tolerates the network coming up late, never blocks
+  boot; SMB files are owned by the desktop user. In the app menu
+  ("Network Shares") and the tray. `cifs-utils` and `nfs-utils` added.
+  Verified in the VM against local Samba and NFS servers: test, add,
+  automount on access, write, unmount, remove, and the GUI on screen.
+- **README credits** everything HoltOS forks or ships, and notes that
+  HoltOS was built with help from AI (Claude Fable 5.1 via Claude Code).
+
 ## [0.0.3-alpha] - 2026-09-12
 
 Same day as 0.0.2-alpha. Everything below was built and verified in the

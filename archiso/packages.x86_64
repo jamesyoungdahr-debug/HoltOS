@@ -157,6 +157,10 @@ breeze-gtk
 python
 pyside6
 qt6-wayland
+# cifs-utils + nfs-utils: mount.cifs / mount.nfs for the Network Shares
+# tool (holtos-shares GUI, holtos-share backend, systemd automount units).
+cifs-utils
+nfs-utils
 qt6-declarative
 libtorrent-rasterbar
 kirigami

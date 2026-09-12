@@ -51,5 +51,7 @@ file_permissions=(
   ["/usr/local/bin/holtos-restore-snapshot"]="0:0:755"
   ["/usr/local/bin/holtos-snapshot-boot-notice"]="0:0:755"
   ["/usr/local/bin/holtos-limine-other-os"]="0:0:755"
+  ["/usr/local/bin/holtos-share"]="0:0:755"
+  ["/usr/local/bin/holtos-shares"]="0:0:755"
   ["/usr/local/bin/holtos-rescan-bootmenu"]="0:0:755"
 )

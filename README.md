@@ -14,6 +14,34 @@ native KDE desktop app
 both installed into the image at build time so a fresh install runs them
 from first boot with no network dependency.
 
+## Credits
+
+HoltOS stands on other people's work. What it forks or ships:
+
+- **[KWin](https://invent.kde.org/plasma/kwin)** (KDE, GPL-2.0-or-later) —
+  `forks/holtos-glass-effect` is a fork of KWin 6.7's built-in blur effect,
+  with features ported from **[Better Blur /
+  kwin-effects-forceblur](https://github.com/taj-ny/kwin-effects-forceblur)**
+  (taj-ny, GPL-3.0-or-later). HoltOS' fork is GPL-3.0.
+- **[Klassy](https://github.com/paulmcauley/klassy)** (Paul A McAuley,
+  GPL-2.0-or-later / MIT / BSD-3-Clause per file) —
+  `forks/holtos-window-decoration` is Klassy v6.7.2 with HoltOS defaults
+  and a HoltOS plugin id; upstream's README and LICENSES are kept.
+- **[Terminus Font](https://terminus-font.sourceforge.net/)** (Dimitar
+  Toshkov Zhekov, SIL OFL 1.1 / GPL-2.0 with font exception) — the
+  Limine menu font, shipped as a raw bitmap converted from `ter-124b`.
+- **[Arch Linux](https://archlinux.org/)** and **archiso** — the base and
+  the image builder; **[Calamares](https://calamares.io/)** — the
+  installer; **[Limine](https://limine-bootloader.org/)** — the
+  bootloader; **[KDE Plasma](https://kde.org/plasma-desktop/)**,
+  **[Kvantum](https://github.com/tsujan/Kvantum)**, **SDDM**,
+  **Plymouth**, **[yad](https://github.com/v1cont/yad)**,
+  **[PySide6 / Qt](https://www.qt.io/)** — the desktop and the tools
+  HoltOS' own utilities are written with.
+- The AUR maintainers of the `calamares`, `zfs-dkms`, `zfs-utils`,
+  `limine-mkinitcpio-hook` and `limine-entry-tool` PKGBUILDs, which
+  `build-local-repo.sh` builds unchanged.
+
 > **Built with help from AI.** HoltOS is designed and directed by Liam
 > ([@jamesyoungdahr-debug](https://github.com/jamesyoungdahr-debug)); much
 > of the code, the build pipeline, the testing in the VM and these docs

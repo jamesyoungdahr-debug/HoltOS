@@ -1,0 +1,291 @@
+#!/usr/bin/env python3
+"""HoltOS Network Shares — the GUI half of holtos-share.
+
+Lists the configured SMB/NFS shares with their mounted state and lets you
+add, edit, remove, mount, unmount and open them. Everything that needs root
+goes through `pkexec holtos-share ...` (one authentication prompt per
+change), same pattern as the updater. PySide6, like holtos-tray, so it
+wears the HoltOS Glass theme like every other Qt window.
+"""
+import os
+import subprocess
+import sys
+
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import (
+    QApplication, QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFormLayout,
+    QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMainWindow, QMessageBox,
+    QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget,
+)
+
+ICON_PATH = "/usr/share/icons/hicolor/scalable/apps/holtos-logo.svg"
+BACKEND = "/usr/local/bin/holtos-share"
+MOUNT_ROOT = "/mnt/shares"
+
+
+def run_backend(args, stdin_text=None, root=True):
+    cmd = (["pkexec", BACKEND] if root else [BACKEND]) + list(args)
+    proc = subprocess.run(cmd, input=stdin_text, capture_output=True, text=True)
+    return proc.returncode, (proc.stdout + proc.stderr).strip()
+
+
+def list_shares():
+    # Listing is the backend's one unprivileged command (share metadata is
+    # world-readable, credentials are not), so opening the window never
+    # asks for a password.
+    rc, out = run_backend(["list"], root=False)
+    if rc != 0:
+        return None, out
+    rows = []
+    for line in out.splitlines():
+        parts = line.split("\t")
+        if len(parts) == 8:
+            rows.append(dict(zip(["name", "type", "server", "path", "user", "ro", "auto", "mounted"], parts)))
+    return rows, ""
+
+
+class ShareDialog(QDialog):
+    def __init__(self, parent=None, share=None):
+        super().__init__(parent)
+        self.setWindowTitle("Edit share" if share else "Add a network share")
+        self.setWindowIcon(QIcon(ICON_PATH))
+        self.setMinimumWidth(460)
+        form = QFormLayout(self)
+
+        self.name = QLineEdit(share["name"] if share else "")
+        self.name.setPlaceholderText("media")
+        self.name.setEnabled(share is None)
+        self.type = QComboBox()
+        self.type.addItem("Windows / Samba (SMB)", "smb")
+        self.type.addItem("NFS", "nfs")
+        if share:
+            self.type.setCurrentIndex(0 if share["type"] == "smb" else 1)
+        self.server = QLineEdit(share["server"] if share else "")
+        self.server.setPlaceholderText("nas.local or 192.168.1.10")
+        self.path = QLineEdit(share["path"] if share else "")
+        self.user = QLineEdit(share["user"] if share else "")
+        self.password = QLineEdit()
+        self.password.setEchoMode(QLineEdit.Password)
+        self.ro = QCheckBox("Read-only")
+        self.ro.setChecked(bool(share and share["ro"] == "1"))
+        self.auto = QCheckBox("Mount automatically (on first access, every boot)")
+        self.auto.setChecked(not share or share["auto"] == "1")
+
+        form.addRow("Name", self.name)
+        form.addRow("Type", self.type)
+        form.addRow("Server", self.server)
+        self.path_label = QLabel("Share")
+        form.addRow(self.path_label, self.path)
+        self.user_label = QLabel("Username")
+        form.addRow(self.user_label, self.user)
+        self.pass_label = QLabel("Password")
+        form.addRow(self.pass_label, self.password)
+        form.addRow("", self.ro)
+        form.addRow("", self.auto)
+        hint = QLabel(f"Mounted at {MOUNT_ROOT}/<name>. Leave the username empty for guest access.")
+        hint.setWordWrap(True)
+        hint.setStyleSheet("color: palette(mid);")
+        form.addRow(hint)
+
+        buttons = QDialogButtonBox()
+        self.test_btn = buttons.addButton("Test connection", QDialogButtonBox.ActionRole)
+        buttons.addButton(QDialogButtonBox.Ok).setText("Save")
+        buttons.addButton(QDialogButtonBox.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        self.test_btn.clicked.connect(self.test)
+        form.addRow(buttons)
+        self.type.currentIndexChanged.connect(self.update_labels)
+        self.update_labels()
+
+    def update_labels(self):
+        smb = self.type.currentData() == "smb"
+        self.path_label.setText("Share name" if smb else "Export path")
+        self.path.setPlaceholderText("Media" if smb else "/export/media")
+        for w in (self.user, self.password, self.user_label, self.pass_label):
+            w.setVisible(smb)
+
+    def values(self):
+        return {
+            "name": self.name.text().strip(),
+            "type": self.type.currentData(),
+            "server": self.server.text().strip(),
+            "path": self.path.text().strip(),
+            "user": self.user.text().strip() if self.type.currentData() == "smb" else "",
+            "password": self.password.text(),
+            "ro": self.ro.isChecked(),
+            "auto": self.auto.isChecked(),
+        }
+
+    def validate(self):
+        v = self.values()
+        if not v["name"] or not v["server"] or not v["path"]:
+            QMessageBox.warning(self, "Network Shares", "Name, server and share are required.")
+            return None
+        return v
+
+    def test(self):
+        v = self.validate()
+        if not v:
+            return
+        args = ["test", v["type"], v["server"], v["path"]] + ([v["user"]] if v["user"] else [])
+        rc, out = run_backend(args, stdin_text=v["password"] if v["user"] else None)
+        if rc == 0:
+            QMessageBox.information(self, "Network Shares", f"Connected.\n\n{out}")
+        else:
+            QMessageBox.critical(self, "Network Shares", f"Could not connect:\n\n{out}")
+
+    def accept(self):
+        if self.validate():
+            super().accept()
+
+
+class SharesWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Network Shares")
+        self.setWindowIcon(QIcon(ICON_PATH))
+        self.resize(760, 380)
+        central = QWidget()
+        self.setCentralWidget(central)
+        layout = QVBoxLayout(central)
+
+        intro = QLabel("Shares mount under /mnt/shares and appear in Dolphin. "
+                       "Automatic shares mount on first access after every boot.")
+        intro.setWordWrap(True)
+        layout.addWidget(intro)
+
+        self.table = QTableWidget(0, 6)
+        self.table.setHorizontalHeaderLabels(["Name", "Type", "Server", "Share", "Automatic", "Status"])
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.table.setSelectionMode(QTableWidget.SingleSelection)
+        self.table.setEditTriggers(QTableWidget.NoEditTriggers)
+        self.table.verticalHeader().setVisible(False)
+        layout.addWidget(self.table)
+
+        row = QHBoxLayout()
+        self.add_btn = QPushButton("Add...")
+        self.edit_btn = QPushButton("Edit...")
+        self.remove_btn = QPushButton("Remove")
+        self.mount_btn = QPushButton("Mount")
+        self.unmount_btn = QPushButton("Unmount")
+        self.open_btn = QPushButton("Open")
+        self.refresh_btn = QPushButton("Refresh")
+        for b in (self.add_btn, self.edit_btn, self.remove_btn, self.mount_btn, self.unmount_btn, self.open_btn):
+            row.addWidget(b)
+        row.addStretch()
+        row.addWidget(self.refresh_btn)
+        layout.addLayout(row)
+
+        self.add_btn.clicked.connect(self.add)
+        self.edit_btn.clicked.connect(self.edit)
+        self.remove_btn.clicked.connect(self.remove)
+        self.mount_btn.clicked.connect(lambda: self.simple("mount"))
+        self.unmount_btn.clicked.connect(lambda: self.simple("unmount"))
+        self.open_btn.clicked.connect(self.open)
+        self.refresh_btn.clicked.connect(self.refresh)
+        self.table.itemSelectionChanged.connect(self.update_buttons)
+        self.shares = []
+        QTimer.singleShot(0, self.refresh)
+
+    def selected(self):
+        r = self.table.currentRow()
+        return self.shares[r] if 0 <= r < len(self.shares) else None
+
+    def update_buttons(self):
+        s = self.selected()
+        for b in (self.edit_btn, self.remove_btn, self.open_btn):
+            b.setEnabled(s is not None)
+        self.mount_btn.setEnabled(s is not None and s["mounted"] != "1")
+        self.unmount_btn.setEnabled(s is not None and s["mounted"] == "1")
+
+    def refresh(self):
+        rows, err = list_shares()
+        if rows is None:
+            self.shares = []
+            self.table.setRowCount(0)
+            if err and "dismissed" not in err.lower():
+                QMessageBox.critical(self, "Network Shares", f"Could not read the share list:\n\n{err}")
+            self.update_buttons()
+            return
+        self.shares = rows
+        self.table.setRowCount(len(rows))
+        for i, s in enumerate(rows):
+            vals = [s["name"], "SMB" if s["type"] == "smb" else "NFS", s["server"], s["path"],
+                    "yes" if s["auto"] == "1" else "no",
+                    ("mounted" if s["mounted"] == "1" else "not mounted") + (" (read-only)" if s["ro"] == "1" else "")]
+            for j, v in enumerate(vals):
+                item = QTableWidgetItem(v)
+                item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+                self.table.setItem(i, j, item)
+        self.update_buttons()
+
+    def apply(self, v):
+        args = ["add", v["name"], v["type"], v["server"], v["path"]]
+        if v["user"]:
+            args.append(v["user"])
+        if v["ro"]:
+            args.append("--ro")
+        if not v["auto"]:
+            args.append("--no-auto")
+        rc, out = run_backend(args, stdin_text=v["password"] if v["user"] else None)
+        if rc != 0:
+            QMessageBox.critical(self, "Network Shares", f"Saving the share failed:\n\n{out}")
+        self.refresh()
+
+    def add(self):
+        d = ShareDialog(self)
+        if d.exec() == QDialog.Accepted:
+            self.apply(d.values())
+
+    def edit(self):
+        s = self.selected()
+        if not s:
+            return
+        d = ShareDialog(self, share=s)
+        if d.exec() == QDialog.Accepted:
+            v = d.values()
+            if v["type"] == "smb" and v["user"] and not v["password"]:
+                QMessageBox.information(self, "Network Shares", "Enter the password again to save an SMB share with a username.")
+                return
+            self.apply(v)
+
+    def remove(self):
+        s = self.selected()
+        if not s:
+            return
+        if QMessageBox.question(self, "Network Shares", f"Remove the share \"{s['name']}\"?\n\nNothing on the server is touched.") != QMessageBox.Yes:
+            return
+        rc, out = run_backend(["remove", s["name"]])
+        if rc != 0:
+            QMessageBox.critical(self, "Network Shares", out)
+        self.refresh()
+
+    def simple(self, action):
+        s = self.selected()
+        if not s:
+            return
+        rc, out = run_backend([action, s["name"]])
+        if rc != 0:
+            QMessageBox.critical(self, "Network Shares", f"{action.capitalize()} failed:\n\n{out}")
+        self.refresh()
+
+    def open(self):
+        s = self.selected()
+        if s:
+            subprocess.Popen(["xdg-open", f"{MOUNT_ROOT}/{s['name']}"])
+
+
+def main():
+    app = QApplication(sys.argv)
+    app.setApplicationName("HoltOS Network Shares")
+    app.setDesktopFileName("holtos-shares")
+    w = SharesWindow()
+    w.show()
+    sys.exit(app.exec())
+
+
+if __name__ == "__main__":
+    main()
