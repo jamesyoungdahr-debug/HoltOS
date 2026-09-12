@@ -51,9 +51,12 @@ is being forked into HoltOS-owned code built by our pipeline:
    unloaded, holtosglass loaded (qdbus6 org.kde.KWin /Effects
    loadedEffects). Red-tint test proved blur+tint reach every
    translucent window region (Falkon toolbar pixel went wine-red).
-   Open question: the Klassy title bar pixel did NOT take the tint —
-   either the decoration is painted opaque there or its blur region is
-   not reaching the effect; settle it while testing the decoration fork.
+   SETTLED (06:50): the title bar is translucent (30 % test went darker)
+   but KWin 6.7 reports the Klassy decoration as having no alpha, so
+   neither stock blur nor the fork blurred under the frame. Fix 2a54c2f:
+   force-blur the frame whenever a decoration exists. Needs rebuild
+   (effect build 7) — do it after the decoration build finishes, the
+   two share local-repo/ and repo-add.
    Live-tuning recipe in the VM: kwriteconfig6 --file kwinrc --group
    Effect-holtosglass --key <Key> <value>; qdbus6 org.kde.KWin /Effects
    reconfigureEffect holtosglass. Kvantum opacity: copy the theme to

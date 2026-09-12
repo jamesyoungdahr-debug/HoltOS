@@ -22,6 +22,9 @@ systemctl mask systemd-firstboot.service
 
 systemctl enable NetworkManager.service
 systemctl enable sddm.service
+# Power profiles (performance / balanced / power saver) for the Power KCM
+# and the battery widget.
+systemctl enable power-profiles-daemon.service
 
 # systemd only honors real symlinks in *.wants/ directories, and git on
 # Windows can't store symlinks (the releng wants/ entries flattened into

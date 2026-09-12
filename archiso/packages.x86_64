@@ -55,6 +55,13 @@ sddm
 konsole
 dolphin
 plasma-nm
+# System Settings > About this System (kinfocenter, reads /etc/os-release and
+# etc/xdg/kcm-about-distrorc), Power Management profiles
+# (power-profiles-daemon: performance / balanced / power saver in the
+# battery widget and the Power KCM), and a task manager.
+kinfocenter
+power-profiles-daemon
+plasma-systemmonitor
 ark
 print-manager
 # The Den's own web UI (the-den.desktop opens http://127.0.0.1:8686) needs a

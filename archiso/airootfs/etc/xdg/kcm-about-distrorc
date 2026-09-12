@@ -1,0 +1,6 @@
+# System Settings > About this System (kinfocenter's kcm_about-distro).
+# Name/version/URLs come from /etc/os-release; this only points at the
+# logo and the website it links to.
+[General]
+LogoPath=/usr/share/icons/hicolor/scalable/apps/holtos-logo.svg
+Website=https://github.com/jamesyoungdahr-debug/HoltOS
