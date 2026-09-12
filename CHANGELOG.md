@@ -5,6 +5,34 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+- **Build fix: NVIDIA staging no longer kills the image build.** Inside
+  the mkarchiso chroot pacman cannot map the staging cache dir to a
+  mount point, so `CheckSpace` aborted the download with a bogus "not
+  enough free disk space" and the whole build failed. The temporary
+  staging `pacman.conf` now drops `CheckSpace` and `DownloadUser`.
+- **Hardware detection at install** (PLAN.md step 7): a new Calamares
+  `detect-hardware` step (`homelab-detect-hardware.sh`, after
+  cleanup-live) logs CPU/PCI to `/var/lib/holtos/hardware.log`; if an
+  NVIDIA GPU is present it installs `nvidia-open-dkms` + `nvidia-utils`
+  from packages staged on the ISO at build time
+  (`/usr/share/holtos/drivers/nvidia/`, no network needed) and appends
+  `nvidia_drm.modeset=1` to the Limine command line (main entry and
+  snapshot entries). Vulkan (AMD/Intel) and VA-API drivers are always in
+  the image. Only the "no NVIDIA" path is verifiable in the Hyper-V VM.
+- **Updater: The Den is restarted and health-checked after every
+  update.** `install_the_den` now waits up to 30 s for the service to be
+  active and answering on port 8686; if it does not come back the update
+  is logged as failed and the last journal lines are shown, instead of
+  silently reporting success.
+- **HoltOS Glass, all the way down.** Desktop: Kvantum widget style with
+  a `HoltOSGlass` theme (70% window / 84% dialog opacity over the ink
+  base), Klassy window decorations with 70%/60% translucent, blurred
+  title bars, KWin blur strength 11 + background contrast, Nunito UI
+  font and JetBrains Mono for mono. Greeter: self-contained SDDM theme
+  with a blurred glass card over the pool-rings ground (opaque twin when
+  the renderer is software). Installer: Glass stylesheet, sidebar,
+  navigation and slideshow. Plymouth: drawn ring + lockup. Confirmed on
+  screen in the VM; real-GPU blur quality still to be seen.
 - **Updater: apps' OS dependencies are installed with the update.**
   Real outage 2026-09-11: the tray moved a v0.1.0 install of The Den to
   v0.2.0, whose built-in torrent client needs `libtorrent-rasterbar`'s

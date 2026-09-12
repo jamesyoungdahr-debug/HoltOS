@@ -40,6 +40,13 @@ Test VM: `holtos-test` (Hyper-V Gen 2, Secure Boot off, 60 GB VHDX under
   install.** 1 needs a decision (below).
 - Direction change decided 2026-09-11 (see `PLAN.md`): the whole
   container stack is being removed and The Den becomes the shipped app.
+- Later on 2026-09-11: PLAN steps 1, 2 and 7 landed (stack gone, The Den
+  vendored, hardware detection), plus HoltOS Glass across SDDM /
+  Plasma / Kvantum windows / Klassy title bars / installer / Plymouth,
+  and the updater now installs app dependencies and health-checks The
+  Den. The first build with NVIDIA staging failed on pacman's
+  `CheckSpace` inside the chroot (fixed, see CHANGELOG). Step 7's NVIDIA
+  path still needs a real GPU machine.
 
 ## Bugs found & fixed this session
 
