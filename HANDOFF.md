@@ -88,9 +88,12 @@ logged "No NVIDIA GPU — nothing to install".
 
 ## Still open
 
-- **Updater cannot reach GitHub: repo is private.** `holtos-update-check`
-  exits 128 on every install. The release's "update-check reports up to
-  date" check is the only PLAN step 5 item not done. Liam's decision.
+- ~~Updater cannot reach GitHub~~ — **resolved 2026-09-12: Liam made the
+  repo public.** Verified on the build 10 install: `holtos-update-check`
+  reported v0.0.2-alpha (exit 0), `holtos-update-apply config` took a
+  Btrfs snapshot + ESP kernel copy + Limine entry, downloaded and applied
+  the release, and `holtos-update-check` now exits 1 (up to date). The
+  tray's update flow is therefore live for every installed system.
 - **Real hardware (PLAN steps 6/7)**: boot the build 11 ISO from the
   Ventoy stick on the 7950X box. Checks: `/var/lib/holtos/hardware.log`
   lists the NVIDIA GPU and "installed: nvidia-open-dkms …",

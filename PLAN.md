@@ -13,10 +13,11 @@ in `holtos-test` and the listed check — don't batch steps.
 
 ## Step 0 — Decisions (before any code)
 
-- [ ] **Repo visibility.** The updater does anonymous `git ls-remote` and
-      release-tarball downloads; HoltOS is private, so every updater path
-      except per-service `podman pull` is broken today. Either make the
-      repo public (what was done for the-den) or add token support.
+- [x] **Repo visibility: public** (Liam, 2026-09-12). Verified the same
+      hour on the build 10 install: `holtos-update-check` went from exit
+      128 to reporting v0.0.2-alpha; `holtos-update-apply config`
+      snapshotted, downloaded the release tarball, applied it, and
+      `holtos-update-check` then exits 1 (up to date).
 - [x] **Plex: goes** — removed with the rest of the stack on 2026-09-11.
       Trivial to re-add as a single unit later if playback needs it.
 - [ ] **Snapshot semantics.** Booting a snapshot is a read-only rescue
@@ -108,7 +109,7 @@ list (24 modes in the VM); volume applet in the tray; Bluetooth,
 Login Screen, Remote Desktop, Disks & Devices pages present;
 `powerprofilesctl list` works; `systemctl --failed` still empty.
 
-## Step 5 — Release
+## Step 5 — Release — DONE 2026-09-12 (v0.0.2-alpha, build 11 from the tag; update path verified after the repo went public)
 
 - Update `CHANGELOG.md` `[Unreleased]` → `[0.0.2-alpha]`, bump
   `profiledef.sh` `iso_version` and `branding.desc` version strings.
