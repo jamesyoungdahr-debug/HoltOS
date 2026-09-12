@@ -176,10 +176,13 @@ logged "No NVIDIA GPU — nothing to install".
   shipped by default (KDE hid it behind that variable because of a
   login-blocking driver bug). Also judge the glass look/frame rate on a
   real GPU: the VM proves the pixels, not the performance.
-- **Game Mode on real hardware**: boot build 20 on the Strix Halo box,
+- **v0.0.4-alpha released** (pre-release, notes on GitHub); build 21 is
+  the release ISO. Liam installs it via the system updater on the Strix
+  Halo box.
+- **Game Mode on real hardware**: boot build 21 on the Strix Halo box,
   "Game Mode" from the app menu, Steam Big Picture on gamescope, "Switch
   to Desktop" from Steam's power menu, and "Start in Game Mode" from the
-  tray. Then tag v0.0.4-alpha. Build 20 ISO still to copy to D:\.
+  tray. Build 21 ISO still to copy to D:\.
 - **Snapshot semantics** (rescue boot vs rollback) — undecided.
 - **Two orphan public GitHub repos** from before the monorepo decision
   (`jamesyoungdahr-debug/holtos-glass-effect`, `/holtos-window-decoration`)

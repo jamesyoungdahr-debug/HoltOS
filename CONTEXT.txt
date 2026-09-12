@@ -12,6 +12,14 @@ Owner: Liam (GitHub jamesyoungdahr-debug, git user Vectorly)
 
 CURRENT STATE (2026-09-12, evening)
 -----------------------------------
+- RELEASED v0.0.4-alpha (2026-09-12 ~19:45, commit de7f1fc): GitHub
+  pre-release with notes; build 21 = release ISO (out/). Upgrade path
+  verified on the build 20 VM install: `holtos-update-apply config the-den
+  the-den-client` -> config v0.0.4-alpha (updater hands over to the
+  release's copy), The Den v0.6.1, client v0.4.6 (icons + desktop file
+  refreshed). Installed 0.0.3-alpha systems need the curl one-liner from
+  the release notes first (old whitelist). Build 21 ISO still to copy to
+  D:\ when the stick is in.
 - Builds 18-20 (2026-09-12 evening): Game Mode (gamescope + Steam Big
   Picture session, SteamOS-style switch both ways, tray toggle), greeter
   session picker, installed-system motd, updater refreshes The Den Client
