@@ -39,11 +39,18 @@ systemctl enable holtos-pacman-keyring-init.service
 # pacman.conf without it — and with signature checking off: the chroot
 # has no pacman keyring (creating one here proved unreliable — see
 # homelab-cleanup-live.sh), the files come straight from the HTTPS
-# mirrors, and they are only STAGED here, not installed.
+# mirrors, and they are only STAGED here, not installed. CheckSpace is
+# dropped too: inside the mkarchiso chroot pacman cannot map the cache
+# dir to a mount point and aborts with a bogus "not enough free disk
+# space" (this exact failure killed a build on 2026-09-11), and
+# DownloadUser goes with it so the download runs as root and can write
+# to the root-owned staging dir.
 echo "==> Staging NVIDIA driver packages for install-time detection..."
 sed -e '/^\[homelab\]/,$d' \
     -e 's/^SigLevel .*/SigLevel = Never/' \
     -e 's/^LocalFileSigLevel .*/LocalFileSigLevel = Never/' \
+    -e '/^CheckSpace/d' \
+    -e '/^DownloadUser/d' \
     /etc/pacman.conf > /tmp/pacman-stage.conf
 mkdir -p /usr/share/holtos/drivers/nvidia
 pacman -Syw --noconfirm --config /tmp/pacman-stage.conf \
