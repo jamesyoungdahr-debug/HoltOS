@@ -123,7 +123,8 @@ kvantum
 # HoltOS Glass title bars: Klassy window decoration (AUR, in local-repo/ —
 # see build-aur-packages.sh) can make the title bar translucent and blurred;
 # Breeze cannot. Configured in etc/skel/.config/klassy/klassyrc.
-klassy
+holtos-window-decoration
+holtos-glass-effect
 
 # Hardware support that is safe on every machine (see
 # usr/local/bin/homelab-detect-hardware.sh for the one that is not: NVIDIA).

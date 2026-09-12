@@ -41,8 +41,23 @@ is being forked into HoltOS-owned code built by our pipeline:
    builds and packages — local-repo/holtos-glass-effect-0.1.0.r5-*.pkg
    (build attempt 5; fixes on the way: stale pacman db, Vulkan/wayland/
    libdrm makedepends, link libxcb, K_PLUGIN_CLASS inside namespace).
-   Feature port in progress in the working tree (kcfg written, blur.h
-   members, colour matrix with brightness+tint, reconfigure reads all).
+   Milestone 2 DONE (06:32): feature port committed (bf8b6dd, 2ed60b8)
+   and building: holtos-glass-effect-0.1.0.r7.2ed60b8 in local-repo/.
+   Implemented: force blur (windows/decorations/menus, docks optional,
+   ExcludeClasses), Contrast/Brightness, TintColor+TintStrength,
+   CornerRadius for undecorated windows, settings module for all.
+   SEEN ON SCREEN (06:39): package installed into the build-8 VM over
+   SSH (holtos@172.20.176.251, key scratchpad/vmkey), stock blur
+   unloaded, holtosglass loaded (qdbus6 org.kde.KWin /Effects
+   loadedEffects). Red-tint test proved blur+tint reach every
+   translucent window region (Falkon toolbar pixel went wine-red).
+   Open question: the Klassy title bar pixel did NOT take the tint —
+   either the decoration is painted opaque there or its blur region is
+   not reaching the effect; settle it while testing the decoration fork.
+   Live-tuning recipe in the VM: kwriteconfig6 --file kwinrc --group
+   Effect-holtosglass --key <Key> <value>; qdbus6 org.kde.KWin /Effects
+   reconfigureEffect holtosglass. Kvantum opacity: copy the theme to
+   ~/.config/Kvantum/HoltOSGlass/ and set reduce_window_opacity=N.
    Planned features (port from Better Blur / kwin-effects-forceblur,
    whose upstream stopped at Plasma 6.4 so it cannot be used directly):
      - force blur behind EVERY window (not only apps that ask), incl.
@@ -62,13 +77,17 @@ is being forked into HoltOS-owned code built by our pipeline:
    decoration's border radius.
 
 2. holtos-window-decoration (C:\projects\holtos-window-decoration, full
-   clone of Klassy at tag v6.7.2, matches Plasma 6.7). Plan: rebrand
-   (plugin org.kde.klassy -> HoltOS id, name "HoltOS Glass"), bake in
-   HoltOS defaults (opacity, blur, corner radius, buttons), own the
-   desktoptheme (Plasma panel style) it ships. Not started beyond clone.
-   Settings kcfg: libbreezecommon/breezesettingsdata.kcfg.
-   KCM id kcm_klassydecoration; plugin OUTPUT_NAME org.kde.klassy
-   (kdecoration/CMakeLists.txt).
+   clone of Klassy at tag v6.7.2, matches Plasma 6.7; local only, NOT on
+   GitHub). Commit 86428c4: plugin renamed org.holtos.glass / "HoltOS
+   Glass" (kdecoration/CMakeLists.txt OUTPUT_NAME, kdecoration/breeze.json),
+   defaults baked into libbreezecommon/breezesettingsdata.kcfg (title bar
+   70/60 % with override on, 10 px corners, glass kept when maximized),
+   LF enforced. Everything else untouched for upstream merges. It still
+   reads klassy/klassyrc, so etc/skel/.config/klassy/klassyrc stays for
+   the remaining styling. PKGBUILD: packaging/holtos-window-decoration
+   (conflicts klassy; Qt6 only). First build: out/build-decoration-1.log.
+   Later: own the desktoptheme (Plasma panel style), drop the Qt5/look-
+   and-feel/colour bits we do not ship.
 
 3. Window contents stay on our Kvantum theme (HoltOSGlass, already ours)
    with lower opacity once the tint in (1) guarantees readability.
@@ -84,7 +103,7 @@ stale (404s) -> script now runs pacman -Syu first.
 NEXT STEPS (in order)
 ---------------------
 1. [DONE 2026-09-12] holtos-glass-effect builds and packages into local-repo/.
-2. Port the features listed above (kcfg entries, blur.cpp, KCM .ui).
+2. [DONE 2026-09-12] Features ported and building.
 3. Add the package to archiso/packages.x86_64, set /etc/xdg/kwinrc
    (blurEnabled=false, holtosglassEnabled=true, [Effect-holtosglass]
    defaults), rebuild ISO, test in VM holtos-test (install build 8 there

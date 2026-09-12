@@ -1,19 +1,36 @@
 # System-wide KWin defaults for HoltOS Glass (users' ~/.config/kwinrc
-# overrides these). Blur and Background Contrast are on by default in
-# Plasma 6; what the defaults don't do is blur STRONGLY enough for the
-# glass panels/windows to read as glass rather than merely see-through.
-# BlurStrength is 1-15 (default 5); NoiseStrength 0-14 adds a little
-# grain so large flat glass areas don't band.
-[Effect-blur]
-BlurStrength=11
-NoiseStrength=2
-
+# overrides these).
+#
+# The blur behind windows is HoltOS' own KWin effect, "holtosglass"
+# (package holtos-glass-effect, a fork of KWin's blur that blurs behind
+# EVERY window, tints the result towards the ink colour so text stays
+# readable on any wallpaper, and rounds the blur to the window corners).
+# It replaces the stock blur — never enable both.
 [Plugins]
-blurEnabled=true
+blurEnabled=false
+holtosglassEnabled=true
 contrastEnabled=true
 
-# HoltOS Glass title bars: Klassy (usr/share/... via local-repo/) with the
-# translucent, blurred configuration in etc/skel/.config/klassy/klassyrc.
+# See holtos-glass-effect/src/blur.kcfg for every key and its meaning.
+# BlurStrength 1-15, NoiseStrength 0-14, the rest in percent.
+[Effect-holtosglass]
+BlurStrength=12
+NoiseStrength=2
+Saturation=150
+Contrast=100
+Brightness=100
+TintColor=#171423
+TintStrength=45
+ForceBlur=true
+ForceBlurDecorations=true
+ForceBlurMenus=true
+ForceBlurDocks=false
+CornerRadius=10
+
+# HoltOS Glass title bars: our fork of Klassy (package
+# holtos-window-decoration, plugin org.holtos.glass) with the glass
+# opacity/corner defaults compiled in; etc/skel/.config/klassy/klassyrc
+# carries the remaining per-user styling.
 [org.kde.kdecoration2]
-library=org.kde.klassy
-theme=Klassy
+library=org.holtos.glass
+theme=HoltOS Glass

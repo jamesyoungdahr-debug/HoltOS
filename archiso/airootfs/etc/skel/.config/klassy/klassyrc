@@ -1,5 +1,7 @@
-# HoltOS Glass window decoration — Klassy (AUR, built into local-repo/ by
-# build-aur-packages.sh). Only the keys that differ from Klassy's defaults;
+# HoltOS Glass window decoration — holtos-window-decoration (our Klassy
+# fork, built into local-repo/ by build-aur-packages.sh; it still reads
+# klassy/klassyrc). The opacity, override and corner-radius defaults are
+# compiled into the fork now; this file carries the rest of the styling;
 # based on its own "Glassy Klassy" preset with the opacity raised for
 # readability: title text is ink on holt-surface at 70% (active) / 60%
 # (inactive) with KWin blur behind, and Klassy's poor-contrast guard on so
