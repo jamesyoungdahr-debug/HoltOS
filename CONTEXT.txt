@@ -57,7 +57,17 @@ AFTERNOON 2026-09-12 (unreleased, builds 12-15, all VM-verified)
 - Limine menu screenshots need a long timeout: sed timeout: 30 into both
   limine.conf copies on the ESP, reboot, shot after ~24 s. Holding Down
   via TypeKey during boot is unreliable.
-- ISO on D:\ is build 14 (Liam may have unplugged the stick).
+- v0.0.3-alpha tagged + released (commit f75196f); ISO build 16 from it in
+  out/. D:\ was unplugged when builds 15/16 finished — build 14 is what is
+  on the stick unless Liam copies again.
+- Updater: config update syncs the component whitelist in
+  holtos-update-apply (update_config); add new HoltOS-owned paths there.
+  Package repo: GitHub release "packages" = local-repo/ contents; publish
+  with tools/publish-packages.sh after build-local-repo.sh. Installed
+  systems get [homelab] from usr/share/holtos/pacman-homelab.conf.
+- 0.0.2 installs need the one-liner in the v0.0.3 release notes first.
+- Liam's next machine: AMD Strix Halo (RDNA 3.5). Nothing extra needed;
+  check hardware.log (vainfo/vulkaninfo) and Display page HDR/VRR there.
 
 FORKS (holtos-glass-effect, holtos-window-decoration)
 -----------------------------------------------------

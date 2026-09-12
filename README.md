@@ -136,10 +136,21 @@ release's `.example`).
 A tray icon (`holtos-tray`) checks every 6 h for a new **tagged** HoltOS
 release and offers: update The Den / The Den Client, the config scripts,
 or system packages (`pacman -Syu`); roll back the config to the previous
-release; view history; create a snapshot now; restore a snapshot.
-Config/app updates are downloaded as GitHub release tarballs — never raw
-commits. The updater does anonymous `git ls-remote` and tarball
-downloads, which is why this repo is public.
+release; view history; create a snapshot now; restore a snapshot; rescan
+the boot menu. Config/app updates are downloaded as GitHub release
+tarballs — never raw commits. The updater does anonymous `git ls-remote`
+and tarball downloads, which is why this repo is public.
+
+**Every HoltOS component updates from HoltOS' own sources.** The config
+update syncs a whitelist of everything HoltOS owns on an installed
+system (tools, units, autostart entries, desktop defaults, themes,
+wallpapers, `os-release`) from the release tarball, then re-themes
+Limine, rescans other OSes and regenerates the snapshot menu. HoltOS-built
+packages (the glass forks, Calamares, Limine tools, ZFS) come from the
+HoltOS pacman repository — the GitHub release tagged `packages`,
+published by `tools/publish-packages.sh` from `local-repo/` — which
+`[homelab]` in `pacman.conf` points at, so `pacman -Syu` updates them
+from HoltOS. Arch's own packages come from Arch mirrors.
 
 ## Building the ISO
 

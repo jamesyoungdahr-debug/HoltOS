@@ -99,6 +99,22 @@ Liam's afternoon requests, all built and verified in the VM:
   the release) silently failed; all switched to the plain dialog.
 - The test VM now has a second disk `vm/fake-windows.vhdx` (fake ESP);
   keep it attached, it is what exercises the other-OS scan.
+- **Released `v0.0.3-alpha`** (tag moved once before the GitHub release
+  existed; ISO build 16 from the final tag). Liam's rule "every
+  component updates from our own sources": the config update now syncs
+  the whole HoltOS component whitelist from the tarball, re-themes
+  Limine, rescans OSes; HoltOS-built packages are a pacman repo on the
+  GitHub release tagged `packages` (`tools/publish-packages.sh` — rerun
+  after every `build-local-repo.sh`), appended to installs' pacman.conf
+  as `[homelab]` via `usr/share/holtos/pacman-homelab.conf`. Verified on
+  the VM's build 14 install: update to v0.0.3 synced 40+ files, added the
+  repo section, `pacman -Sy` fetched our database from GitHub,
+  `holtos-update-check` then exits 1. **Installs of 0.0.2 cannot pull
+  this by themselves** (their updater only copied install scripts) —
+  the release notes carry a one-liner, or reinstall.
+- Strix Halo is Liam's next real machine: nothing AMD-specific needed
+  beyond what's in the image; hardware detection now logs `vainfo` /
+  `vulkaninfo` for AMD/Intel so `hardware.log` shows what the stack sees.
 
 ## Confirmed working (build 10, on screen or over SSH)
 

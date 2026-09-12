@@ -136,8 +136,14 @@ in this step can be done before that decision; only this check waits.
 - Limine themed as HoltOS (branding, Terminus 12x24, glass panel,
   comments, collapsed Snapshots submenu) — verified on screen.
 - yad 15 dropped `--question`/`--info`; all dialogs fixed.
-- Next: tag `v0.0.3-alpha` once Liam has seen the boot menu and the
-  restore flow on real hardware; the VM has covered everything else.
+- Tagged and released as `v0.0.3-alpha` the same day (Liam wanted to run
+  the updater on a Strix Halo machine). Also in it: the config update
+  syncs every HoltOS-owned component from the tarball (Liam: "each
+  component can be updated, from our own sources"), and HoltOS-built
+  packages are served from the `packages` GitHub release as a pacman
+  repo. Verified on the VM's existing install.
+- Next: real hardware feedback from the Strix Halo box (boot menu look,
+  restore flow, Display page HDR/VRR, `hardware.log` vainfo/vulkaninfo).
 
 **Open cosmetic:** Plasma's Disks & Devices popup opens over the
 installer in the live session for the live medium's own optical disc.
