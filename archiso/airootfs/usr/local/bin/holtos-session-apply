@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+# Root helper behind the Plasma <-> Game Mode switch. Keeps
+# /etc/holtos/session.conf (DEFAULT=plasma|gamemode, NEXT=<one-shot or
+# empty>, USER=<desktop user>) and derives SDDM's autologin file from it:
+#
+#   /etc/sddm.conf.d/zz-holtos-session.conf
+#     [Autologin] User=<USER> Session=<plasma|holtos-gamemode> Relogin=true
+#
+# The file exists only while it is needed — a one-shot NEXT is pending (the
+# switch button: end this session, relogin straight into the other one) or
+# the user chose to start in Game Mode. With DEFAULT=plasma and no NEXT the
+# file is removed and the login screen behaves normally. Autologin is the
+# price of a seamless switch; it is what SteamOS/Bazzite do too.
+#
+#   --next <plasma|gamemode>     one-shot: the next relogin uses this session
+#   --next-done                  clear the one-shot (session scripts call it)
+#   --default <plasma|gamemode>  persistent choice ("Start in Game Mode")
+#   --user <name>                whose session (default: the pkexec caller)
+#   --show                       print the config
+# Written by hand (security-relevant): it decides who is logged in without
+# a password.
+set -euo pipefail
+
+CONF=/etc/holtos/session.conf
+SDDM_CONF=/etc/sddm.conf.d/zz-holtos-session.conf
+
+[ "$(id -u)" -eq 0 ] || { echo "holtos-session-apply must run as root (pkexec)" >&2; exit 1; }
+
+DEFAULT=plasma; NEXT=""; USER_=""
+# shellcheck disable=SC1090
+[ -f "$CONF" ] && . "$CONF"
+
+caller=""
+if [ -n "${PKEXEC_UID:-}" ]; then
+    caller="$(getent passwd "$PKEXEC_UID" | cut -d: -f1)"
+fi
+
+valid_session() { case "$1" in plasma|gamemode) return 0 ;; *) return 1 ;; esac; }
+valid_user() { [[ "$1" =~ ^[a-z_][a-z0-9_-]*$ ]] && getent passwd "$1" >/dev/null; }
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --next)      valid_session "${2:-}" || { echo "bad session: ${2:-}" >&2; exit 2; }; NEXT="$2"; shift ;;
+        --next-done) NEXT="" ;;
+        --default)   valid_session "${2:-}" || { echo "bad session: ${2:-}" >&2; exit 2; }; DEFAULT="$2"; shift ;;
+        --user)      valid_user "${2:-}" || { echo "bad user: ${2:-}" >&2; exit 2; }; USER_="$2"; shift ;;
+        --show)      printf 'DEFAULT=%s\nNEXT=%s\nUSER=%s\n' "$DEFAULT" "$NEXT" "$USER_"; exit 0 ;;
+        *) echo "unknown option: $1" >&2; exit 2 ;;
+    esac
+    shift
+done
+
+# The autologin user is the one who asked, unless set explicitly. A caller
+# may only act for their own account (a wheel member could still edit the
+# file as root; this keeps the pkexec path honest).
+if [ -n "$caller" ]; then
+    if [ -n "$USER_" ] && [ "$USER_" != "$caller" ]; then
+        echo "refusing to set the session for another user (${USER_}) from ${caller}'s session" >&2
+        exit 1
+    fi
+    USER_="$caller"
+fi
+[ -n "$USER_" ] || { echo "no user known: pass --user" >&2; exit 2; }
+
+# Calamares' displaymanager module leaves /etc/sddm.conf with
+# "[Autologin] Session=plasma", and SDDM lets the main file override every
+# drop-in — with that line present nothing written below is honoured
+# (found live 2026-09-12: every switch relogged into Plasma). Strip it.
+if [ -f /etc/sddm.conf ] && grep -q '^Session=' /etc/sddm.conf; then
+    sed -i '/^\[Autologin\]/,/^\[/{/^Session=/d}' /etc/sddm.conf
+fi
+
+mkdir -p "$(dirname "$CONF")" "$(dirname "$SDDM_CONF")"
+printf 'DEFAULT=%s\nNEXT=%s\nUSER_=%s\n' "$DEFAULT" "$NEXT" "$USER_" > "$CONF"
+chmod 644 "$CONF"
+
+want="${NEXT:-$DEFAULT}"
+
+# SDDM remembers the last session per machine in /var/lib/sddm/state.conf
+# and the HoltOS greeter preselects it (the theme has no session picker).
+# Keep it pointing at the session we want, so a Game Mode that failed to
+# start (no GPU, broken driver) can never trap the login screen into
+# starting Game Mode again and again — seen live in the VM 2026-09-12.
+STATE=/var/lib/sddm/state.conf
+case "$want" in
+    plasma)   want_file=/usr/share/wayland-sessions/plasma.desktop ;;
+    gamemode) want_file=/usr/share/wayland-sessions/holtos-gamemode.desktop ;;
+esac
+if [ -f "$STATE" ]; then
+    if grep -q '^Session=' "$STATE"; then
+        sed -i "s|^Session=.*|Session=${want_file}|" "$STATE"
+    else
+        printf '\n[Last]\nSession=%s\n' "$want_file" >> "$STATE"
+    fi
+fi
+
+if [ -z "$NEXT" ] && [ "$DEFAULT" = "plasma" ]; then
+    rm -f "$SDDM_CONF"
+    echo "==> Login screen: normal (no autologin)"
+    exit 0
+fi
+# SDDM matches Session= against the session file NAME, extension included;
+# without ".desktop" it silently falls back to the last session used
+# (seen live: the switch autologged into Plasma again).
+case "$want" in
+    plasma)   sddm_session=plasma.desktop ;;
+    gamemode) sddm_session=holtos-gamemode.desktop ;;
+esac
+cat > "$SDDM_CONF" <<EOF
+# Written by holtos-session-apply — do not edit; use the Game Mode switch
+# or the tray's "Start in Game Mode".
+[Autologin]
+User=${USER_}
+Session=${sddm_session}
+Relogin=true
+EOF
+chmod 644 "$SDDM_CONF"
+echo "==> Next login: ${want} for ${USER_}${NEXT:+ (one-shot)}"

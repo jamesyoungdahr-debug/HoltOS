@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+set -uo pipefail
+
+# HoltOS Game Mode Session for Steam Big Picture on gamescope.
+# This runs gamescope with steam big picture mode; "Switch to Desktop"
+# will invoke steamos-session-select which terminates this session cleanly.
+
+# Read optional overrides from /etc/holtos/gamemode.conf if it exists
+[ -f /etc/holtos/gamemode.conf ] && source /etc/holtos/gamemode.conf
+
+: "${GAMESCOPE_ARGS:=}"
+HOLTOS_GAMEMODE_HDR="${HOLTOS_GAMEMODE_HDR:-auto}"
+HOLTOS_GAMEMODE_VRR="${HOLTOS_GAMEMODE_VRR:-auto}"
+
+# Export session environment for steam/gamescope
+export XDG_SESSION_TYPE=wayland
+export STEAM_USE_MANGOAPP=1
+unset QT_QPA_PLATFORM   # unset, but explicit to ensure clean slate
+export XDG_CURRENT_DESKTOP=gamescope
+
+# Set up logging with timestamp
+LOGFILE="${XDG_RUNTIME_DIR:-/tmp}/holtos-gamemode.log"
+mkdir -p "$(dirname "$LOGFILE")" 2>/dev/null || true
+log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOGFILE"; }
+
+# Record session start
+log "Game Mode session started."
+
+# Build gamescope arguments
+args=(-e -f --steam)
+case "${HOLTOS_GAMEMODE_HDR:-auto}" in
+    on) args+=(--hdr-enabled);;
+esac
+case "${HOLTOS_GAMEMODE_VRR:-auto}" in
+    on) args+=(--adaptive-sync);;
+esac
+args+=($GAMESCOPE_ARGS)   # unquoted to split words
+
+# Check for resolution override file
+if [ -f /etc/holtos/gamemode-resolution ]; then
+    IFS='x' read -r width height < /etc/holtos/gamemode-resolution 2>/dev/null || true
+    if [ -n "$width" ] && [ -n "$height" ]; then
+        args+=(-W "$width" -H "$height")
+    fi
+fi
+
+# Run gamescope with steam big picture flags
+gamescope "${args[@]}" -- \
+    steam -gamepadui -steamos3 -steampal -steamdeck
+
+GAMESCOPE_EXIT=$?
+
+# Log exit status and end session
+log "Gamescope exited with code $GAMESCOPE_EXIT."
+
+# If the apply script exists and is executable, invoke it to reset session choice
+pkexec /usr/local/bin/holtos-session-apply --next-done 2>/dev/null || true
+
+exit "$GAMESCOPE_EXIT"

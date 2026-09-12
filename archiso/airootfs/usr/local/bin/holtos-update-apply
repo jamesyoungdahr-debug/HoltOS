@@ -141,6 +141,9 @@ update_config() {
         usr/share/sddm/themes/
         usr/share/wallpapers/HoltOS/
         usr/share/wallpapers/HoltOS-Otter/
+        usr/local/bin/steamos-session-select
+        usr/share/wayland-sessions/holtos-*.desktop
+        etc/polkit-1/rules.d/*holtos*.rules
     )
     local present=()
     shopt -s nullglob

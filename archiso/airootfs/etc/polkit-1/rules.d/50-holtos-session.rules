@@ -1,0 +1,13 @@
+// HoltOS: the Plasma <-> Game Mode switch. steamos-session-select runs
+// `pkexec holtos-session-apply --next ...` to record the next session for
+// SDDM's relogin; it must not stop for a password (a controller user in
+// Big Picture has no keyboard). Only the active local session's own user,
+// only that program. holtos-session-apply itself refuses to act for a
+// different account than the caller. Written by hand: security-relevant.
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.freedesktop.policykit.exec" &&
+        action.lookup("program") == "/usr/local/bin/holtos-session-apply" &&
+        subject.local && subject.active && subject.isInGroup("wheel")) {
+        return polkit.Result.YES;
+    }
+});

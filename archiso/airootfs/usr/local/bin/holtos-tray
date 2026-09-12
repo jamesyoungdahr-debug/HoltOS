@@ -73,6 +73,41 @@ def background_check_loop():
         check_for_updates(verbose=False)
 
 
+def add_gamemode_toggle(menu):
+    """
+    Adds a toggleable "Start in Game Mode" action to the given menu.
+    """
+    from PySide6.QtGui import QAction
+
+    action = QAction("Start in Game Mode", menu)
+    action.setCheckable(True)
+
+    try:
+        with open("/etc/holtos/session.conf", "r") as file:
+            for line in file:
+                if line.strip() == "DEFAULT=gamemode":
+                    action.setChecked(True)
+                    break
+    except Exception:
+        pass
+
+    def on_toggle(checked):
+        proc = subprocess.run(
+            ["pkexec", "/usr/local/bin/holtos-session-apply", "--default", "gamemode" if checked else "plasma"],
+            capture_output=True,
+            text=True
+        )
+        if proc.returncode != 0:
+            action.blockSignals(True)
+            action.setChecked(not checked)
+            action.blockSignals(False)
+            log(f"holtos-tray: session-apply failed: {proc.stderr.strip()}")
+
+    action.triggered.connect(on_toggle)
+    menu.addAction(action)
+    return action
+
+
 def main():
     log(f"=== holtos-tray started {time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())} ===")
 
@@ -107,6 +142,8 @@ def main():
     menu.addSeparator()
     menu.addAction("Network Shares...", lambda: run("/usr/local/bin/holtos-shares"))
     menu.addAction("Update Proton GE", lambda: run("/usr/local/bin/holtos-update-proton-ge"))
+    menu.addAction("Game Mode now", lambda: run("/usr/local/bin/steamos-session-select", "gamescope"))
+    add_gamemode_toggle(menu)
     menu.addSeparator()
     menu.addAction("Quit", app.quit)
     tray.setContextMenu(menu)

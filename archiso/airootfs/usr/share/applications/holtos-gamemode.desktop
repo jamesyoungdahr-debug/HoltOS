@@ -1,0 +1,11 @@
+# HoltOS: Plasma -> Game Mode switch (see steamos-session-select)
+[Desktop Entry]
+Type=Application
+Name=Game Mode
+GenericName=Steam Big Picture on gamescope
+Comment=Leave the desktop and start Steam Big Picture full screen (switch back from Steam's power menu)
+Exec=/usr/local/bin/steamos-session-select gamescope
+Icon=steam
+Terminal=false
+Categories=Game;
+Keywords=steam;gamescope;big picture;game mode;

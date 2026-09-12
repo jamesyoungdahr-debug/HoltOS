@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=HoltOS Game Mode
+Comment=Steam Big Picture on gamescope; switch back to the desktop from Steam's power menu
+Exec=/usr/local/bin/holtos-gamemode-session
+TryExec=/usr/bin/gamescope
+Type=Application
+DesktopNames=gamescope

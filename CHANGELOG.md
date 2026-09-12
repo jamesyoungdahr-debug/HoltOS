@@ -5,6 +5,24 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+- **Game Mode** (plan 1.2; Liam: "gamescope and an option to boot right
+  into it and switch seamlessly back and forth"). A second SDDM session
+  "HoltOS Game Mode" (`holtos-gamemode-session`: gamescope's own
+  compositor running Steam Big Picture, HDR/VRR/resolution overridable
+  in `/etc/holtos/gamemode.conf`). Switching is SteamOS-style:
+  `steamos-session-select` (the name Steam's "Switch to Desktop" button
+  calls) records the next session with `holtos-session-apply` and ends
+  the current one; SDDM's Relogin autologin then starts the other. The
+  "Game Mode" app-menu entry and tray "Game Mode now" go Plasma ->
+  Game Mode; Steam's power menu goes back. Tray "Start in Game Mode"
+  makes it the default at boot. A polkit rule lets the active local user
+  run the apply helper without a password (a controller user has no
+  keyboard); the helper refuses to act for another account and only
+  writes an autologin file while a switch or the Game Mode default needs
+  one. The Den is untouched by all of this — it is a system service.
+  Drafted by the local model: session script, both desktop entries,
+  the tray toggle; by hand (security-relevant): the apply helper and
+  polkit rule, plus the selector after two failed handoffs.
 - **Gaming base** (docs/holtos-must-haves-and-plan.md 1.1/1.4; Liam:
   "Steam preinstalled along with Proton + Proton GE"). `[multilib]`
   enabled for the build and the installed system (and by the config

@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Switch between the Plasma desktop and HoltOS Game Mode (gamescope + Steam
+# Big Picture). Named like SteamOS' tool because Steam's own "Switch to
+# Desktop" button runs `steamos-session-select plasma`; the "Game Mode"
+# app-menu entry runs it the other way. It records the next session for
+# SDDM's relogin (holtos-session-apply) and ends the current one.
+set -euo pipefail
+
+case "${1:-}" in
+    plasma|desktop) target=plasma ;;
+    gamescope|gamemode|steam) target=gamemode ;;
+    *) echo "usage: steamos-session-select <plasma|gamescope>" >&2; exit 2 ;;
+esac
+
+session_id="${XDG_SESSION_ID:-}"
+if [ -z "$session_id" ]; then
+    session_id="$(loginctl list-sessions --no-legend | awk -v u="$USER" '$3 == u { print $1; exit }')"
+fi
+
+if ! pkexec /usr/local/bin/holtos-session-apply --next "$target"; then
+    echo "Could not select the next session" >&2
+    exit 1
+fi
+
+# End this session; SDDM's Relogin autologin then starts the chosen one.
+if [ "${XDG_CURRENT_DESKTOP:-}" = "gamescope" ]; then
+    pkill -TERM -x gamescope || true
+elif command -v qdbus6 >/dev/null 2>&1; then
+    qdbus6 org.kde.Shutdown /Shutdown logout || loginctl terminate-session "$session_id"
+else
+    loginctl terminate-session "$session_id"
+fi
+exit 0
