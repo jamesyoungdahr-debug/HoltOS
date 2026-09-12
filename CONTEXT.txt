@@ -125,6 +125,10 @@ Synthetic clicks do NOT activate taskbar/desktop icons: open apps with
 KRunner (keydown=18 key=113 keyup=18, type name, key=13). Then SSH
 (key: scratchpad/vmkey): in Konsole type
   sudo systemctl start sshd && mkdir -p ~/.ssh && echo '<pub>' > ~/.ssh/authorized_keys
+The VM's address changes when the host's Default Switch renews its subnet
+(172.30.x -> 172.29.x after the 2026-09-12 host reboot); read it off a
+Konsole screenshot (`ip -4 -br a`) — Get-VMNetworkAdapter shows nothing
+(no KVP daemon) and the host neighbour cache also lists WSL.
 Live session user liveuser (passwordless sudo). Installed test user
 holtos / password holtos — sudo over ssh needs `echo holtos | sudo -S`,
 and three wrong attempts trip pam_faillock for 10 minutes.
