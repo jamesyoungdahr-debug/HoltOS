@@ -5,6 +5,20 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.0.4-alpha] - 2026-09-12
+
+Game Mode release. Built and verified in the Hyper-V VM (builds 18-20);
+the gamescope screen itself needs a real GPU, so that check is Liam's on
+the Strix Halo box.
+
+- **Updater hands over to the release's own copy of itself** when the
+  tarball ships a different `holtos-update-apply`, so whitelist additions
+  reach older installs from the next release on. (An installed 0.0.3-alpha
+  still needs the one-liner in the release notes first: its list lacks the
+  Game Mode files.) Scripts under `usr/local/bin` are now committed with
+  the executable bit so the release tarball carries it. Drafted by the
+  local model.
+
 - **Game Mode** (plan 1.2; Liam: "gamescope and an option to boot right
   into it and switch seamlessly back and forth"). A second SDDM session
   "HoltOS Game Mode" (`holtos-gamemode-session`: gamescope's own

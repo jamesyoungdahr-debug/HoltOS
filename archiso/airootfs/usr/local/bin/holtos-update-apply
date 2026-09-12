@@ -116,6 +116,21 @@ update_config() {
     # archiso/airootfs and land at the same path under /.
     echo "==> Syncing HoltOS components from $latest_tag..."
     local airootfs="$src_dir/archiso/airootfs"
+    # If the release ships a different updater than the one running, install
+    # it and let it finish this update: the component whitelist below lives
+    # in this script, so an older updater cannot know about files a newer
+    # release adds (0.0.3's list lacked the Game Mode files). A subprocess,
+    # not exec, so the caller's remaining items still run; the env var
+    # guards against recursion.
+    local new_self="$airootfs/usr/local/bin/holtos-update-apply"
+    if [[ -z "${HOLTOS_UPDATE_REEXEC:-}" ]] && [[ -f "$new_self" ]] &&
+       ! cmp -s "$new_self" /usr/local/bin/holtos-update-apply; then
+        echo "==> Updater changed in $latest_tag; handing over to the new one"
+        install -m755 "$new_self" /usr/local/bin/holtos-update-apply
+        rm -rf "$src_dir"
+        HOLTOS_UPDATE_REEXEC=1 /usr/local/bin/holtos-update-apply config "$latest_tag"
+        return $?
+    fi
     local components=(
         usr/local/bin/holtos-*
         usr/local/bin/homelab-*.sh
@@ -156,7 +171,7 @@ update_config() {
         return 1
     fi
     ( cd "$airootfs" && rsync -aR --itemize-changes "${present[@]}" / ) | grep -E '^[<>c]' | sed 's/^/    /' || true
-    chmod +x /usr/local/bin/holtos-* /usr/local/bin/homelab-*.sh 2>/dev/null || true
+    chmod +x /usr/local/bin/holtos-* /usr/local/bin/homelab-*.sh /usr/local/bin/steamos-session-select 2>/dev/null || true
     rm -rf "$src_dir"
 
     # New units in this release start working on the next boot.
