@@ -1,6 +1,6 @@
 HoltOS — running context file (plain text, kept current by the agent)
 =====================================================================
-Last updated: 2026-09-12 (early morning)
+Last updated: 2026-09-12 (unattended session, Liam asleep)
 Read this first when resuming. Newest state at the top of each section.
 
 WHAT HOLTOS IS
@@ -10,159 +10,92 @@ Repo: C:\projects\holtos  (GitHub jamesyoungdahr-debug/HoltOS, private, branch m
 Docs in repo: README.md, BUILD.md, PLAN.md, HANDOFF.md, CHANGELOG.md, BRANDING-STATUS.md
 Owner: Liam (GitHub jamesyoungdahr-debug, git user Vectorly)
 
-CURRENT STATE (2026-09-12)
---------------------------
-- ISO build 8 is the current good image: out/holtos-0.0.1-alpha-x86_64.iso
-  Copies on the Desktop: holtos-0.0.1-alpha-x86_64-zstd.iso (build 8),
-  holtos-0.0.1-alpha-x86_64.iso (build 7).
-- Real hardware: build 7/8 boot from a Ventoy stick and install. Confirmed
-  by Liam ("the build works").
-- The earlier real-hardware failure ("airootfs.sfs missing") was archiso's
-  copytoram=auto default (image copied to RAM, boot mount removed), fixed
-  by the installer step shellprocess@locate-airootfs. Not Ventoy's fault.
-- Live medium is zstd-compressed now (faster live session from USB).
-- master is pushed through e31b4b3. Uncommitted in the working tree:
-  build-aur-packages.sh / build-local-repo.sh (HoltOS packages phase),
-  packaging/holtos-glass-effect/PKGBUILD, this file.
+CURRENT STATE (2026-09-12, evening)
+-----------------------------------
+- Dev machine (LiamPC, Ryzen 7950X, 64 GB) was rebuilt from nothing today:
+  Git 2.55, GitHub CLI 2.100 (Liam signed in), WSL2 Ubuntu 26.04 + podman
+  5.7 (user liam, passwordless sudo, .wslconfig caps 24 threads / 32 GB),
+  Hyper-V + VM holtos-test (Gen 2, 6 vCPU, 8 GB, 60 GB VHDX in vm/,
+  Secure Boot off, Default Switch). Liam is in Hyper-V Administrators; UAC
+  is off, elevated scripts run via Start-Process -Verb RunAs.
+- Build 9 = first ISO from this machine: out/holtos-0.0.1-alpha-x86_64.iso
+  (2026-09-12 03:35 local). Copied to D:\ (the Ventoy stick) as
+  holtos-0.0.1-alpha-x86_64-build9.iso; older copy removed (Liam: always
+  replace the old ISO on D:\).
+- Build 9 VERIFIED in the VM, live and installed (see HANDOFF.md):
+  glass forks active (holtosglass effect, org.holtos.glass decoration),
+  About this System branded, live-ISO guards, no failed units, The Den
+  active, Btrfs @ + zstd, keyring OK. Bugs found: no Display page
+  (kscreen missing — the "no resolution options" report), no volume
+  applet backend (pipewire-pulse), powerprofilesctl traceback
+  (python-gobject), live session auto-locks, partition legend still
+  dark-on-dark (Calamares hardcodes the pens; now on a light chip).
+- Build 10 started ~03:58 local with all of the above fixed (commits
+  through b99fcca). Not yet verified. If it verifies: bump to
+  0.0.2-alpha, tag, rebuild as the release (PLAN step 5).
+- The updater still cannot reach GitHub (repo private): holtos-update-check
+  exits 128 on the build 9 install. Liam's decision.
 
-STOP POINT 2026-09-12 ~07:00 (Liam: "stop here and push")
------------------------------------------------------------
-- Both forks now live INSIDE this repo under forks/ (Liam: "can't we
-  just merge the forks") — no separate repos. packaging/*/PKGBUILD build
-  from a tar of forks/<name> made by build-aur-packages.sh; version
-  suffix = HoltOS commit count (HOLTOS_REV). The standalone checkouts
-  C:\projects\holtos-glass-effect and C:\projects\holtos-window-decoration
-  are now redundant (their history is summarised in the fork READMEs).
-- LEFTOVER TO CLEAN UP: two GitHub repos were created before the
-  monorepo decision: jamesyoungdahr-debug/holtos-glass-effect (pushed,
-  public) and jamesyoungdahr-debug/holtos-window-decoration (empty,
-  public). Delete them (gh repo delete) — Liam's call, not done.
-- Both packages are built and in local-repo/:
-  holtos-glass-effect-0.1.0.r7.2ed60b8 (WITHOUT fix 2a54c2f, see below)
-  holtos-window-decoration-6.7.2.r3340.86428c43.
-- Not done yet: rebuild the effect with the decoration-frame fix, install
-  both into the VM and look, rebuild the ISO (VM must be shut down
-  first), verify About/power additions. Then delete the standalone
-  checkouts and the two GitHub repos.
+FORKS (holtos-glass-effect, holtos-window-decoration)
+-----------------------------------------------------
+Both live in forks/ and are built by build-local-repo.sh into local-repo/
+(packaging/*/PKGBUILD, version suffix = commit count: r54 today). Verified
+on screen in build 9. The decoration-frame fix (force-blur the frame even
+when KWin reports the decoration as opaque) is in forks/ and shipped.
+LEFTOVER: two public GitHub repos created before the monorepo decision
+(jamesyoungdahr-debug/holtos-glass-effect, /holtos-window-decoration)
+still exist — delete with `gh repo delete` (needs the delete_repo scope,
+so Liam runs it).
+Live-tuning recipe in the VM: kwriteconfig6 --file kwinrc --group
+Effect-holtosglass --key <Key> <value>; qdbus6 org.kde.KWin /Effects
+reconfigureEffect holtosglass. Kvantum opacity: copy the theme to
+~/.config/Kvantum/HoltOSGlass/ and set reduce_window_opacity=N.
 
-IN PROGRESS: "FORK KDE" — HOLTOS-OWNED GLASS
---------------------------------------------
-(Paths below refer to the old standalone checkouts; the same trees are
-now forks/holtos-glass-effect and forks/holtos-window-decoration here.)
-Liam does not like the current glass look (Klassy 70 % title bars, Kvantum
-70 % windows, KWin blur 11) and wants full control, so the desktop chrome
-is being forked into HoltOS-owned code built by our pipeline:
-
-1. holtos-glass-effect  (C:\projects\holtos-glass-effect, git, local only,
-   NOT yet on GitHub). A KWin effect forked from KWin 6.7.5's built-in
-   blur (src/plugins/blur) and built OUT OF TREE against the installed
-   KWin headers (Arch's kwin package ships them). Plugin id "holtosglass";
-   config group [Effect-holtosglass]; replaces stock blur
-   (kwinrc: blurEnabled=false, holtosglassEnabled=true).
-   Status: DONE (milestone 1, 2026-09-12 06:28): the unmodified fork
-   builds and packages — local-repo/holtos-glass-effect-0.1.0.r5-*.pkg
-   (build attempt 5; fixes on the way: stale pacman db, Vulkan/wayland/
-   libdrm makedepends, link libxcb, K_PLUGIN_CLASS inside namespace).
-   Milestone 2 DONE (06:32): feature port committed (bf8b6dd, 2ed60b8)
-   and building: holtos-glass-effect-0.1.0.r7.2ed60b8 in local-repo/.
-   Implemented: force blur (windows/decorations/menus, docks optional,
-   ExcludeClasses), Contrast/Brightness, TintColor+TintStrength,
-   CornerRadius for undecorated windows, settings module for all.
-   SEEN ON SCREEN (06:39): package installed into the build-8 VM over
-   SSH (holtos@172.20.176.251, key scratchpad/vmkey), stock blur
-   unloaded, holtosglass loaded (qdbus6 org.kde.KWin /Effects
-   loadedEffects). Red-tint test proved blur+tint reach every
-   translucent window region (Falkon toolbar pixel went wine-red).
-   SETTLED (06:50): the title bar is translucent (30 % test went darker)
-   but KWin 6.7 reports the Klassy decoration as having no alpha, so
-   neither stock blur nor the fork blurred under the frame. Fix 2a54c2f:
-   force-blur the frame whenever a decoration exists. Needs rebuild
-   (effect build 7) — do it after the decoration build finishes, the
-   two share local-repo/ and repo-add.
-   Live-tuning recipe in the VM: kwriteconfig6 --file kwinrc --group
-   Effect-holtosglass --key <Key> <value>; qdbus6 org.kde.KWin /Effects
-   reconfigureEffect holtosglass. Kvantum opacity: copy the theme to
-   ~/.config/Kvantum/HoltOSGlass/ and set reduce_window_opacity=N.
-   Planned features (port from Better Blur / kwin-effects-forceblur,
-   whose upstream stopped at Plasma 6.4 so it cannot be used directly):
-     - force blur behind EVERY window (not only apps that ask), incl.
-       decorations, menus; exclude list by window class
-     - brightness / contrast / saturation of the blurred background
-     - TINT: blend a colour (ink #171423) into the blur so text on
-       translucent windows stays readable on any wallpaper
-     - corner radius for windows without a decoration radius
-     - later: static/fake blur (blur wallpaper once, low GPU cost)
-   Reference sources: C:\projects\forks\kwin\kwin-6.7.5 (extracted parts),
-   C:\projects\forks\forceblur-ref (Better Blur v1.5.0 + main).
-   Key API facts learned: shader colorMatrix is applied as
-   color * matrix (translation in the LAST ROW of QMatrix4x4);
-   "#include \"sdf.glsl\"" in shaders resolves to :/opengl/sdf.glsl inside
-   the kwin process (fine out of tree); BorderRadius(qreal) ctor exists
-   (scene/borderradius.h); KWin 6.7 already rounds blur to the
-   decoration's border radius.
-
-2. holtos-window-decoration (C:\projects\holtos-window-decoration, full
-   clone of Klassy at tag v6.7.2, matches Plasma 6.7; local only, NOT on
-   GitHub). Commit 86428c4: plugin renamed org.holtos.glass / "HoltOS
-   Glass" (kdecoration/CMakeLists.txt OUTPUT_NAME, kdecoration/breeze.json),
-   defaults baked into libbreezecommon/breezesettingsdata.kcfg (title bar
-   70/60 % with override on, 10 px corners, glass kept when maximized),
-   LF enforced. Everything else untouched for upstream merges. It still
-   reads klassy/klassyrc, so etc/skel/.config/klassy/klassyrc stays for
-   the remaining styling. PKGBUILD: packaging/holtos-window-decoration
-   (conflicts klassy; Qt6 only). First build: out/build-decoration-1.log.
-   Later: own the desktoptheme (Plasma panel style), drop the Qt5/look-
-   and-feel/colour bits we do not ship.
-
-3. Window contents stay on our Kvantum theme (HoltOSGlass, already ours)
-   with lower opacity once the tint in (1) guarantees readability.
-
-Build pipeline for the forks: build-local-repo.sh now also builds
-packaging/*/PKGBUILD ("HoltOS packages") with sources cloned from
-GitHub, or from local checkouts next to the holtos repo when
-HOLTOS_SRC is set (default ../ = C:\projects). Subset builds:
-  AUR_PKGS=none HOLTOS_PKGS=holtos-glass-effect ./build-local-repo.sh
-Logs: out/build-glass-effect-N.log. The builder image's package db was
-stale (404s) -> script now runs pacman -Syu first.
-
-NEXT STEPS (in order)
----------------------
-1. [DONE 2026-09-12] holtos-glass-effect builds and packages into local-repo/.
-2. [DONE 2026-09-12] Features ported and building.
-3. Add the package to archiso/packages.x86_64, set /etc/xdg/kwinrc
-   (blurEnabled=false, holtosglassEnabled=true, [Effect-holtosglass]
-   defaults), rebuild ISO, test in VM holtos-test (install build 8 there
-   first — its live session is at the installer's Summary page / locked;
-   password liveuser).
-4. Klassy fork: rebrand + defaults + package (packaging/holtos-window-decoration).
-5. Create GitHub repos for both forks (public, so PKGBUILDs can clone
-   anonymously), push, switch PKGBUILDs' default source to GitHub.
-6. "About this computer" + power options: STARTED (commit 5cabfe4,
-   unverified): kinfocenter (About this System) + etc/xdg/kcm-about-
-   distrorc, power-profiles-daemon (enabled), plasma-systemmonitor added
-   to packages.x86_64. Finding in the VM: the Power Management KCM
-   (powerdevil) was already installed and its daemon active — what was
-   missing is the power *profiles* daemon and the About page. Verify in
-   the next ISO. Still open after that: hardware-level optimisation
-   (CPU/GPU tuning, zram, AMD/Intel specifics); release v0.0.2-alpha
-   (PLAN step 5).
-   Image integration for the forks is committed too (7f28901: kwinrc,
-   packages.x86_64, Kvantum 55/72 %), also unbuilt/unverified.
+DISPLAY PAGE / HDR / VRR (Liam's question, 2026-09-12)
+-----------------------------------------------------
+System Settings > Display was missing outright: kscreen (the KCM) was not
+in packages.x86_64. Fixed in build 10. Beyond that, Plasma 6 shows
+resolution/refresh/scale always, and HDR / VRR / wide gamut only when the
+DRM driver reports the capability: hyperv_drm reports none (VM), AMD/Intel
+get them from the Mesa/amdgpu/i915 stack already in the image, NVIDIA
+needs the driver installed by hardware detection (PLAN step 7, real
+machine only) plus KWIN_DRM_ALLOW_NVIDIA_COLORSPACE=1 for the HDR toggle
+on Plasma >= 6.2 (KDE hid it on NVIDIA behind that env var because of a
+login-blocking driver bug; not shipped by default — enable per machine).
+GPU-PV / dxgkrnl in Hyper-V cannot test any of this: it gives /dev/dxg
+(compute) with no DRM device, no NVIDIA PCI device, no nvidia.ko.
 
 OPEN DECISIONS (Liam)
 ---------------------
 - HoltOS repo visibility (updater needs anonymous access) — still private.
 - Snapshot semantics (rescue boot vs rollback).
-- Real NVIDIA machine test for hardware detection (PLAN step 7).
+- Real NVIDIA machine test for hardware detection (PLAN step 7) and the
+  real-GPU look of the glass: boot build 10+ from the Ventoy stick (D:\).
+- Delete the two orphan fork repos on GitHub.
 
 HOW TO DRIVE THE TEST VM (Hyper-V "holtos-test")
 -------------------------------------------------
-Scratchpad C:\Users\Liam\AppData\Local\Temp\claude\C--projects-holtos\
-05bebaf1-5fd7-4a84-ab52-ae1495f17844\scratchpad\ has vmctl.sh
-(shot <png> | slow <text> | key <vk-code, Return=13> | keydown/keyup |
-click x y | dblclick x y | state), vm-attach-start.ps1 (attach newest
-out/*.iso, boot), vm-shutdown.ps1, vm-net.ps1 on|off. Run the .ps1 files
-elevated via Start-Process -Verb RunAs. Synthetic double-click does not
-open desktop icons; launch Calamares from Konsole: pkexec calamares.
-Installer coordinates at 1024x768: Next (977,145) on early pages,
-(977,61) once the window grows on Summary; Erase disk radio (20,351/361).
+Tooling lives in the session scratchpad (C:\Users\Liam\AppData\Local\Temp\
+claude\C--projects-holtos\<session>\scratchpad\): vm.ps1 (non-elevated
+wrapper) runs vmctl.ps1 elevated. Actions: state | iso=<path>|none |
+start | off | shutdown | bootdisk | bootdvd | net=on|off | shot=<png> |
+type=<text> | key=<vk> | keydown/keyup=<vk> | holdkey=<vk>,<secs> |
+click/dblclick/rclick/move=<x>,<y> | sleep=<s>. Screenshots come from
+Msvm_VirtualSystemManagementService.GetVirtualSystemThumbnailImage at the
+guest's real resolution (1024x768); keyboard via Msvm_Keyboard TypeKey
+per character (VkKeyScan + Shift); mouse via Msvm_SyntheticMouse
+SetAbsolutePosition + SetButtonState (Click() alone does nothing).
+Synthetic clicks do NOT activate taskbar/desktop icons: open apps with
+KRunner (keydown=18 key=113 keyup=18, type name, key=13). Then SSH
+(key: scratchpad/vmkey): in Konsole type
+  sudo systemctl start sshd && mkdir -p ~/.ssh && echo '<pub>' > ~/.ssh/authorized_keys
+Live session user liveuser (passwordless sudo). Installed test user
+holtos / password holtos — sudo over ssh needs `echo holtos | sudo -S`,
+and three wrong attempts trip pam_faillock for 10 minutes.
+Installer at 1024x768: Next (977,145) on early pages, (977,61) once the
+window grows on Summary; Erase disk radio (20,254); Users fields: name
+(110,233), password (110,434), repeat (316,434), same-password box
+(19,494). Erase-disk install of build 9 took under 3 minutes.
+guest-checks.sh (scratchpad) is the in-guest verification script; run it
+with `ssh ... 'bash -s' < guest-checks.sh`.
+The DVD stays attached: boot order decides (bootdisk / bootdvd).

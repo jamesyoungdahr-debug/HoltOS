@@ -73,22 +73,40 @@ updates them.
 **Check:** fresh install with the VM's network disconnected → `the-den`
 active, `the-den-client` in the app menu and launches, migration ran.
 
-## Step 3 — Verify the live-ISO guards
+## Step 3 — Verify the live-ISO guards — DONE 2026-09-12 (build 9)
 
-The `!/run/archiso` gates on the tray and first-boot units were committed
-after the last ISO build.
+Live session: no `holtos-tray` process, no first-boot unit at all (the
+vendoring in Step 2 removed it; The Den's migration runs from
+`holtos-update-apply vendor` at build time and `the-den.service` on the
+installed system, which was active with HTTP 200 on first boot). The
+installed system has the tray running. Also found and fixed in the same
+round: the live session auto-locked after 5 minutes (installer finished
+behind the lock screen) — `Autolock=false` for liveuser only.
 
-**Check:** boot the live ISO — no tray icon, `systemctl status
-holtos-first-boot-apps` shows condition unmet.
+## Step 4 — Finish the cosmetic installer items — code DONE 2026-09-12, verify in build 10
 
-## Step 4 — Finish the cosmetic installer items
+- Partition-bar legend: NOT fixable with a colour rule — Calamares'
+  `PartitionLabelsView::drawLabel` uses hardcoded `Qt::black` /
+  `Qt::gray` pens. The stylesheet now gives the view a light
+  (rgba 255,255,255,0.88) rounded background instead, so black text reads.
+- Slideshow white frame: already fixed (root Rectangle in `show.qml`),
+  confirmed on screen in build 9.
 
-- Partition-bar labels dark-on-dark: set `QWidget { color }` isn't
-  reaching them (palette-painted). Try `QPalette`-driven keys via
-  `branding.desc` `style:` or a `#partitionBarView` rule.
-- Slideshow page white frame around the slide.
+**Check:** screenshot of the Partitions page in the build 10 install
+(legend on a light chip, both lines readable) and the Summary page.
 
-**Check:** screenshots of Partitions and Install pages.
+## Step 4b — System Settings pages that were missing — code DONE 2026-09-12, verify in build 10
+
+Found while checking Liam's "Display shows no resolution options":
+`kscreen` (the Display page itself) was not in the image, nor were
+`plasma-pa` + `pipewire-pulse`/`-alsa`, `bluedevil` + `bluez`,
+`kde-gtk-config`, `plasma-disks`, `sddm-kcm`, `kwallet-pam`, `krdp`,
+`python-gobject`. All added; `bluetooth.service` enabled.
+
+**Check:** build 10 install → System Settings > Display shows the mode
+list (24 modes in the VM); volume applet in the tray; Bluetooth,
+Login Screen, Remote Desktop, Disks & Devices pages present;
+`powerprofilesctl list` works; `systemctl --failed` still empty.
 
 ## Step 5 — Release
 
@@ -100,7 +118,9 @@ holtos-first-boot-apps` shows condition unmet.
 - Rebuild from that tag so `deployed-commit` matches.
 
 **Check:** fresh install → `holtos-update-check` exits 1 (up to date).
-Requires Step 0's repo-visibility decision.
+Requires Step 0's repo-visibility decision (still private on 2026-09-12:
+the build 9 install's `holtos-update-check` exits 128). Everything else
+in this step can be done before that decision; only this check waits.
 
 ## Step 6 — Real hardware
 
