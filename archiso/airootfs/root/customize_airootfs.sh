@@ -25,6 +25,9 @@ systemctl enable sddm.service
 # Power profiles (performance / balanced / power saver) for the Power KCM
 # and the battery widget.
 systemctl enable power-profiles-daemon.service
+# bluez daemon for bluedevil (Bluetooth remotes/headphones); added with the
+# System Settings pages that were missing from build 9 (2026-09-12).
+systemctl enable bluetooth.service
 
 # systemd only honors real symlinks in *.wants/ directories, and git on
 # Windows can't store symlinks (the releng wants/ entries flattened into
@@ -88,4 +91,16 @@ EOF
 mkdir -p /home/liveuser/Desktop
 cp /usr/share/applications/homelab-install.desktop /home/liveuser/Desktop/homelab-install.desktop
 chmod +x /home/liveuser/Desktop/homelab-install.desktop
+# The live session must never lock itself: the installer ran to completion
+# behind a lock screen during the build 9 VM test (2026-09-12) and anyone
+# installing from a USB stick would hit the same thing after 5 idle
+# minutes, with a password nobody told them (liveuser). Live-only — the
+# installed system keeps the normal locker; this file is liveuser's, not
+# skel's.
+cat >> /home/liveuser/.config/kscreenlockerrc <<'EOF'
+
+[Daemon]
+Autolock=false
+LockOnResume=false
+EOF
 chown -R liveuser:liveuser /home/liveuser

@@ -67,6 +67,37 @@ power-profiles-daemon
 # not need it, but the CLI is what scripts and support checks use.
 python-gobject
 plasma-systemmonitor
+# System Settings pages a Plasma desktop is expected to have but that
+# plasma-desktop alone does not pull in — found on the build 9 install
+# (2026-09-12): System Settings > Display opened to "Could not find
+# plugin kcm_kscreen", so there was NO resolution / refresh rate / scale /
+# HDR / VRR page at all (libkscreen was there, the KCM package was not).
+# kscreen: Display Configuration page + the kded module that applies it.
+# plasma-pa: audio volume applet and Audio page (needs the pipewire stack
+# already in the list). bluedevil: Bluetooth applet + page (remotes,
+# headphones). kde-gtk-config: GTK apps follow the HoltOS theme.
+# plasma-disks: SMART disk-health monitoring and warnings — a media
+# server's disks are the whole point. sddm-kcm: Login Screen page.
+# kwallet-pam: unlocks KWallet at login so Wi-Fi/Bluetooth secrets don't
+# prompt. krdp: the Remote Desktop (RDP server) page, so the box can be
+# driven headless from another machine.
+kscreen
+plasma-pa
+bluedevil
+kde-gtk-config
+plasma-disks
+sddm-kcm
+kwallet-pam
+krdp
+# ...and the daemons behind two of those pages, also absent from build 9:
+# pipewire-pulse + pipewire-alsa (pipewire and wireplumber were there, but
+# nothing served the PulseAudio API plasma-pa and every desktop app use),
+# bluez + bluez-utils (the Bluetooth daemon bluedevil talks to; enabled in
+# customize_airootfs.sh).
+pipewire-pulse
+pipewire-alsa
+bluez
+bluez-utils
 ark
 print-manager
 # The Den's own web UI (the-den.desktop opens http://127.0.0.1:8686) needs a

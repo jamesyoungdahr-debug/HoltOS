@@ -34,6 +34,29 @@ All notable changes to HoltOS are logged here. Format loosely follows
   2026-09-11 could never work — it was still dark-on-dark in build 9. The
   legend now sits on a light chip via the one property a stylesheet can
   set on that view, its background.
+- **System Settings > Display existed only as an error.** Real bug behind
+  "the settings pane doesn't show any resolution options": the image
+  installs `plasma-desktop` plus hand-picked packages, and the Display
+  Configuration page lives in `kscreen`, which was never listed —
+  System Settings > Display opened to "Could not find plugin
+  kcm_kscreen" (build 9 install, 2026-09-12; `libkscreen` and
+  `kscreen-doctor` were present, so the compositor side was fine and the
+  VM's `hyperv_drm` output lists 24 modes). Added `kscreen`, and the other
+  pages a Plasma desktop is expected to have that were missing for the
+  same reason: `plasma-pa` (volume applet + Audio page; also
+  `pipewire-pulse`/`pipewire-alsa`, without which no app had a sound
+  server), `bluedevil` + `bluez`/`bluez-utils` (Bluetooth, service
+  enabled), `kde-gtk-config`, `plasma-disks` (SMART health), `sddm-kcm`,
+  `kwallet-pam`, `krdp` (Remote Desktop page). HDR / VRR / refresh-rate
+  entries on that page appear only when the DRM driver reports them —
+  `hyperv_drm` reports none, NVIDIA needs the driver from PLAN step 7
+  (and `KWIN_DRM_ALLOW_NVIDIA_COLORSPACE=1` for the HDR toggle on Plasma
+  6.2+), AMD/Intel get them from Mesa/amdgpu/i915 already in the image.
+- **Live session no longer locks itself.** The installer finished behind
+  the Plasma lock screen during the build 9 VM test; a USB install would
+  hit the same after 5 idle minutes with a password (liveuser) nobody is
+  told. `Autolock=false` in liveuser's `kscreenlockerrc` only — the
+  installed system keeps the normal locker.
 - **Live-ISO guards verified** (PLAN.md step 3, build 9): no
   `holtos-tray` process and no first-boot unit in the live session.
 - **Dev machine rebuilt from nothing (2026-09-12)**: Git, GitHub CLI,
