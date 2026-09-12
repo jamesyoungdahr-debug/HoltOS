@@ -19,7 +19,9 @@ CURRENT STATE (2026-09-12, evening)
   v0.5.1 needs it), live-medium udev rule (no "Disks & Devices" popup over
   Calamares), SDDM state seeded with Plasma on install. Build 18 install
   verified in the VM; Game Mode there fails (no GPU) and bounces back to
-  Plasma automatically, which is the designed failure path. The real Game
+  Plasma automatically, which is the designed failure path. Build 20 fresh
+  install verified too: no Disks & Devices popup over Calamares, login
+  screen preselects Plasma. The real Game
   Mode screen needs Liam's Strix Halo box. Build 20 = everything above.
   Next: copy build 20 ISO to D:\ (stick not plugged in), tag v0.0.4-alpha
   after the real-hardware check.
