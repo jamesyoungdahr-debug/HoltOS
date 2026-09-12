@@ -51,7 +51,16 @@ All notable changes to HoltOS are logged here. Format loosely follows
   progress, reboot offer) and a login-time notice when the session is a
   booted snapshot, offering to restore it. `holtos-btrfs-snapshot` gained
   `--regen` (retention + Limine rewrite only) and `SNAP_LOG` /
-  `SNAPSHOTS_DIR` overrides for that. README updated.
+  `SNAPSHOTS_DIR` overrides for that. README updated. Verified on the
+  build 10 VM (restore back, restore forward, cleanup on reboot) and on a
+  fresh build 14 install through the tray dialogs and the snapshot-boot
+  notice (KDE polkit prompt). Two real bugs found on the way: the merge
+  aborted when the very first snapshot had no `snapshots.log` inside it
+  (pipefail + missing file) — now merges whatever exists, including the
+  running system's own log, and reconciles the log with the subvolumes
+  that actually exist; and the replaced root must never be deleted while
+  it is the running root (btrfs will do it and take the session down) —
+  it is renamed and removed on the next boot instead.
 
 ## [0.0.2-alpha] - 2026-09-12
 

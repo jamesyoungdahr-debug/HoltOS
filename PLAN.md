@@ -123,6 +123,25 @@ Requires Step 0's repo-visibility decision (still private on 2026-09-12:
 the build 9 install's `holtos-update-check` exits 128). Everything else
 in this step can be done before that decision; only this check waits.
 
+## Step 5b — After the release (2026-09-12, unreleased, all verified in the VM)
+
+- Snapshot restore (`holtos-btrfs-restore`, tray "Restore Snapshot...",
+  snapshot-boot notice) — verified: CLI restore back/forward, tray flow on
+  a fresh build 14 install, restore from a booted snapshot, cleanup unit.
+- Other operating systems in the Limine menu
+  (`holtos-limine-other-os`, install time + kernel updates + tray "Rescan
+  Boot Menu") — verified with a second disk carrying a fake Windows and
+  Ubuntu ESP: entries appear at install time and chainloading via
+  `guid()` reaches the loader on the other disk.
+- Limine themed as HoltOS (branding, Terminus 12x24, glass panel,
+  comments, collapsed Snapshots submenu) — verified on screen.
+- yad 15 dropped `--question`/`--info`; all dialogs fixed.
+- Next: tag `v0.0.3-alpha` once Liam has seen the boot menu and the
+  restore flow on real hardware; the VM has covered everything else.
+
+**Open cosmetic:** Plasma's Disks & Devices popup opens over the
+installer in the live session for the live medium's own optical disc.
+
 ## Step 6 — Real hardware
 
 Only after Step 5: R720 PERC to HBA mode, iDRAC virtual media, UEFI

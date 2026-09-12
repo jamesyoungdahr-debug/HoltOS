@@ -134,15 +134,40 @@ mkdir -p "$NEW_LIB"
 # snapshot's copy, sorted, is the complete history (a plain copy of
 # either side loses lines: the snapshot's is frozen at its time, the
 # replaced root's may itself have been restored past some entries).
+# Either side may be missing a file: the very first snapshot on a fresh
+# install has no snapshots.log inside it yet (the log line is written
+# after the subvolume is taken). With pipefail a missing file would
+# abort the whole restore — seen live on the build 14 install.
+# Three sources: the replaced @, the snapshot, and the RUNNING system's
+# own /var/lib/holtos (which is one of the two on a normal boot, but the
+# most complete copy when running from a booted snapshot or after an
+# interrupted restore left the log in a renamed root). Written as
+# if/then so a missing file never becomes the loop's exit status
+# (pipefail turned exactly that into an aborted restore, twice).
 for f in snapshots.log history.log; do
-    cat "${OLD_LIB}/${f}" "${NEW_LIB}/${f}" 2>/dev/null | sort -u > "${NEW_LIB}/${f}.merged"
+    for src in "${OLD_LIB}/${f}" "${NEW_LIB}/${f}" "/var/lib/holtos/${f}"; do
+        if [ -f "$src" ]; then cat "$src"; fi
+    done | sort -u > "${NEW_LIB}/${f}.merged"
     mv "${NEW_LIB}/${f}.merged" "${NEW_LIB}/${f}"
 done
-# snapshots.log must only list subvolumes that still exist (retention on
-# either side may have evicted some).
-while IFS=$'\t' read -r ts label name; do
-    [ -n "$name" ] && [ -d "${TOP}/@snapshots/${name}" ] && printf '%s\t%s\t%s\n' "$ts" "$label" "$name"
-done < "${NEW_LIB}/snapshots.log" > "${NEW_LIB}/snapshots.log.merged"
+# snapshots.log must list exactly the snapshot subvolumes that exist:
+# drop lines whose subvolume is gone (retention on either side), and add
+# lines for subvolumes no log knew about (an interrupted restore can
+# leave one whose only log line was in a root that got replaced). The
+# name encodes everything: <YYYYMMDDTHHMMSSZ>-<label>.
+{
+    while IFS=$'\t' read -r ts label name; do
+        [ -n "$name" ] && [ -d "${TOP}/@snapshots/${name}" ] && printf '%s\t%s\t%s\n' "$ts" "$label" "$name"
+    done < "${NEW_LIB}/snapshots.log"
+    for d in "${TOP}"/@snapshots/*/; do
+        n="${d%/}"; n="${n##*/}"
+        [ -n "$n" ] && [ "$n" != "*" ] || continue
+        grep -q $'\t'"${n}"'$' "${NEW_LIB}/snapshots.log" && continue
+        stamp="${n%%-*}"; lbl="${n#*-}"
+        iso="${stamp:0:4}-${stamp:4:2}-${stamp:6:2}T${stamp:9:2}:${stamp:11:2}:${stamp:13:2}Z"
+        printf '%s\t%s\t%s\n' "$iso" "$lbl" "$n"
+    done
+} | sort -u > "${NEW_LIB}/snapshots.log.merged"
 mv "${NEW_LIB}/snapshots.log.merged" "${NEW_LIB}/snapshots.log"
 # The kernel command-line extras are a property of THIS machine's
 # hardware, not of the snapshot: keep the replaced root's.

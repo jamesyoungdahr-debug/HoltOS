@@ -39,6 +39,26 @@ CURRENT STATE (2026-09-12, evening)
   end on the build 10 install: check -> apply config (snapshot + release
   tarball) -> up to date (exit 1).
 
+AFTERNOON 2026-09-12 (unreleased, builds 12-15, all VM-verified)
+------------------------------------------------------------------
+- Snapshot restore: holtos-btrfs-restore (root; <name> | --current |
+  --cleanup), tray "Restore Snapshot...", autostart notice on snapshot
+  boots, holtos-btrfs-restore-cleanup.service deletes @.old-* at boot.
+  NEVER btrfs-delete the running root (it works and kills the session).
+- Other OSes in Limine: holtos-limine-other-os (install, kernel-update
+  hook, tray "Rescan Boot Menu"); entries between HOLTOS OTHER OS markers.
+  Test rig: second VHDX vm/fake-windows.vhdx with EFI/Microsoft/Boot/
+  bootmgfw.efi + EFI/ubuntu/grubx64.efi (both copies of Limine).
+- Limine theme: set in homelab-limine-install.sh; font from terminus-font
+  converted in customize_airootfs.sh to /usr/share/holtos/limine/
+  ter-124b.bin, copied to ESP /holtos/. Snapshots live in a collapsed
+  /Snapshots submenu written by holtos-btrfs-snapshot.
+- yad 15: no --question / --info. Plain `yad --text ... --button` only.
+- Limine menu screenshots need a long timeout: sed timeout: 30 into both
+  limine.conf copies on the ESP, reboot, shot after ~24 s. Holding Down
+  via TypeKey during boot is unreliable.
+- ISO on D:\ is build 14 (Liam may have unplugged the stick).
+
 FORKS (holtos-glass-effect, holtos-window-decoration)
 -----------------------------------------------------
 Both live in forks/ and are built by build-local-repo.sh into local-repo/

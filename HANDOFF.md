@@ -72,6 +72,34 @@ All found on the build 9 install/live session, fixed, verified on build 10.
 Also: BUILD.md/pacman.conf still described "six AUR packages incl.
 klassy" (now five AUR + two HoltOS forks) — fixed.
 
+## After the release (same day, unreleased — builds 12–15)
+
+Liam's afternoon requests, all built and verified in the VM:
+
+- **Real snapshot rollback**: `holtos-btrfs-restore <name>` / `--current`,
+  tray "Restore Snapshot...", and a login-time notice when booted into a
+  snapshot. Verified: restore back and forward on the build 10 install,
+  the tray dialogs and KDE polkit prompt on a fresh build 14 install,
+  restore from a booted snapshot, and the boot-time cleanup unit removing
+  the replaced roots. Two bugs found live: btrfs WILL delete the mounted
+  running root if asked (session died) — the old root is now renamed and
+  deleted on the next boot; and the log merge aborted when a side had no
+  log file yet (pipefail) — merge now tolerates missing files, includes
+  the running system's log, and reconciles the log with the subvolumes.
+- **Other OSes in the boot menu**: `holtos-limine-other-os` scans every
+  ESP for Windows Boot Manager / shim / GRUB / systemd-boot and writes
+  `protocol: efi` entries (install time, kernel updates, tray "Rescan
+  Boot Menu"). Verified with a second VHDX carrying a fake Windows and
+  Ubuntu ESP: entries appear on a fresh install and the "Windows" entry
+  chainloads the loader on the other disk via `guid()`.
+- **Limine themed as HoltOS**: branding line, Terminus 12x24 font
+  (converted at build time), translucent panel, per-entry comments,
+  collapsed Snapshots submenu. Screenshots in the session scratchpad.
+- **yad 15 removed `--question`/`--info`**: five dialogs (two of them in
+  the release) silently failed; all switched to the plain dialog.
+- The test VM now has a second disk `vm/fake-windows.vhdx` (fake ESP);
+  keep it attached, it is what exercises the other-OS scan.
+
 ## Confirmed working (build 10, on screen or over SSH)
 
 Live ISO → branded Plasma desktop in ~40 s, no tray, no first-boot unit,
