@@ -464,8 +464,7 @@ update_the_den_client() {
 install_the_den_client() {
     local src_dir="$1" latest_tag="$2" new_commit="$3"
     local app_dir="/opt/the-den-client"
-    local first_install=0
-    [ -d "$app_dir" ] || first_install=1
+    local logo=""
 
     install_pkgbuild_depends "$src_dir/PKGBUILD" "The Den Client" || return 1
 
@@ -473,12 +472,27 @@ install_the_den_client() {
     install -dm755 "$app_dir"
     rsync -a --delete "$src_dir/src/" "$app_dir/src/"
 
-    if [ "$first_install" -eq 1 ]; then
-        echo "==> Installing launcher, .desktop entry, and icon..."
-        install -Dm755 "$src_dir/deploy/the-den-client" /usr/bin/the-den-client
-        install -Dm644 "$src_dir/deploy/the-den-client.desktop" /usr/share/applications/the-den-client.desktop
-        install -Dm644 "$src_dir/assets/logo.svg" /usr/share/icons/hicolor/scalable/apps/the-den-client.svg
+    # These used to be installed only on first install, so icon/.desktop
+    # fixes in new releases never reached updated systems (seen live
+    # 2026-09-12). Refresh them every time, like the PKGBUILD does.
+    echo "==> Installing launcher, .desktop entry, and icon..."
+    install -Dm755 "$src_dir/deploy/the-den-client" /usr/bin/the-den-client
+    install -Dm644 "$src_dir/deploy/the-den-client.desktop" /usr/share/applications/the-den-client.desktop
+
+    # The logo moved into src/assets/ (v0.4.5+); older tags keep it at assets/.
+    for f in "$src_dir/src/assets/logo.svg" "$src_dir/assets/logo.svg"; do
+        [ -f "$f" ] && { logo="$f"; break; }
+    done
+    if [ -n "$logo" ]; then
+        for dest in /usr/share/icons/hicolor/scalable/apps/the-den-client.svg                     /usr/share/icons/hicolor/64x64/apps/the-den-client.svg                     /usr/share/pixmaps/the-den-client.svg; do
+            install -Dm644 "$logo" "$dest"
+        done
+    else
+        echo "==> No logo.svg in this release; keeping the installed icon" >&2
     fi
+
+    command -v gtk-update-icon-cache >/dev/null && gtk-update-icon-cache -q -t -f /usr/share/icons/hicolor || true
+    command -v update-desktop-database >/dev/null && update-desktop-database -q /usr/share/applications || true
 
     log_history the-den-client "$latest_tag" "$new_commit"
     echo "==> The Den Client updated to $latest_tag"

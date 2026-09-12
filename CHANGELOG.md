@@ -47,6 +47,15 @@ All notable changes to HoltOS are logged here. Format loosely follows
   ("Network Shares") and the tray. `cifs-utils` and `nfs-utils` added.
   Verified in the VM against local Samba and NFS servers: test, add,
   automount on access, write, unmount, remove, and the GUI on screen.
+- **Updater: The Den Client launcher, .desktop and icons refresh on every
+  update.** They were installed only on first install, so icon and
+  desktop-file fixes in new client releases never reached an updated
+  system (found 2026-09-12 checking the client's window icon on Plasma
+  Wayland). The icon now lands in hicolor scalable, hicolor 64x64 and
+  pixmaps like the client's PKGBUILD, from `src/assets/` or the older
+  `assets/`; icon cache and desktop database are refreshed. Drafted by
+  the local model. Verified in the VM: an in-place v0.4.4 update
+  replaced the image-build placeholder icon and created the missing files.
 - **README credits** everything HoltOS forks or ships, and notes that
   HoltOS was built with help from AI (Claude Fable 5.1 via Claude Code).
 
@@ -340,7 +349,8 @@ pages. Verified on two fresh Erase-Disk installs in the Hyper-V VM
   found two real bugs, both fixed:
   - Git for Windows defaults `core.autocrlf=true`, so every text file
     checked out with CRLF; `build-aur-packages.sh` died inside the
-    container on `set -euo pipefail` (`pipefail: invalid option name`),
+    container on `set -euo pipefail` (`pipefail
+: invalid option name`),
     and every script/unit file under `airootfs/` would have shipped
     broken into the ISO the same way. Added `.gitattributes`
     (`* text=auto eol=lf`) so checkouts are LF regardless of local git
