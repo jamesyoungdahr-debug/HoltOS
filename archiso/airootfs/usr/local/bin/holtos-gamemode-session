@@ -44,6 +44,7 @@ if [ -f /etc/holtos/gamemode-resolution ]; then
     fi
 fi
 
+START_TS=$(date +%s)
 # Run gamescope with steam big picture flags
 gamescope "${args[@]}" -- \
     steam -gamepadui -steamos3 -steampal -steamdeck
@@ -53,7 +54,19 @@ GAMESCOPE_EXIT=$?
 # Log exit status and end session
 log "Gamescope exited with code $GAMESCOPE_EXIT."
 
-# If the apply script exists and is executable, invoke it to reset session choice
-pkexec /usr/local/bin/holtos-session-apply --next-done 2>/dev/null || true
+# Game Mode that died within a few seconds of starting (no GPU, broken
+# driver, gamescope crash) must not leave a black screen: ask for a
+# one-shot relogin straight back into Plasma instead of just clearing
+# the switch. Otherwise clear the one-shot so the next login is normal.
+if [ "$GAMESCOPE_EXIT" -ne 0 ] && [ $(( $(date +%s) - START_TS )) -lt 15 ]; then
+    log "Game Mode failed to start; returning to the desktop."
+    logger -t holtos-gamemode "Game Mode failed to start (gamescope exit $GAMESCOPE_EXIT); returning to Plasma"
+    pkexec /usr/local/bin/holtos-session-apply --next plasma 2>/dev/null || true
+else
+    pkexec /usr/local/bin/holtos-session-apply --next-done 2>/dev/null || true
+fi
 
-exit "$GAMESCOPE_EXIT"
+# Always exit 0: SDDM only recreates the display (greeter or relogin)
+# when the session helper exits successfully; a non-zero exit left the
+# login screen black (seen live 2026-09-12, build 18 in the VM).
+exit 0

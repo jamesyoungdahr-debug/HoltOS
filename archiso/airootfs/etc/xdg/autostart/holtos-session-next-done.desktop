@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=HoltOS session switch cleanup
+Comment=Clears the one-shot Plasma/Game Mode relogin once the desktop is up, so the login screen behaves normally afterwards
+Exec=sh -c 'grep -q "^NEXT=.." /etc/holtos/session.conf 2>/dev/null && exec pkexec /usr/local/bin/holtos-session-apply --next-done'
+OnlyShowIn=KDE;
+NoDisplay=true
+X-KDE-autostart-phase=2

@@ -79,3 +79,19 @@ rm -f /etc/systemd/system/etc-pacman.d-gnupg.mount \
 # Konsole/SSH login). Replace it with a one-liner. /etc/issue is fine as
 # is ("HoltOS \r (\l)").
 printf 'Welcome to \033[38;2;177;77;255mHoltOS\033[0m -- your media and gaming box. The Den runs as a service; open "The Den" from the app menu.\n\n' > /etc/motd
+
+# The live-medium udev rule that hides the boot ISO/EFI partition from
+# udisks must not ship on installs (real sticks with that label would vanish).
+rm -f /etc/udev/rules.d/90-holtos-live-media.rules
+
+# SDDM remembers the last session in /var/lib/sddm/state.conf and, with no
+# state, preselects the first session file alphabetically -- that is
+# holtos-gamemode.desktop, so a fresh install's login screen defaulted to
+# Game Mode (seen live 2026-09-12, build 18). Seed it with Plasma;
+# holtos-session-apply keeps it in sync afterwards.
+if getent passwd sddm >/dev/null; then
+    install -d -m 750 -o sddm -g sddm /var/lib/sddm
+    printf '[Last]\nSession=/usr/share/wayland-sessions/plasma.desktop\n' > /var/lib/sddm/state.conf
+    chown sddm:sddm /var/lib/sddm/state.conf
+    chmod 600 /var/lib/sddm/state.conf
+fi

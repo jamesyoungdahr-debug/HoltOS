@@ -103,6 +103,10 @@ print-manager
 # The Den's own web UI (the-den.desktop opens http://127.0.0.1:8686) needs a
 # browser; nothing else in this package list provides one.
 falkon
+# The Den v0.5.1+ depends on chromium (its built-in Cloudflare solver for
+# public trackers, app/indexers/solver.py); build-vendor-apps refuses to
+# vendor a release whose depends are missing from this list.
+chromium
 
 # Calamares installer (AUR, via the local repo). polkit provides pkexec,
 # which the installer's desktop launcher uses to gain root.

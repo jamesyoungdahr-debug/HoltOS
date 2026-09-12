@@ -64,6 +64,27 @@ All notable changes to HoltOS are logged here. Format loosely follows
   Install HoltOS..."); the Calamares cleanup step writes a one-line
   welcome instead. Written by hand after two failed handoffs (the model
   garbled the ANSI escape).
+- **Live medium: no more "Disks & Devices" popup over the installer.** A
+  udev rule marks the boot ISO and archiso EFI partition UDISKS_IGNORE on
+  the live medium; the Calamares cleanup step drops the rule on installs.
+  Drafted by the local model.
+- **chromium in the image**: The Den v0.5.1 depends on it (its built-in
+  Cloudflare solver for public trackers); build 18 vendors The Den v0.5.1
+  and The Den Client v0.4.4.
+- **Game Mode failure no longer leaves a black screen.** SDDM only
+  recreates the display when the session helper exits successfully, so a
+  gamescope that died at startup (no GPU in the VM) left the login screen
+  black (build 18). The session script now always exits 0 and, when
+  gamescope dies within 15 s of starting, asks for a one-shot relogin
+  straight back into Plasma, and a Plasma autostart entry
+  (`holtos-session-next-done.desktop`) clears the one-shot once the
+  desktop is up so the login screen behaves normally afterwards. Verified
+  in the VM: Game Mode fails, the desktop is back in seconds, no autologin
+  file is left behind. Also: fresh installs seed SDDM's remembered
+  session with Plasma so the login screen does not default to Game Mode
+  (build 18 picked it because it sorts first). Both written by hand: the
+  local model reported DONE twice without writing the file, and returned
+  a bare `return 0` at script level for the seed snippet.
 - **README credits** everything HoltOS forks or ships, and notes that
   HoltOS was built with help from AI (Claude Fable 5.1 via Claude Code).
 
