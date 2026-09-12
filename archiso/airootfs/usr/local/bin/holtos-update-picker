@@ -27,7 +27,7 @@ items=()
 [ "$f_system" = "TRUE" ] && items+=(system)
 
 if [ "${#items[@]}" -eq 0 ]; then
-    yad --info --title="HoltOS Updater" --window-icon="$ICON" \
+    yad --title="HoltOS Updater" --window-icon="$ICON" \
         --text="Nothing selected." --button="Close:0"
     exit 0
 fi

@@ -1,0 +1,163 @@
+#!/usr/bin/env bash
+# Finds the other operating systems on this machine and gives each one a
+# Limine menu entry — Limine has no os-prober, but it can chainload any
+# EFI application, and every installed OS that boots under UEFI leaves
+# its loader on an EFI System Partition. Scans EVERY ESP on every disk:
+#
+#   EFI/Microsoft/Boot/bootmgfw.efi         -> "Windows"
+#   EFI/<name>/shimx64.efi | grubx64.efi    -> "<Name>" (Ubuntu, Fedora, CachyOS, ...)
+#   EFI/systemd/systemd-bootx64.efi          -> "Linux (systemd-boot)"
+#   EFI/BOOT/BOOTX64.EFI on a foreign ESP    -> "Other OS on <disk>" (only if
+#                                               nothing better was found there)
+#
+# HoltOS' own loader directories (limine, BOOT on our ESP, holtos-*) are
+# skipped. Entries go between the HOLTOS OTHER OS markers in BOTH copies
+# of limine.conf (see homelab-limine-install.sh for why two copies), and
+# the menu timeout is raised to 5 s when there is something to choose.
+#
+# Paths: loaders on our own ESP are addressed as boot():/..., anything
+# else as guid(<GPT partition GUID>):/... (Limine resolves guid()/uuid()
+# to a GPT partition GUID or a filesystem UUID; MBR disks have no GUID,
+# so those fall back to the FAT volume id via uuid()).
+#
+# Run at install time (homelab-limine-install.sh), after every kernel
+# update (homelab-limine-sync.sh), and on demand from the tray ("Rescan
+# Boot Menu"). Safe to rerun: the block is rewritten wholesale.
+set -euo pipefail
+
+if [ "$(id -u)" -ne 0 ]; then
+    echo "holtos-limine-other-os must run as root" >&2
+    exit 1
+fi
+
+for candidate in /boot/efi /efi /boot; do
+    if mountpoint -q "$candidate" 2>/dev/null && [ -d "$candidate/EFI" -o -w "$candidate" ]; then
+        ESP="$candidate"
+        break
+    fi
+done
+: "${ESP:?Could not find a mounted EFI System Partition under /boot/efi, /efi, or /boot}"
+OUR_ESP_DEV="$(findmnt -no SOURCE "$ESP")"
+
+SCAN_DIR=/run/holtos/esp-scan
+mkdir -p "$SCAN_DIR"
+cleanup() {
+    for m in "$SCAN_DIR"/*; do
+        [ -d "$m" ] && mountpoint -q "$m" && umount "$m" || true
+    done
+    rmdir "$SCAN_DIR"/* 2>/dev/null || true
+}
+trap cleanup EXIT
+
+# Title-case a loader directory name: ubuntu -> Ubuntu, cachyos -> CachyOS
+# is beyond us, so just capitalise the first letter.
+pretty() { printf '%s' "${1^}"; }
+
+entries=()   # each element: "<title>\t<uri>"
+add_entry() { entries+=("$1"$'\t'"$2"); echo "    found: $1 -> $2"; }
+
+echo "==> Scanning EFI System Partitions for other operating systems..."
+n=0
+while read -r path parttype partuuid fstype fsuuid pkname; do
+    [ -n "$path" ] || continue
+    # ESP by GPT type, or any FAT partition that carries an EFI directory
+    # (MBR disks, odd installers).
+    is_esp=0
+    case "${parttype,,}" in c12a7328-f81f-11d2-ba4b-00a0c93ec93b) is_esp=1 ;; esac
+    case "${fstype,,}" in vfat|fat32|fat16) ;; *) [ "$is_esp" -eq 1 ] || continue ;; esac
+
+    if [ "$path" = "$OUR_ESP_DEV" ]; then
+        mnt="$ESP"; ours=1
+        prefix="boot()"
+    else
+        ours=0
+        n=$((n + 1)); mnt="${SCAN_DIR}/${n}"
+        mkdir -p "$mnt"
+        mount -o ro "$path" "$mnt" 2>/dev/null || { rmdir "$mnt"; continue; }
+        [ -d "$mnt/EFI" ] || { umount "$mnt"; rmdir "$mnt"; continue; }
+        if [[ "$partuuid" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]; then
+            prefix="guid(${partuuid})"
+        else
+            prefix="uuid(${fsuuid})"
+        fi
+    fi
+    echo "  - ${path} ($( [ "$ours" -eq 1 ] && echo "HoltOS ESP" || echo "disk ${pkname}, ${prefix}" ))"
+
+    found_here=0
+    # Windows
+    for f in "$mnt"/EFI/[Mm]icrosoft/[Bb]oot/bootmgfw.efi; do
+        [ -f "$f" ] || continue
+        add_entry "Windows" "${prefix}:/EFI/Microsoft/Boot/bootmgfw.efi"; found_here=1
+    done
+    # Other Linux distributions (shim first, then plain GRUB)
+    for d in "$mnt"/EFI/*/; do
+        d="${d%/}"; name="${d##*/}"
+        case "${name,,}" in limine|boot|microsoft|holtos*|systemd|tools|dell|hp|lenovo|intel|insyde|apple) continue ;; esac
+        loader=""
+        for cand in shimx64.efi grubx64.efi BOOTX64.EFI bootx64.efi; do
+            [ -f "$d/$cand" ] && { loader="$cand"; break; }
+        done
+        [ -n "$loader" ] || continue
+        add_entry "$(pretty "$name")" "${prefix}:/EFI/${name}/${loader}"; found_here=1
+    done
+    if [ -f "$mnt/EFI/systemd/systemd-bootx64.efi" ]; then
+        add_entry "Linux (systemd-boot)" "${prefix}:/EFI/systemd/systemd-bootx64.efi"; found_here=1
+    fi
+    # Generic fallback loader on a foreign ESP only
+    if [ "$ours" -eq 0 ] && [ "$found_here" -eq 0 ]; then
+        for f in "$mnt"/EFI/[Bb][Oo][Oo][Tt]/[Bb][Oo][Oo][Tt][Xx]64.[Ee][Ff][Ii]; do
+            [ -f "$f" ] || continue
+            add_entry "Other OS on ${pkname}" "${prefix}:/EFI/BOOT/BOOTX64.EFI"
+        done
+    fi
+    if [ "$ours" -eq 0 ]; then umount "$mnt"; rmdir "$mnt"; fi
+done < <(lsblk -rno PATH,PARTTYPE,PARTUUID,FSTYPE,UUID,PKNAME | grep -v '^loop\|^sr' || true)
+
+block="$(mktemp)"
+{
+    echo "#### HOLTOS OTHER OS START ####"
+    for e in "${entries[@]}"; do
+        IFS=$'\t' read -r title uri <<< "$e"
+        echo
+        echo "/${title}"
+        echo "    protocol: efi"
+        echo "    path: ${uri}"
+    done
+    echo
+    echo "#### HOLTOS OTHER OS END ####"
+} > "$block"
+
+updated=0
+for LIMINE_CONF in "${ESP}/EFI/limine/limine.conf" "${ESP}/EFI/BOOT/limine.conf"; do
+    [ -f "$LIMINE_CONF" ] || continue
+    if ! grep -q '#### HOLTOS OTHER OS START ####' "$LIMINE_CONF"; then
+        # Config written before this script existed: add the markers after
+        # the snapshot block (or at the end).
+        if grep -q '#### HOLTOS SNAPSHOTS END ####' "$LIMINE_CONF"; then
+            sed -i 's/^#### HOLTOS SNAPSHOTS END ####$/&\n\n#### HOLTOS OTHER OS START ####\n#### HOLTOS OTHER OS END ####/' "$LIMINE_CONF"
+        else
+            printf '\n#### HOLTOS OTHER OS START ####\n#### HOLTOS OTHER OS END ####\n' >> "$LIMINE_CONF"
+        fi
+    fi
+    awk -v blockfile="$block" '
+        /#### HOLTOS OTHER OS START ####/ { skip = 1; while ((getline line < blockfile) > 0) print line; next }
+        /#### HOLTOS OTHER OS END ####/   { skip = 0; next }
+        skip { next }
+        { print }
+    ' "$LIMINE_CONF" > "${LIMINE_CONF}.tmp"
+    mv "${LIMINE_CONF}.tmp" "$LIMINE_CONF"
+    # A menu with a real choice deserves a moment to be read.
+    if [ "${#entries[@]}" -gt 0 ]; then
+        sed -i 's/^timeout: [0-9]*$/timeout: 5/' "$LIMINE_CONF"
+    else
+        sed -i 's/^timeout: [0-9]*$/timeout: 3/' "$LIMINE_CONF"
+    fi
+    updated=1
+done
+rm -f "$block"
+
+if [ "$updated" -eq 1 ]; then
+    echo "==> Limine menu: ${#entries[@]} other operating system(s)"
+else
+    echo "==> WARNING: no limine.conf found under ${ESP}" >&2
+fi

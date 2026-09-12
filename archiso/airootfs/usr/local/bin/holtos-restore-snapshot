@@ -6,7 +6,7 @@ ICON=/usr/share/icons/hicolor/scalable/apps/holtos-logo.svg
 SNAP_LOG=/var/lib/holtos/snapshots.log
 
 if [ ! -s "$SNAP_LOG" ]; then
-    yad --info --title="HoltOS Updater" --window-icon="$ICON" \
+    yad --title="HoltOS Updater" --window-icon="$ICON" \
         --text="No snapshots yet. Snapshots are taken before every config/system update, or from \"Create Snapshot Now\"." \
         --button="Close:0"
     exit 0
@@ -29,7 +29,7 @@ choice="$(yad --list --title="HoltOS Updater" --image="$ICON" --window-icon="$IC
 rc=$?
 [ "$rc" -eq 0 ] && [ -n "$choice" ] || exit 0
 
-yad --question --title="HoltOS Updater" --image=dialog-warning --window-icon="$ICON" \
+yad --title="HoltOS Updater" --image=dialog-warning --window-icon="$ICON" \
     --text="Restore <b>${choice}</b> and make it the system root?\n\nEverything installed or changed on the root filesystem since then is undone after the next reboot (files in /home are kept)." \
     --button="Restore:0" --button="Cancel:1"
 [ $? -eq 0 ] || exit 0
@@ -54,7 +54,7 @@ if [ "$status" -ne 0 ]; then
 fi
 rm -f "$logfile"
 
-yad --question --title="HoltOS Updater" --image="$ICON" --window-icon="$ICON" \
+yad --title="HoltOS Updater" --image="$ICON" --window-icon="$ICON" \
     --text="Snapshot restored. Reboot now to finish?" \
     --button="Reboot:0" --button="Later:1"
 [ $? -eq 0 ] && systemctl reboot

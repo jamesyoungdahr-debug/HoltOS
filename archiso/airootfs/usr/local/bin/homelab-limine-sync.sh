@@ -20,3 +20,8 @@ done
 mkdir -p "${ESP}/boot"
 cp /boot/vmlinuz-linux "${ESP}/boot/vmlinuz-linux"
 cp /boot/initramfs-linux.img "${ESP}/boot/initramfs-linux.img"
+
+# Same moment is a good one to re-detect other operating systems (a
+# Windows install added after HoltOS, a removed disk): see
+# holtos-limine-other-os. Best-effort.
+/usr/local/bin/holtos-limine-other-os || true

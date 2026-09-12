@@ -5,6 +5,22 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+- **Other operating systems appear in the Limine menu** (Liam,
+  2026-09-12: "it should auto detect them, Windows etc"). Limine has no
+  os-prober, but every UEFI-installed OS leaves its loader on an EFI
+  System Partition, and Limine can chainload EFI applications. New
+  `holtos-limine-other-os` scans every ESP on every disk (mounting
+  foreign ones read-only) for `EFI/Microsoft/Boot/bootmgfw.efi`
+  (Windows), `EFI/<distro>/shimx64.efi|grubx64.efi` (Ubuntu, Fedora,
+  CachyOS, ...), `EFI/systemd/systemd-bootx64.efi`, and, on foreign ESPs
+  only, the generic `EFI/BOOT/BOOTX64.EFI`, and writes one
+  `protocol: efi` entry per find between the new HOLTOS OTHER OS markers
+  in both `limine.conf` copies — `boot():` paths for loaders on our own
+  ESP (a Windows sharing the disk), `guid(<partition GUID>):` for other
+  disks. The menu timeout goes to 5 s when there is a choice. Runs at
+  install time (from `homelab-limine-install.sh`), after every kernel
+  update (`homelab-limine-sync.sh`), and from the tray's new "Rescan
+  Boot Menu". Configs written before this get the markers added.
 - **Snapshots can be restored — a real rollback** (PLAN.md step 0's last
   open decision, Liam 2026-09-12). New `holtos-btrfs-restore <name>`
   (root) makes a retained read-only snapshot the system: it first keeps

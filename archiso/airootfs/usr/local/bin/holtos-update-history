@@ -4,7 +4,7 @@ ICON=/usr/share/icons/hicolor/scalable/apps/holtos-logo.svg
 HISTORY=/var/lib/holtos/history.log
 
 if [ ! -s "$HISTORY" ]; then
-    yad --info --title="HoltOS Update History" --window-icon="$ICON" \
+    yad --title="HoltOS Update History" --window-icon="$ICON" \
         --text="No updates have been applied yet." --button="Close:0"
     exit 0
 fi

@@ -113,10 +113,18 @@ term_palette: 0D0B12;B14DFF;28E0C8;F4EBFF;171423;B14DFF;28E0C8;F4EBFF
 
 #### HOLTOS SNAPSHOTS START ####
 #### HOLTOS SNAPSHOTS END ####
+
+#### HOLTOS OTHER OS START ####
+#### HOLTOS OTHER OS END ####
 EOF
 )"
 printf '%s\n' "$LIMINE_CONF_CONTENT" > "${ESP}/EFI/limine/limine.conf"
 printf '%s\n' "$LIMINE_CONF_CONTENT" > "${ESP}/EFI/BOOT/limine.conf"
+
+# Other operating systems on this machine (Windows, other Linux) get
+# chainload entries — see holtos-limine-other-os. Best-effort: a scan
+# failure must not fail the install.
+/usr/local/bin/holtos-limine-other-os || echo "WARNING: other-OS scan failed; the menu has only HoltOS (rerun holtos-limine-other-os later)" >&2
 
 # NVRAM entry — best-effort; the fallback path copy above is what actually
 # guarantees boot if this doesn't take (e.g. firmware without NVRAM

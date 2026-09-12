@@ -113,6 +113,12 @@ kernel back as the main boot files, carries the snapshot/history logs
 over, and deletes the replaced root on the next boot. Only the root
 subvolume is restored; `@home`, `@log` and `@cache` are untouched.
 
+**Other operating systems** show up in the Limine menu automatically:
+`holtos-limine-other-os` scans every EFI System Partition on every disk
+for Windows Boot Manager, other distributions' shim/GRUB, and
+systemd-boot, and writes chainload entries. It runs at install, after
+every kernel update, and from the tray's "Rescan Boot Menu".
+
 ## The Den
 
 `build-vendor-apps.sh` fetches the latest tagged release of both repos;

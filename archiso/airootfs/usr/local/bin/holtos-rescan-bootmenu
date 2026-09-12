@@ -1,0 +1,24 @@
+#!/bin/bash
+# Tray entry "Rescan Boot Menu": re-detect other operating systems and
+# rewrite their Limine entries (holtos-limine-other-os). Same yad
+# progress/result pattern as holtos-snapshot-now.
+ICON=/usr/share/icons/hicolor/scalable/apps/holtos-logo.svg
+
+logfile="$(mktemp)"
+pkexec /usr/local/bin/holtos-limine-other-os 2>&1 | tee "$logfile" \
+    | stdbuf -oL sed -u 's/^==> /#/' \
+    | yad --progress --pulsate --auto-close --auto-kill \
+        --title="HoltOS" --image="$ICON" --window-icon="$ICON" \
+        --text="Scanning for other operating systems..." --width=420 --center \
+        --no-buttons
+
+status=${PIPESTATUS[0]}
+if [ "$status" -ne 0 ]; then
+    yad --image=dialog-error --title="HoltOS" --window-icon="$ICON" --width=520 --wrap \
+        --text="Scan failed (exit $status):\n\n$(tail -8 "$logfile")" --button="Close:0"
+else
+    found="$(grep -E '^    found: ' "$logfile" | sed 's/^    found: //; s/ -> .*//' | paste -sd ', ' -)"
+    yad --image="$ICON" --title="HoltOS" --window-icon="$ICON" --width=480 --wrap \
+        --text="Boot menu updated.\n\nOther operating systems: ${found:-none found}" --button="Close:0"
+fi
+rm -f "$logfile"
