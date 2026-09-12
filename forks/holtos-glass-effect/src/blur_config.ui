@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>BlurEffectConfig</class>
+ <widget class="QWidget" name="BlurEffectConfig">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>520</width>
+    <height>520</height>
+   </rect>
+  </property>
+  <layout class="QFormLayout" name="formLayout">
+   <item row="0" column="0">
+    <widget class="QLabel" name="labelBlurStrength">
+     <property name="text">
+      <string>Blur strength:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="QSlider" name="kcfg_BlurStrength">
+     <property name="minimum"><number>1</number></property>
+     <property name="maximum"><number>15</number></property>
+     <property name="pageStep"><number>1</number></property>
+     <property name="orientation"><enum>Qt::Orientation::Horizontal</enum></property>
+     <property name="tickPosition"><enum>QSlider::TickPosition::TicksBelow</enum></property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="labelNoiseStrength">
+     <property name="text">
+      <string>Noise:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QSlider" name="kcfg_NoiseStrength">
+     <property name="maximum"><number>14</number></property>
+     <property name="pageStep"><number>1</number></property>
+     <property name="orientation"><enum>Qt::Orientation::Horizontal</enum></property>
+     <property name="tickPosition"><enum>QSlider::TickPosition::TicksBelow</enum></property>
+     <property name="tickInterval"><number>1</number></property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="labelSaturation">
+     <property name="text">
+      <string>Saturation:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="1">
+    <widget class="QSpinBox" name="kcfg_Saturation">
+     <property name="suffix"><string> %</string></property>
+     <property name="minimum"><number>0</number></property>
+     <property name="maximum"><number>500</number></property>
+     <property name="singleStep"><number>10</number></property>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <widget class="QLabel" name="labelContrast">
+     <property name="text">
+      <string>Contrast:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="1">
+    <widget class="QSpinBox" name="kcfg_Contrast">
+     <property name="suffix"><string> %</string></property>
+     <property name="minimum"><number>0</number></property>
+     <property name="maximum"><number>300</number></property>
+     <property name="singleStep"><number>10</number></property>
+    </widget>
+   </item>
+   <item row="4" column="0">
+    <widget class="QLabel" name="labelBrightness">
+     <property name="text">
+      <string>Brightness:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="1">
+    <widget class="QSpinBox" name="kcfg_Brightness">
+     <property name="suffix"><string> %</string></property>
+     <property name="minimum"><number>0</number></property>
+     <property name="maximum"><number>300</number></property>
+     <property name="singleStep"><number>10</number></property>
+    </widget>
+   </item>
+   <item row="5" column="0">
+    <widget class="QLabel" name="labelTintColor">
+     <property name="text">
+      <string>Tint colour:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="1">
+    <widget class="KColorButton" name="kcfg_TintColor"/>
+   </item>
+   <item row="6" column="0">
+    <widget class="QLabel" name="labelTintStrength">
+     <property name="text">
+      <string>Tint strength:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="1">
+    <widget class="QSpinBox" name="kcfg_TintStrength">
+     <property name="toolTip">
+      <string>How far the blurred background is blended towards the tint colour. Higher keeps text readable on any wallpaper; 100 hides the background completely.</string>
+     </property>
+     <property name="suffix"><string> %</string></property>
+     <property name="minimum"><number>0</number></property>
+     <property name="maximum"><number>100</number></property>
+     <property name="singleStep"><number>5</number></property>
+    </widget>
+   </item>
+   <item row="7" column="0" colspan="2">
+    <widget class="QCheckBox" name="kcfg_ForceBlur">
+     <property name="text">
+      <string>Blur behind every window, not only those that ask for it</string>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="0" colspan="2">
+    <widget class="QCheckBox" name="kcfg_ForceBlurDecorations">
+     <property name="text">
+      <string>Include translucent title bars and borders</string>
+     </property>
+    </widget>
+   </item>
+   <item row="9" column="0" colspan="2">
+    <widget class="QCheckBox" name="kcfg_ForceBlurMenus">
+     <property name="text">
+      <string>Include menus, pop-ups and tooltips</string>
+     </property>
+    </widget>
+   </item>
+   <item row="10" column="0" colspan="2">
+    <widget class="QCheckBox" name="kcfg_ForceBlurDocks">
+     <property name="text">
+      <string>Include panels (docks)</string>
+     </property>
+    </widget>
+   </item>
+   <item row="11" column="0">
+    <widget class="QLabel" name="labelExcludeClasses">
+     <property name="text">
+      <string>Never blur behind:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="11" column="1">
+    <widget class="QLineEdit" name="kcfg_ExcludeClasses">
+     <property name="toolTip">
+      <string>Comma-separated window classes (as shown by xprop / the Window Rules editor).</string>
+     </property>
+    </widget>
+   </item>
+   <item row="12" column="0">
+    <widget class="QLabel" name="labelCornerRadius">
+     <property name="text">
+      <string>Corner radius for undecorated windows:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="12" column="1">
+    <widget class="QSpinBox" name="kcfg_CornerRadius">
+     <property name="toolTip">
+      <string>Windows with a HoltOS title bar follow the title bar's own corner radius; this applies to apps that draw their own frame. 0 = square.</string>
+     </property>
+     <property name="suffix"><string> px</string></property>
+     <property name="maximum"><number>40</number></property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>KColorButton</class>
+   <extends>QPushButton</extends>
+   <header>kcolorbutton.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

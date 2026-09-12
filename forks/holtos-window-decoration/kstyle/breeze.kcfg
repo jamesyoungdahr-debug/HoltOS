@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kcfg xmlns="http://www.kde.org/standards/kcfg/1.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0 http://www.kde.org/standards/kcfg/1.0/kcfg.xsd">
+
+  <kcfgfile name="klassy/klassyrc"/>
+
+  <!-- widget style -->
+  <group name="Style">
+
+    <entry name="FrameCornerRadius" type="Enum">
+      <choices>
+          <choice name="FCR_DerivedFromWindow" />
+          <choice name="FCR_Custom" />
+      </choices>
+      <default>FCR_DerivedFromWindow</default>
+    </entry>
+
+    <entry name="FrameCustomCornerRadius" type="Double">
+      <default>3.0</default>
+      <min>0</min>
+      <max>24.0</max>
+    </entry>
+
+    <!-- animations -->
+    <entry name="AnimationsEnabled" type="Bool">
+      <default>true</default>
+    </entry>
+
+    <entry name="AnimationSteps" type = "Int">
+       <default>10</default>
+    </entry>
+
+    <entry name="AnimationsDuration" type="Int">
+      <default>100</default>
+    </entry>
+
+   <!-- transition flags -->
+    <entry name="StackedWidgetTransitionsEnabled" type="Bool">
+      <default>false</default>
+    </entry>
+
+    <!-- busy progress bars -->
+    <entry name="ProgressBarAnimated" type="Bool">
+      <default>true</default>
+    </entry>
+
+    <!-- progress bar animation durations -->
+    <entry name="ProgressBarBusyStepDuration" type="Int">
+      <default>800</default>
+    </entry>
+
+    <!-- scrollbar -->
+    
+    <entry name="ScrollBarSeparator" type="Bool">
+      <default>false</default>
+    </entry>
+
+    <entry name="ScrollBarTopBottomMargins" type = "Int">
+       <default>4</default>
+       <min>0</min>
+       <max>20</max>
+    </entry>
+    
+    <entry name="ScrollBarAddLineButtons" type="Int">
+      <default>1</default>
+    </entry>
+
+    <entry name="ScrollBarSubLineButtons" type="Int">
+      <default>1</default>
+    </entry>
+    
+    <entry name="ScrollBarTopOneButtonSpacing" type = "Int">
+       <default>-4</default>
+       <min>-10</min>
+       <max>10</max>
+    </entry>
+    
+    <entry name="ScrollBarBottomOneButtonSpacing" type = "Int">
+       <default>-4</default>
+       <min>-10</min>
+       <max>10</max>
+    </entry>
+    
+    <entry name="ScrollBarTopTwoButtonSpacing" type = "Int">
+       <default>-1</default>
+       <min>-10</min>
+       <max>10</max>
+    </entry>
+    
+    <entry name="ScrollBarBottomTwoButtonSpacing" type = "Int">
+       <default>-1</default>
+       <min>-10</min>
+       <max>10</max>
+    </entry>
+    
+    <entry name="ScrollBarAutoHideArrows" type="Bool">
+      <default>true</default>
+    </entry>
+    
+    <entry name="ScrollBarSliderThicknessMouseOver" type = "Int">
+       <default>8</default>
+       <min>1</min>
+       <max>50</max>
+    </entry>
+    
+    <entry name="ScrollBarSliderThicknessMouseNotOverPercent" type = "Int">
+       <default>75</default>
+       <min>1</min>
+       <max>100</max>
+    </entry>
+    
+    <entry name="ScrollBarSliderPadding" type = "Int">
+       <default>5</default>
+       <min>0</min>
+       <max>20</max>
+    </entry>
+    
+    <entry name="ScrollBarMinSliderHeight" type = "Int">
+       <default>36</default>
+       <min>5</min>
+       <max>80</max>
+    </entry>
+
+    <!-- mnemonics -->
+    <entry name="MnemonicsMode" type="Enum">
+      <choices>
+          <choice name="MN_NEVER" />
+          <choice name="MN_AUTO" />
+          <choice name="MN_ALWAYS" />
+      </choices>
+      <default>MN_AUTO</default>
+    </entry>
+
+    <!-- toolbars -->
+    <entry name="ToolBarDrawItemSeparator" type="Bool">
+      <default>true</default>
+    </entry>
+
+    <!-- views -->
+    <entry name="ViewDrawFocusIndicator" type="Bool">
+      <default>true</default>
+    </entry>
+
+    <!-- sliders -->
+    <entry name="SliderDrawTickMarks" type="Bool">
+      <default>true</default>
+    </entry>
+
+    <!-- tree views -->
+    <entry name="ViewDrawTreeBranchLines" type="Bool">
+      <default>true</default>
+    </entry>
+
+    <!-- Direction of sort order arrow in table view headers -->
+    <!-- True means the arrow points down when biggest stuff is on top -->
+    <entry name="ViewInvertSortIndicator" type="Bool">
+      <default>true</default>
+    </entry>
+
+    <!-- tab bars -->
+    <entry name="TabBarDrawCenteredTabs" type="Bool">
+      <default>false</default>
+    </entry>
+    
+    <!-- button gradient -->
+    <entry name="ButtonGradient" type="Bool">
+      <default>false</default>
+    </entry>
+
+    <entry name="DockWidgetDrawFrame" type="Bool">
+      <default>false</default>
+    </entry>
+
+    <entry name="SidePanelDrawFrame" type="Bool">
+      <default>false</default>
+    </entry>
+
+    <entry name="MenuItemDrawStrongFocus" type="Bool">
+      <default>true</default>
+    </entry>
+
+    <!-- window dragging -->
+    <entry name="WindowDragMode" type="Enum">
+      <choices>
+          <choice name="WD_NONE" />
+          <choice name="WD_MINIMAL" />
+          <choice name="WD_FULL" />
+      </choices>
+      <default>WD_MINIMAL</default>
+    </entry>
+
+    <!--
+        this is the comma separated list of special per-app widgets on which
+        window dragging can be installed (in addition to the build-in list of
+        standard widgets. They are reference by the widget class name.
+    -->
+    <entry name="WindowDragWhiteList" type="StringList">
+       <default></default>
+    </entry>
+
+    <!--
+        this is the comma separated list of special per-app widgets on which
+        window dragging must be disabled (in addition to the build-in list of
+        standard widgets). They are reference by the widget class name.
+    -->
+    <entry name="WindowDragBlackList" type="StringList">
+       <default></default>
+    </entry>
+
+    <!-- splitter proxy -->
+    <entry name="SplitterProxyEnabled" type="Bool">
+      <default>false</default>
+    </entry>
+
+    <entry name="SplitterProxyWidth" type="Int">
+      <default>12</default>
+    </entry>
+
+    <!-- debugging -->
+    <entry name="WidgetExplorerEnabled" type="Bool">
+      <default>false</default>
+    </entry>
+
+    <entry name="DrawWidgetRects" type="Bool">
+      <default>false</default>
+    </entry>
+
+    <!-- transparency -->
+    <entry name="MenuOpacity" type="Int">
+        <default>100</default>
+    </entry>
+
+  </group>
+
+</kcfg>

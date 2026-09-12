@@ -1,32 +1,21 @@
 # HoltOS Glass — the KWin blur effect HoltOS owns (fork of KWin 6.7's blur
-# plus features ported from Better Blur). Source lives in its own repo:
-# https://github.com/jamesyoungdahr-debug/holtos-glass-effect
-#
-# Built by build-aur-packages.sh into local-repo/ like the AUR packages.
-# For local development set HOLTOS_SRC to a directory containing a
-# checkout named holtos-glass-effect (build-local-repo.sh mounts
-# ../ there by default) and the PKGBUILD clones from that instead of
-# GitHub, so an uncommitted-to-GitHub tree can be built into an ISO.
+# plus features ported from Better Blur). Source: forks/holtos-glass-effect
+# in the HoltOS repo. build-aur-packages.sh tars that directory into the
+# build dir as ${pkgname}.tar and sets HOLTOS_REV (HoltOS commit count) for
+# the version, so a rebuilt package always sorts newer.
 pkgname=holtos-glass-effect
-pkgver=0.1.0
+pkgver=0.1.0.r${HOLTOS_REV:-0}
 pkgrel=1
-pkgdesc="HoltOS Glass: KWin background blur effect with force-blur, rounded corners and contrast control"
+pkgdesc="HoltOS Glass: KWin background blur effect with force-blur, tint, rounded corners and contrast control"
 arch=(x86_64)
-url="https://github.com/jamesyoungdahr-debug/holtos-glass-effect"
+url="https://github.com/jamesyoungdahr-debug/HoltOS"
 license=(GPL-3.0-or-later)
-depends=(kwin libxcb kdecoration kcmutils kconfig kcoreaddons ki18n kwindowsystem libepoxy qt6-base)
+depends=(kwin libxcb kdecoration kcmutils kconfig kcoreaddons ki18n kwidgetsaddons kwindowsystem libepoxy qt6-base)
 # vulkan-headers, wayland, libdrm, qt6-declarative: KWinConfig.cmake find_dependency()s them.
-makedepends=(git cmake extra-cmake-modules qt6-tools qt6-declarative vulkan-headers wayland libdrm pkgconf)
-_src="${HOLTOS_SRC:+file://${HOLTOS_SRC}/${pkgname}}"
-source=("${pkgname}::git+${_src:-${url}.git}")
-sha256sums=('SKIP')
-# No -debug split package: nothing in the image consumes it.
+makedepends=(cmake extra-cmake-modules qt6-tools qt6-declarative vulkan-headers wayland libdrm pkgconf)
 options=(!debug)
-
-pkgver() {
-    cd "${pkgname}"
-    printf '%s.r%s.%s' "$(grep -oP 'set\(PROJECT_VERSION "\K[^"]+' CMakeLists.txt)" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
-}
+source=("${pkgname}.tar")
+sha256sums=('SKIP')
 
 build() {
     cmake -B build -S "${pkgname}" \

@@ -1,15 +1,14 @@
 # HoltOS Glass window decoration — HoltOS' fork of Klassy (Qt 6 only).
-# Source: https://github.com/jamesyoungdahr-debug/holtos-window-decoration
-# Built by build-aur-packages.sh into local-repo/; with HOLTOS_SRC set the
-# tree is cloned from the local checkout next to the holtos repo instead.
+# Source: forks/holtos-window-decoration in the HoltOS repo (tarred into
+# the build dir by build-aur-packages.sh, versioned by HOLTOS_REV).
 # Replaces the AUR klassy package in the image (same file paths, so the
 # two cannot coexist).
 pkgname=holtos-window-decoration
-pkgver=6.7.2
+pkgver=6.7.2.r${HOLTOS_REV:-0}
 pkgrel=1
 pkgdesc="HoltOS Glass: translucent, blurred window decoration and application style (fork of Klassy)"
 arch=(x86_64)
-url="https://github.com/jamesyoungdahr-debug/holtos-window-decoration"
+url="https://github.com/jamesyoungdahr-debug/HoltOS"
 license=('GPL-2.0-only AND GPL-3.0-only AND GPL-2.0-or-later AND LGPL-2.1-or-later AND MIT')
 conflicts=(klassy klassy-qt5)
 depends=(breeze-icons
@@ -31,16 +30,10 @@ depends=(breeze-icons
          qt6-declarative
          qt6-svg
          xdg-utils)
-makedepends=(git cmake extra-cmake-modules)
+makedepends=(cmake extra-cmake-modules)
 options=(!debug)
-_src="${HOLTOS_SRC:+file://${HOLTOS_SRC}/${pkgname}}"
-source=("${pkgname}::git+${_src:-${url}.git}")
+source=("${pkgname}.tar")
 sha256sums=('SKIP')
-
-pkgver() {
-    cd "${pkgname}"
-    printf '%s.r%s.%s' "6.7.2" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
-}
 
 build() {
     cmake -B build -S "${pkgname}" \

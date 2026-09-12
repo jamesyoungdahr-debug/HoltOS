@@ -1,0 +1,11 @@
+{
+    "KPlugin": {
+        "Description": "HoltOS Glass window decoration: translucent, blurred title bars (a HoltOS fork of Klassy)",
+        "EnabledByDefault": true,
+        "Name": "HoltOS Glass"
+    },
+    "X-KDE-ConfigModule": "kcm_klassydecoration",
+    "org.kde.kdecoration3": {
+        "recommendedBorderSize": "Normal"
+    }
+}

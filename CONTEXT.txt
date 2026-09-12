@@ -25,8 +25,30 @@ CURRENT STATE (2026-09-12)
   build-aur-packages.sh / build-local-repo.sh (HoltOS packages phase),
   packaging/holtos-glass-effect/PKGBUILD, this file.
 
+STOP POINT 2026-09-12 ~07:00 (Liam: "stop here and push")
+-----------------------------------------------------------
+- Both forks now live INSIDE this repo under forks/ (Liam: "can't we
+  just merge the forks") — no separate repos. packaging/*/PKGBUILD build
+  from a tar of forks/<name> made by build-aur-packages.sh; version
+  suffix = HoltOS commit count (HOLTOS_REV). The standalone checkouts
+  C:\projects\holtos-glass-effect and C:\projects\holtos-window-decoration
+  are now redundant (their history is summarised in the fork READMEs).
+- LEFTOVER TO CLEAN UP: two GitHub repos were created before the
+  monorepo decision: jamesyoungdahr-debug/holtos-glass-effect (pushed,
+  public) and jamesyoungdahr-debug/holtos-window-decoration (empty,
+  public). Delete them (gh repo delete) — Liam's call, not done.
+- Both packages are built and in local-repo/:
+  holtos-glass-effect-0.1.0.r7.2ed60b8 (WITHOUT fix 2a54c2f, see below)
+  holtos-window-decoration-6.7.2.r3340.86428c43.
+- Not done yet: rebuild the effect with the decoration-frame fix, install
+  both into the VM and look, rebuild the ISO (VM must be shut down
+  first), verify About/power additions. Then delete the standalone
+  checkouts and the two GitHub repos.
+
 IN PROGRESS: "FORK KDE" — HOLTOS-OWNED GLASS
 --------------------------------------------
+(Paths below refer to the old standalone checkouts; the same trees are
+now forks/holtos-glass-effect and forks/holtos-window-decoration here.)
 Liam does not like the current glass look (Klassy 70 % title bars, Kvantum
 70 % windows, KWin blur 11) and wants full control, so the desktop chrome
 is being forked into HoltOS-owned code built by our pipeline:

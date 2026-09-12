@@ -10,9 +10,7 @@
 #                "none" skips the AUR phase entirely.
 #   HOLTOS_PKGS  space-separated subset of packaging/* to (re)build;
 #                "none" skips them. Default: every directory in /pkgbuilds.
-#   HOLTOS_SRC   directory holding local checkouts of the HoltOS package
-#                sources (mounted at /src); the PKGBUILDs clone from there
-#                instead of GitHub when it is set.
+#   HOLTOS_REV   version suffix for the HoltOS packages (commit count).
 set -euo pipefail
 
 # The image's package database is as old as the image; makepkg -s installs
@@ -23,7 +21,7 @@ pacman -Syu --noconfirm
 mkdir -p /tmp/pkgout
 chown builder:builder /tmp/pkgout
 
-AUR_DEFAULT="calamares zfs-dkms zfs-utils limine-mkinitcpio-hook limine-entry-tool klassy"
+AUR_DEFAULT="calamares zfs-dkms zfs-utils limine-mkinitcpio-hook limine-entry-tool"
 AUR_PKGS="${AUR_PKGS:-$AUR_DEFAULT}"
 
 if [ "$AUR_PKGS" != "none" ]; then
@@ -42,23 +40,23 @@ if [ "$AUR_PKGS" != "none" ]; then
 fi
 
 # HoltOS' own packages: PKGBUILDs from the HoltOS repo's packaging/
-# directory (mounted at /pkgbuilds), sources from GitHub or, when
-# HOLTOS_SRC is set, from the local checkouts mounted at /src. The
-# checkouts are bind-mounted from the host and owned by another uid, and
-# git refuses to touch repositories with "dubious ownership" unless told
-# they are safe.
+# directory (mounted at /pkgbuilds), sources from the repo's forks/
+# directory (mounted at /forks): each is tarred into the build dir as
+# <name>.tar, which the PKGBUILD lists as its only source. HOLTOS_REV
+# (the HoltOS commit count, from build-local-repo.sh) versions them.
 if [ -d /pkgbuilds ]; then
     HOLTOS_PKGS="${HOLTOS_PKGS:-$(ls /pkgbuilds)}"
     if [ "$HOLTOS_PKGS" != "none" ]; then
-        su - builder -c "git config --global --add safe.directory '*'"
         for pkg in $HOLTOS_PKGS; do
             echo "=== Building ${pkg} (HoltOS) ==="
             [ -f "/pkgbuilds/${pkg}/PKGBUILD" ] || { echo "no /pkgbuilds/${pkg}/PKGBUILD" >&2; exit 1; }
             rm -rf "/tmp/build-${pkg}"
             mkdir -p "/tmp/build-${pkg}"
             cp "/pkgbuilds/${pkg}/"* "/tmp/build-${pkg}/"
+            [ -d "/forks/${pkg}" ] || { echo "no /forks/${pkg} source tree" >&2; exit 1; }
+            tar -cf "/tmp/build-${pkg}/${pkg}.tar" -C /forks "${pkg}"
             chown -R builder:builder "/tmp/build-${pkg}"
-            su - builder -c "cd /tmp/build-${pkg} && HOLTOS_SRC='${HOLTOS_SRC:+/src}' makepkg -s --noconfirm --needed"
+            su - builder -c "cd /tmp/build-${pkg} && HOLTOS_REV='${HOLTOS_REV:-0}' makepkg -s --noconfirm --needed"
             # An older build of the same package would otherwise sit next to
             # the new one and repo-add would keep whichever sorts last.
             rm -f /tmp/pkgout/"${pkg}"-*.pkg.tar.zst

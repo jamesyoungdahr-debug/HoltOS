@@ -1,0 +1,19 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "KWin development team"
+            },
+            {
+                "Name": "HoltOS"
+            }
+        ],
+        "Category": "Appearance",
+        "Description": "HoltOS Glass: blurs and tints the background behind every window, with rounded corners and contrast control",
+        "EnabledByDefault": false,
+        "License": "GPL",
+        "Name": "HoltOS Glass"
+    },
+    "X-KDE-ConfigModule": "kwin_holtosglass_config",
+    "X-KDE-Ordering": 20
+}

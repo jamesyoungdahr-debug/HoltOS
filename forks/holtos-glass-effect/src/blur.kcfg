@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kcfg xmlns="http://www.kde.org/standards/kcfg/1.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0
+    http://www.kde.org/standards/kcfg/1.0/kcfg.xsd" >
+    <kcfgfile arg="true"/>
+    <group name="Effect-holtosglass">
+        <!-- Blur itself (same meaning as the stock effect). -->
+        <entry name="BlurStrength" type="Int">
+            <default>15</default>
+        </entry>
+        <entry name="NoiseStrength" type="Int">
+            <default>2</default>
+        </entry>
+        <!-- Colour of the blurred background, all in percent. -->
+        <entry name="Saturation" type="Int">
+            <default>150</default>
+        </entry>
+        <entry name="Contrast" type="Int">
+            <default>100</default>
+        </entry>
+        <entry name="Brightness" type="Int">
+            <default>100</default>
+        </entry>
+        <!-- Tint: blend TintColor into the blurred background so that a
+             translucent window reads the same on a bright wallpaper as on a
+             dark one. TintStrength 0 = off, 100 = a solid TintColor. -->
+        <entry name="TintColor" type="Color">
+            <default>#171423</default>
+        </entry>
+        <entry name="TintStrength" type="Int">
+            <default>35</default>
+        </entry>
+        <!-- Force blur: blur behind every eligible window, not only the
+             ones that ask for it (Kvantum/Plasma windows do, most others
+             never will). -->
+        <entry name="ForceBlur" type="Bool">
+            <default>true</default>
+        </entry>
+        <entry name="ForceBlurDecorations" type="Bool">
+            <default>true</default>
+        </entry>
+        <entry name="ForceBlurMenus" type="Bool">
+            <default>true</default>
+        </entry>
+        <entry name="ForceBlurDocks" type="Bool">
+            <default>false</default>
+        </entry>
+        <!-- Comma-separated window classes (resource name or class) never
+             to force-blur. Screen recorders/sharing bridges must see the
+             real content. -->
+        <entry name="ExcludeClasses" type="String">
+            <default>xwaylandvideobridge,spectacle,org.kde.spectacle</default>
+        </entry>
+        <!-- Corner radius (logical px) for the blur of windows that have no
+             decoration-provided radius (client-side decorated apps). 0 =
+             square. Windows with a server-side decoration always follow the
+             decoration's own radius. -->
+        <entry name="CornerRadius" type="Int">
+            <default>12</default>
+        </entry>
+    </group>
+</kcfg>
