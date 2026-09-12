@@ -14,6 +14,13 @@ native KDE desktop app
 both installed into the image at build time so a fresh install runs them
 from first boot with no network dependency.
 
+> **Built with help from AI.** HoltOS is designed and directed by Liam
+> ([@jamesyoungdahr-debug](https://github.com/jamesyoungdahr-debug)); much
+> of the code, the build pipeline, the testing in the VM and these docs
+> were written with Anthropic's **Claude** (Claude Fable 5.1, through
+> Claude Code), working from his direction and reviewed by him. Commits
+> made that way carry a `Co-Authored-By: Claude` trailer.
+
 Split out of the [homelab-os](https://github.com/jamesyoungdahr-debug/homelab-os)
 monorepo once it had a validated end-to-end install. Until 2026-09-11 it
 also carried a full Podman container stack (Authentik, Sonarr, Radarr,
