@@ -32,7 +32,7 @@ Status key: **done** · **planned** (designed here, not built) · **later**.
 - Verification: VM can prove packaging and Proton GE fetch/unpack; the
   Strix Halo box proves a game launches under Proton GE with MangoHud.
 
-### 1.2 Game Mode: gamescope session, switch both ways — planned
+### 1.2 Game Mode: gamescope session, switch both ways — built (builds 18–20), real-hardware check pending
 
 What SteamOS/Bazzite do, done HoltOS' way:
 

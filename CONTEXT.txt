@@ -1,17 +1,34 @@
 HoltOS — running context file (plain text, kept current by the agent)
 =====================================================================
-Last updated: 2026-09-12 (unattended session, Liam asleep)
+Last updated: 2026-09-12 (evening; Game Mode + fixes, builds 18-20)
 Read this first when resuming. Newest state at the top of each section.
 
 WHAT HOLTOS IS
 --------------
 Arch-based archiso + Calamares + Limine distro with KDE Plasma 6.7.
-Repo: C:\projects\holtos  (GitHub jamesyoungdahr-debug/HoltOS, private, branch master)
+Repo: C:\projects\holtos  (GitHub jamesyoungdahr-debug/HoltOS, PUBLIC, branch master)
 Docs in repo: README.md, BUILD.md, PLAN.md, HANDOFF.md, CHANGELOG.md, BRANDING-STATUS.md
 Owner: Liam (GitHub jamesyoungdahr-debug, git user Vectorly)
 
 CURRENT STATE (2026-09-12, evening)
 -----------------------------------
+- Builds 18-20 (2026-09-12 evening): Game Mode (gamescope + Steam Big
+  Picture session, SteamOS-style switch both ways, tray toggle), greeter
+  session picker, installed-system motd, updater refreshes The Den Client
+  launcher/.desktop/icons on every update, chromium in the image (The Den
+  v0.5.1 needs it), live-medium udev rule (no "Disks & Devices" popup over
+  Calamares), SDDM state seeded with Plasma on install. Build 18 install
+  verified in the VM; Game Mode there fails (no GPU) and bounces back to
+  Plasma automatically, which is the designed failure path. The real Game
+  Mode screen needs Liam's Strix Halo box. Build 20 = everything above.
+  Next: copy build 20 ISO to D:\ (stick not plugged in), tag v0.0.4-alpha
+  after the real-hardware check.
+- VM: SSH key is scratchpadmkey (user holtos, NOPASSWD sudo on the test
+  install); address moves with the Default Switch subnet (was
+  192.168.233.17 at 19:00). The adapter once came up disconnected from the
+  switch -- Connect-VMNetworkAdapter -SwitchName "Default Switch" fixes it.
+- LM Studio: deepseek-coder-v2-lite-instruct cannot tool-call, so the
+  bridge's run_coding_task never writes files; chat_completion works.
 - Dev machine (LiamPC, Ryzen 7950X, 64 GB) was rebuilt from nothing today:
   Git 2.55, GitHub CLI 2.100 (Liam signed in), WSL2 Ubuntu 26.04 + podman
   5.7 (user liam, passwordless sudo, .wslconfig caps 24 threads / 32 GB),

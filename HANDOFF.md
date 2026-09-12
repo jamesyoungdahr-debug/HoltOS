@@ -139,6 +139,25 @@ works after `-Sy`, `holtosglass` the only blur effect loaded with the
 content behind them, About this System branded, hardware detection
 logged "No NVIDIA GPU — nothing to install".
 
+## Game Mode and fixes (evening, builds 16-20)
+
+- **Game Mode** (CHANGELOG [Unreleased]): `holtos-gamemode-session`,
+  `steamos-session-select`, `holtos-session-apply` (+ polkit rule), tray
+  "Game Mode now" / "Start in Game Mode", greeter session picker. Fresh
+  build 18 install: switch from the app menu -> SDDM autologin into the
+  gamescope session -> gamescope dies (VM has no GPU) -> one-shot relogin
+  back into Plasma -> autostart entry clears the one-shot. Two SDDM facts
+  cost most of the evening: it only recreates the display when the session
+  helper exits 0 (so the session script always exits 0), and with no
+  state.conf it preselects the first session file alphabetically (so
+  installs seed it with Plasma).
+- **Updater**: The Den Client launcher/.desktop/icons refresh on every
+  update (they were first-install only, which hid the client's icon fix).
+- **Live medium**: udev rule marks the boot ISO/EFI UDISKS_IGNORE, dropped
+  on install; installed motd is a one-liner instead of the live text.
+- **chromium** added: The Den v0.5.1 depends on it; build-vendor-apps
+  stops the build otherwise.
+
 ## Still open
 
 - ~~Updater cannot reach GitHub~~ — **resolved 2026-09-12: Liam made the
@@ -157,6 +176,10 @@ logged "No NVIDIA GPU — nothing to install".
   shipped by default (KDE hid it behind that variable because of a
   login-blocking driver bug). Also judge the glass look/frame rate on a
   real GPU: the VM proves the pixels, not the performance.
+- **Game Mode on real hardware**: boot build 20 on the Strix Halo box,
+  "Game Mode" from the app menu, Steam Big Picture on gamescope, "Switch
+  to Desktop" from Steam's power menu, and "Start in Game Mode" from the
+  tray. Then tag v0.0.4-alpha. Build 20 ISO still to copy to D:\.
 - **Snapshot semantics** (rescue boot vs rollback) — undecided.
 - **Two orphan public GitHub repos** from before the monorepo decision
   (`jamesyoungdahr-debug/holtos-glass-effect`, `/holtos-window-decoration`)
