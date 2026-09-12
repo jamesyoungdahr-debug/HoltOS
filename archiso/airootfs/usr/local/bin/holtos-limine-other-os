@@ -120,6 +120,7 @@ block="$(mktemp)"
         IFS=$'\t' read -r title uri <<< "$e"
         echo
         echo "/${title}"
+        echo "    comment: Hand off to this system's own boot loader."
         echo "    protocol: efi"
         echo "    path: ${uri}"
     done

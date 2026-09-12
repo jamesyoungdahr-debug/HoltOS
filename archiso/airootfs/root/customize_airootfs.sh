@@ -39,6 +39,24 @@ systemctl enable holtos-pacman-keyring-init.service
 # subvolume, which cannot be removed while it is the running root).
 systemctl enable holtos-btrfs-restore-cleanup.service
 
+# Limine menu font: Terminus Bold 12x24 as a raw bitmap. Limine's
+# term_font wants raw glyph rows (256 glyphs x 24 rows x 2 bytes), not a
+# PSF file, so strip the PSF2 header from the terminus-font package's
+# ter-124b at build time. homelab-limine-install.sh copies it to the ESP.
+echo "==> Converting Terminus 12x24 to a raw Limine font..."
+mkdir -p /usr/share/holtos/limine
+gunzip -c /usr/share/kbd/consolefonts/ter-124b.psf.gz > /tmp/ter-124b.psf
+python3 - <<'EOF'
+import struct
+d = open("/tmp/ter-124b.psf", "rb").read()
+assert d[:4] == b"\x72\xb5\x4a\x86", "ter-124b is not PSF2"
+_ver, hs, _flags, cnt, cs, h, w = struct.unpack("<IIIIIII", d[4:32])
+assert (w, h) == (12, 24), f"unexpected glyph size {w}x{h}"
+open("/usr/share/holtos/limine/ter-124b.bin", "wb").write(d[hs:hs + 256 * cs])
+EOF
+rm -f /tmp/ter-124b.psf
+echo "    $(stat -c '%s bytes' /usr/share/holtos/limine/ter-124b.bin)"
+
 # Stage the NVIDIA driver packages on the ISO WITHOUT installing them:
 # homelab-detect-hardware.sh installs them into the target at install
 # time only if an NVIDIA GPU is present (no network needed then). The

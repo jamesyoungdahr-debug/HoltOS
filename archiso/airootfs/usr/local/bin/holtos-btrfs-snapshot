@@ -106,17 +106,34 @@ fi
 # break snapshot boot entries on whichever path isn't the one the
 # firmware happens to use. See homelab-limine-install.sh's own comment
 # for the full story on why both copies must exist at all.
+# Entries go in a collapsed "Snapshots" submenu (Limine: a /Title line
+# followed by //sub-entries), newest first, each with a comment saying
+# what it is. Nothing is written when there are no snapshots, so the
+# submenu never appears empty.
 block="$(mktemp)"
 {
     echo "#### HOLTOS SNAPSHOTS START ####"
-    while IFS=$'\t' read -r ts snap_label snap_name; do
+    if [ -s "$SNAP_LOG" ]; then
         echo
-        echo "/HoltOS snapshot: ${snap_label} (${ts})"
-        echo "    protocol: linux"
-        echo "    path: boot():/holtos-snapshots/${snap_name}/vmlinuz-linux"
-        echo "    cmdline: root=UUID=${ROOT_UUID} rootflags=subvol=@snapshots/${snap_name} rw quiet${CMDLINE_EXTRA:+ $CMDLINE_EXTRA}"
-        echo "    module_path: boot():/holtos-snapshots/${snap_name}/initramfs-linux.img"
-    done < "$SNAP_LOG"
+        echo "/Snapshots"
+        echo "    comment: Earlier states of HoltOS. Read-only rescue boots; restore from the desktop."
+        tac "$SNAP_LOG" | while IFS=$'\t' read -r ts snap_label snap_name; do
+            [ -n "$snap_name" ] || continue
+            echo
+            echo "//${snap_label^} ${ts}"
+            case "$snap_label" in
+                config) echo "    comment: Taken before the HoltOS config update at ${ts}." ;;
+                system) echo "    comment: Taken before the system package update at ${ts}." ;;
+                pre-restore) echo "    comment: The system as it was right before a snapshot restore at ${ts}." ;;
+                manual) echo "    comment: Taken on request at ${ts}." ;;
+                *) echo "    comment: Taken at ${ts}." ;;
+            esac
+            echo "    protocol: linux"
+            echo "    path: boot():/holtos-snapshots/${snap_name}/vmlinuz-linux"
+            echo "    cmdline: root=UUID=${ROOT_UUID} rootflags=subvol=@snapshots/${snap_name} rw quiet${CMDLINE_EXTRA:+ $CMDLINE_EXTRA}"
+            echo "    module_path: boot():/holtos-snapshots/${snap_name}/initramfs-linux.img"
+        done
+    fi
     echo
     echo "#### HOLTOS SNAPSHOTS END ####"
 } > "$block"

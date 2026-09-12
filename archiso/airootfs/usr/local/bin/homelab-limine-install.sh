@@ -97,25 +97,55 @@ cp /usr/share/wallpapers/HoltOS/contents/images/1920x1080.png "${ESP}/wallpaper.
 # at all ("[config file not found]", confirmed live). Writing the exact
 # same config to both paths makes it boot correctly regardless of which
 # copy the firmware actually runs.
+# HoltOS Glass for the boot menu (Limine 12 theming keys, see its
+# CONFIG.md): branded header instead of "Limine x.y.z", the HoltOS palette
+# for help/countdown/selection, a real 12x24 bitmap font (Terminus Bold,
+# converted from PSF2 at image-build time — see customize_airootfs.sh)
+# instead of the 8x16 VGA one, and the menu drawn in a translucent panel
+# (term_background TTRRGGBB) with a soft gradient margin over the
+# wallpaper. Each entry carries a one-line `comment` shown when selected.
+# Snapshot entries live in a collapsed "Snapshots" submenu
+# (holtos-btrfs-snapshot writes them as //entries) so other operating
+# systems sit right under HoltOS. Prototyped on screen in the VM 2026-09-12.
+mkdir -p "${ESP}/holtos"
+cp /usr/share/holtos/limine/ter-124b.bin "${ESP}/holtos/ter-124b.bin"
+. /etc/os-release
 LIMINE_CONF_CONTENT="$(cat <<EOF
 timeout: 3
+
+interface_branding: ${PRETTY_NAME:-HoltOS}
+interface_branding_colour: B14DFF
+interface_help_colour: 6B6B6B
+interface_help_colour_bright: 28E0C8
 
 wallpaper: boot():/wallpaper.png
 wallpaper_style: stretched
 backdrop: 0D0B12
+
+term_font: boot():/holtos/ter-124b.bin
+term_font_size: 12x24
+term_font_spacing: 1
+term_margin: 120
+term_margin_gradient: 40
+term_background: 90171423
+term_foreground: F4EBFF
+term_background_bright: B14DFF
+term_foreground_bright: 0D0B12
 term_palette: 0D0B12;B14DFF;28E0C8;F4EBFF;171423;B14DFF;28E0C8;F4EBFF
+term_palette_bright: 171423;C77DFF;5FF0DC;FFFFFF;2A2438;C77DFF;5FF0DC;FFFFFF
 
 /HoltOS
+    comment: The system as it is now.
     protocol: linux
     path: boot():/boot/vmlinuz-linux
     cmdline: root=UUID=${ROOT_UUID} rootflags=${ROOTFLAGS} rw quiet splash${CMDLINE_EXTRA:+ $CMDLINE_EXTRA}
     module_path: boot():/boot/initramfs-linux.img
 
-#### HOLTOS SNAPSHOTS START ####
-#### HOLTOS SNAPSHOTS END ####
-
 #### HOLTOS OTHER OS START ####
 #### HOLTOS OTHER OS END ####
+
+#### HOLTOS SNAPSHOTS START ####
+#### HOLTOS SNAPSHOTS END ####
 EOF
 )"
 printf '%s\n' "$LIMINE_CONF_CONTENT" > "${ESP}/EFI/limine/limine.conf"

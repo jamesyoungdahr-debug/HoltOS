@@ -5,6 +5,18 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+- **The boot menu looks like HoltOS now** (Liam: "make Limine more
+  modern"). Limine 12's theming keys, all set by
+  `homelab-limine-install.sh`: `interface_branding` shows "HoltOS
+  <version>" instead of "Limine 12.9.0", help/countdown/selection in the
+  HoltOS palette, Terminus Bold 12x24 as the menu font (`terminus-font`
+  added; `customize_airootfs.sh` strips the PSF2 header into the raw
+  bitmap Limine wants, installed to the ESP as `/holtos/ter-124b.bin`),
+  the menu drawn in a translucent ink panel with a soft gradient margin
+  over the wallpaper, and a `comment` line per entry. Snapshots move into
+  a collapsed "Snapshots" submenu (newest first, labelled by what they
+  were taken before) so Windows and other systems sit directly under
+  HoltOS. Prototyped on screen in the VM before being wired in.
 - **Other operating systems appear in the Limine menu** (Liam,
   2026-09-12: "it should auto detect them, Windows etc"). Limine has no
   os-prober, but every UEFI-installed OS leaves its loader on an EFI

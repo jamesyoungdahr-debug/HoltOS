@@ -43,6 +43,9 @@ linux-headers
 # is redundant with our own homelab-limine-install.sh anyway.
 limine
 limine-entry-tool
+# terminus-font: source of the Limine menu font (ter-124b, converted to a
+# raw bitmap at build time in customize_airootfs.sh).
+terminus-font
 
 # KDE Plasma desktop
 plasma-desktop
