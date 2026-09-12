@@ -5,6 +5,41 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+- **HoltOS Glass is now HoltOS-owned code, built by our pipeline.** Two
+  forks live in this repo under `forks/` and are packaged by
+  `packaging/*/PKGBUILD` into the `[homelab]` local repo alongside the
+  AUR packages: `holtos-glass-effect` (KWin effect `holtosglass`, forked
+  from KWin 6.7's blur: blurs behind every window including decorations
+  and menus, tints the blur towards the ink colour so text stays
+  readable on any wallpaper, adjustable contrast/brightness/saturation,
+  rounded corners for undecorated windows) and `holtos-window-decoration`
+  (plugin `org.holtos.glass`, forked from Klassy 6.7.2 with the glass
+  title-bar opacity and 10 px corners compiled in as defaults; replaces
+  the AUR `klassy` package). `/etc/xdg/kwinrc` enables the effect and
+  decoration system-wide and disables stock blur. Verified in the build 9
+  live session (2026-09-12): `holtosglass` is the only blur effect
+  loaded, the decoration library is `org.holtos.glass`, Konsole and
+  Dolphin render translucent with blurred content behind them.
+- **System Settings > About this System and power profiles**:
+  `kinfocenter` with `kcm-about-distrorc` pointing at the HoltOS logo and
+  repo, `power-profiles-daemon` enabled, `plasma-systemmonitor` added.
+  `python-gobject` added too: `powerprofilesctl` is a Python script that
+  tracebacked without it (seen in the build 9 live session).
+- **Image needs `qt6-declarative` for The Den Client >= v0.4.3**: its
+  PKGBUILD lists it, and `build-vendor-apps.sh` correctly refused to build
+  the image until `packages.x86_64` carried it.
+- **Installer partition legend readable.** Calamares paints the
+  "Current:"/"After:" legend with hardcoded `Qt::black`/`Qt::gray` pens
+  (`PartitionLabelsView::drawLabel`), so the colour rule added on
+  2026-09-11 could never work — it was still dark-on-dark in build 9. The
+  legend now sits on a light chip via the one property a stylesheet can
+  set on that view, its background.
+- **Live-ISO guards verified** (PLAN.md step 3, build 9): no
+  `holtos-tray` process and no first-boot unit in the live session.
+- **Dev machine rebuilt from nothing (2026-09-12)**: Git, GitHub CLI,
+  WSL2 Ubuntu 26.04 + podman 5.7, Hyper-V and a new `holtos-test` VM; the
+  whole pipeline (AUR + HoltOS packages, `archiso-image`, `build.sh`) ran
+  clean on it — build 9.
 - **Installer works from a USB stick on machines with enough RAM.** The
   first real-hardware install (2026-09-11, Ventoy stick, then GRUB2
   mode — both the same) failed in unpackfs with "airootfs.sfs missing".
