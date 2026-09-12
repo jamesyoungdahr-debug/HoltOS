@@ -129,7 +129,7 @@ update_config() {
         etc/sddm.conf.d/holtos.conf
         etc/plymouth/plymouthd.conf
         etc/skel/.config/
-        usr/share/holtos/limine/
+        usr/share/holtos/
         usr/share/Kvantum/HoltOSGlass/
         usr/share/color-schemes/
         usr/share/icons/hicolor/
@@ -168,9 +168,12 @@ update_config() {
     # forks, Calamares, Limine tools) update through pacman from HoltOS'
     # releases rather than only existing at image-build time. Older
     # installs have the section with only the build-time file:// server.
-    if grep -q '^\[homelab\]' /etc/pacman.conf && ! grep -q 'releases/download/packages' /etc/pacman.conf; then
+    if ! grep -q '^\[homelab\]' /etc/pacman.conf; then
         echo "==> Adding the HoltOS package repository to pacman.conf..."
-        sed -i '/^\[homelab\]/,/^\[/{s|^Server = file:///homelab-local-repo$|&\nServer = https://github.com/jamesyoungdahr-debug/holtos/releases/download/packages|}' /etc/pacman.conf
+        cat /usr/share/holtos/pacman-homelab.conf >> /etc/pacman.conf
+    elif ! grep -q 'releases/download/packages' /etc/pacman.conf; then
+        echo "==> Adding the HoltOS package repository server to pacman.conf..."
+        sed -i '/^\[homelab\]/,/^\[/{s|^\(Server = .*\)$|\1\nServer = https://github.com/jamesyoungdahr-debug/holtos/releases/download/packages|}' /etc/pacman.conf
     fi
 
     # Boot menu: theme, other operating systems, snapshot submenu — all

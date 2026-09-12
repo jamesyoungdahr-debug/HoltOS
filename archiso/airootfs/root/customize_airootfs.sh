@@ -39,6 +39,15 @@ systemctl enable holtos-pacman-keyring-init.service
 # subvolume, which cannot be removed while it is the running root).
 systemctl enable holtos-btrfs-restore-cleanup.service
 
+# The HoltOS package repository for the live AND installed system: the
+# profile's pacman.conf (with its build-time file:// server) is only used
+# by mkarchiso itself; the rootfs carries the pacman package's stock
+# /etc/pacman.conf, so the installed system never had [homelab] until
+# now (found 2026-09-12 when pointing an install at the published repo).
+if ! grep -q '^\[homelab\]' /etc/pacman.conf; then
+    cat /usr/share/holtos/pacman-homelab.conf >> /etc/pacman.conf
+fi
+
 # Stage the NVIDIA driver packages on the ISO WITHOUT installing them:
 # homelab-detect-hardware.sh installs them into the target at install
 # time only if an NVIDIA GPU is present (no network needed then). The
