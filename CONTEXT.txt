@@ -30,9 +30,11 @@ CURRENT STATE (2026-09-12, evening)
   applet backend (pipewire-pulse), powerprofilesctl traceback
   (python-gobject), live session auto-locks, partition legend still
   dark-on-dark (Calamares hardcodes the pens; now on a light chip).
-- Build 10 started ~03:58 local with all of the above fixed (commits
-  through b99fcca). Not yet verified. If it verifies: bump to
-  0.0.2-alpha, tag, rebuild as the release (PLAN step 5).
+- Build 10 (07:27 local) VERIFIED on a second fresh install: Display
+  page present (kscreen), volume applet, Bluetooth/Login/RDP pages,
+  powerprofilesctl OK, live session no longer locks, legend chip
+  readable, 0 failed units. Version bumped to 0.0.2-alpha, tagged, and
+  build 11 rebuilt from the tag as the release ISO (PLAN step 5).
 - The updater still cannot reach GitHub (repo private): holtos-update-check
   exits 128 on the build 9 install. Liam's decision.
 

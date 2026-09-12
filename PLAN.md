@@ -83,7 +83,7 @@ installed system has the tray running. Also found and fixed in the same
 round: the live session auto-locked after 5 minutes (installer finished
 behind the lock screen) — `Autolock=false` for liveuser only.
 
-## Step 4 — Finish the cosmetic installer items — code DONE 2026-09-12, verify in build 10
+## Step 4 — Finish the cosmetic installer items — DONE 2026-09-12 (verified in build 10: legend readable on the chip, Current and After rows)
 
 - Partition-bar legend: NOT fixable with a colour rule — Calamares'
   `PartitionLabelsView::drawLabel` uses hardcoded `Qt::black` /
@@ -95,7 +95,7 @@ behind the lock screen) — `Autolock=false` for liveuser only.
 **Check:** screenshot of the Partitions page in the build 10 install
 (legend on a light chip, both lines readable) and the Summary page.
 
-## Step 4b — System Settings pages that were missing — code DONE 2026-09-12, verify in build 10
+## Step 4b — System Settings pages that were missing — DONE 2026-09-12 (verified in build 10: Display page with 24 modes, volume applet, Bluetooth/Login Screen/Remote Desktop KCMs present, PulseAudio-on-PipeWire server, powerprofilesctl works, 0 failed units)
 
 Found while checking Liam's "Display shows no resolution options":
 `kscreen` (the Display page itself) was not in the image, nor were

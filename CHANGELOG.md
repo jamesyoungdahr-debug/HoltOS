@@ -5,6 +5,14 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.0.2-alpha] - 2026-09-12
+
+First release carrying the 2026-09-11/12 work: the container stack is
+gone, The Den ships in the image, HoltOS Glass is HoltOS-owned code,
+hardware detection at install, and the full set of System Settings
+pages. Verified on two fresh Erase-Disk installs in the Hyper-V VM
+(builds 9 and 10, 2026-09-12); real-hardware NVIDIA path still pending.
+
 - **HoltOS Glass is now HoltOS-owned code, built by our pipeline.** Two
   forks live in this repo under `forks/` and are packaged by
   `packaging/*/PKGBUILD` into the `[homelab]` local repo alongside the
