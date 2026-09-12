@@ -129,6 +129,7 @@ update_config() {
         etc/pacman.d/hooks/*homelab*.hook
         etc/sddm.conf.d/holtos.conf
         etc/plymouth/plymouthd.conf
+        etc/systemd/zram-generator.conf
         etc/skel/.config/
         usr/share/holtos/
         usr/share/Kvantum/HoltOSGlass/
@@ -169,6 +170,11 @@ update_config() {
     # forks, Calamares, Limine tools) update through pacman from HoltOS'
     # releases rather than only existing at image-build time. Older
     # installs have the section with only the build-time file:// server.
+    # [multilib] for installs that predate the gaming base (Steam, lib32).
+    if grep -q '^#\[multilib\]' /etc/pacman.conf; then
+        echo "==> Enabling [multilib] in pacman.conf..."
+        sed -i '/^#\[multilib\]/,/^#Include = \/etc\/pacman.d\/mirrorlist/ s/^#//' /etc/pacman.conf
+    fi
     if ! grep -q '^\[homelab\]' /etc/pacman.conf; then
         echo "==> Adding the HoltOS package repository to pacman.conf..."
         cat /usr/share/holtos/pacman-homelab.conf >> /etc/pacman.conf

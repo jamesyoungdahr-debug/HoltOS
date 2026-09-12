@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=HoltOS Proton GE first run
+Comment=Installs Proton GE for this user once
+Exec=/usr/local/bin/holtos-proton-ge-firstrun
+Icon=holtos-logo
+NoDisplay=true

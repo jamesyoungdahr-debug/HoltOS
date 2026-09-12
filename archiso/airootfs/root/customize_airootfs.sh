@@ -39,6 +39,10 @@ systemctl enable holtos-pacman-keyring-init.service
 # subvolume, which cannot be removed while it is the running root).
 systemctl enable holtos-btrfs-restore-cleanup.service
 
+# [multilib] for the live AND installed system (Steam + lib32 drivers are
+# in the image; without this the installed system could not update them).
+sed -i '/^#\[multilib\]/,/^#Include = \/etc\/pacman.d\/mirrorlist/ s/^#//' /etc/pacman.conf
+
 # The HoltOS package repository for the live AND installed system: the
 # profile's pacman.conf (with its build-time file:// server) is only used
 # by mkarchiso itself; the rootfs carries the pacman package's stock
@@ -72,7 +76,7 @@ sed -e '/^\[homelab\]/,$d' \
     /etc/pacman.conf > /tmp/pacman-stage.conf
 mkdir -p /usr/share/holtos/drivers/nvidia
 pacman -Syw --noconfirm --config /tmp/pacman-stage.conf \
-    --cachedir /usr/share/holtos/drivers/nvidia nvidia-open-dkms nvidia-utils
+    --cachedir /usr/share/holtos/drivers/nvidia nvidia-open-dkms nvidia-utils lib32-nvidia-utils
 rm -f /usr/share/holtos/drivers/nvidia/*.sig /tmp/pacman-stage.conf
 echo "    staged: $(ls /usr/share/holtos/drivers/nvidia | tr '\n' ' ')"
 

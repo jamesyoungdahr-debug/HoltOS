@@ -1,0 +1,10 @@
+#!/bin/bash
+# Autostarted at login (etc/xdg/autostart). Installs Proton GE once for
+# this user if it is not there yet, quietly in the background, and tells
+# them when it is done. Never on the live medium.
+[ -e /run/archiso ] && exit 0
+ls -d "$HOME/.local/share/Steam/compatibilitytools.d"/GE-Proton* >/dev/null 2>&1 && exit 0
+sleep 90   # let the desktop and network settle
+if /usr/local/bin/holtos-proton-ge >/tmp/holtos-proton-ge.log 2>&1; then
+    notify-send --icon=holtos-logo "HoltOS" "Proton GE is installed. Pick it under a game's Compatibility settings in Steam."
+fi

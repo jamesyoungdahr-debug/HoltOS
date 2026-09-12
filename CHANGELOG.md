@@ -5,6 +5,18 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+- **Gaming base** (docs/holtos-must-haves-and-plan.md 1.1/1.4; Liam:
+  "Steam preinstalled along with Proton + Proton GE"). `[multilib]`
+  enabled for the build and the installed system (and by the config
+  update on older installs); `steam`, `gamescope`, `gamemode`,
+  `mangohud` (+ lib32), `vulkan-icd-loader` (+ lib32), `lib32-vulkan-radeon`,
+  `lib32-vulkan-intel`, `lib32-mesa` in the image; `lib32-nvidia-utils`
+  staged with the NVIDIA driver and installed on the NVIDIA path. Proton
+  comes with Steam; **Proton GE** is fetched per user from GloriousEggroll's
+  GitHub releases by `holtos-proton-ge` (sha512-verified, keeps the last
+  two), installed once at first login by an autostart helper and updated
+  from the tray ("Update Proton GE"). `zram-generator` with half of RAM as
+  zstd-compressed swap.
 - **Network Shares** (Liam, 2026-09-12: "make it simple to mount a share,
   NFS/Samba, and have it automount, with an easy GUI"). New
   `holtos-shares` (PySide6 window: list with mounted state, Add / Edit /

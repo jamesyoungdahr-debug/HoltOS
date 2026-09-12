@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+# Proton GE (GloriousEggroll's Proton build) for Steam, per user: fetches
+# the latest GE-Proton release from GitHub, verifies the sha512sum it
+# publishes, unpacks it into Steam's compatibilitytools.d, and keeps the
+# last two versions so a game pinned to the previous one still runs.
+# Runs as the desktop user (no root, it is all under ~/.local/share/Steam).
+#
+#   holtos-proton-ge            install/update to the latest release
+#   holtos-proton-ge --check    print "<installed> -> <latest>" and exit 0 if
+#                               an update exists, 1 if up to date
+#   holtos-proton-ge --list     installed versions
+#
+# Called from the tray ("Update Proton GE") and once per login by
+# holtos-proton-ge-firstrun (autostart) when nothing is installed yet.
+set -euo pipefail
+
+API="https://api.github.com/repos/GloriousEggroll/proton-ge-custom/releases/latest"
+TOOLS_DIR="${HOME}/.local/share/Steam/compatibilitytools.d"
+KEEP=2
+
+installed() {
+    local d
+    shopt -s nullglob
+    for d in "${TOOLS_DIR}"/GE-Proton*/; do basename "$d"; done | sort -V
+    shopt -u nullglob
+}
+# Release metadata, read once: the tag, and the x86_64 tarball + checksum
+# asset URLs (GE releases carry an -x86_64 / -aarch64 suffix since 2026,
+# so the names cannot be composed from the tag). Whole response into a
+# variable first: grep -m1 on a live curl pipe closes it early and curl
+# reports "failure writing output" under pipefail.
+fetch_release() {
+    local json
+    json="$(curl -fsSL "$API")" || return 1
+    REL_TAG="$(printf '%s\n' "$json" | sed -n 's/.*"tag_name": *"\([^"]*\)".*/\1/p' | head -1)"
+    REL_TAR="$(printf '%s\n' "$json" | grep -o '"browser_download_url": *"[^"]*x86_64\.tar\.[gx]z"' | sed 's/.*"\(http[^"]*\)"/\1/' | head -1)"
+    REL_SUM="$(printf '%s\n' "$json" | grep -o '"browser_download_url": *"[^"]*x86_64\.sha512sum"' | sed 's/.*"\(http[^"]*\)"/\1/' | head -1)"
+    [ -n "$REL_TAG" ] && [ -n "$REL_TAR" ]
+}
+latest_tag() { fetch_release && printf '%s\n' "$REL_TAG"; }
+
+case "${1:-}" in
+--list) installed; exit 0 ;;
+--check)
+    # The unpacked directory is named after the tarball (tag + "-x86_64"
+    # since 2026), so compare on the tag prefix.
+    cur="$(installed | tail -1)"; new="$(latest_tag)"
+    echo "${cur:-none} -> ${new}"
+    [ "${cur%-x86_64}" != "$new" ]
+    ;;
+"")
+    fetch_release || { echo "Could not read the latest Proton GE release from GitHub" >&2; exit 1; }
+    new="$REL_TAG"
+    if installed | grep -qxE "${new}(-x86_64)?"; then
+        echo "==> Proton GE ${new} is already installed"
+        exit 0
+    fi
+    mkdir -p "$TOOLS_DIR"
+    tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
+    tarname="$(basename "$REL_TAR")"
+    echo "==> Downloading Proton GE ${new}..."
+    curl -fL --progress-bar -o "${tmp}/${tarname}" "$REL_TAR"
+    if [ -n "$REL_SUM" ]; then
+        curl -fsSL -o "${tmp}/${tarname}.sha512sum" "$REL_SUM"
+        echo "==> Verifying..."
+        ( cd "$tmp" && sha512sum -c "${tarname}.sha512sum" --quiet )
+    else
+        echo "==> WARNING: no checksum published for this release, skipping verification" >&2
+    fi
+    echo "==> Unpacking into ${TOOLS_DIR}..."
+    tar -xf "${tmp}/${tarname}" -C "$TOOLS_DIR"
+    # Retention: keep the newest KEEP.
+    installed | head -n -"$KEEP" | while read -r old; do
+        [ -n "$old" ] && { echo "==> Removing old ${old}"; rm -rf "${TOOLS_DIR:?}/${old}"; }
+    done
+    echo "==> Proton GE ${new} installed. Restart Steam to see it under Compatibility."
+    ;;
+*) sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+esac

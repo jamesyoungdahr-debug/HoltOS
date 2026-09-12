@@ -112,6 +112,15 @@ Liam's afternoon requests, all built and verified in the VM:
   `holtos-update-check` then exits 1. **Installs of 0.0.2 cannot pull
   this by themselves** (their updater only copied install scripts) —
   the release notes carry a one-liner, or reinstall.
+- **Network Shares** (after the 0.0.3 tag, unreleased): `holtos-shares`
+  GUI + `holtos-share` root backend, systemd automount units under
+  `/mnt/shares`, SMB creds root-only, unprivileged listing. Verified in
+  the VM against local Samba/NFS servers (the VM still runs them:
+  `/srv/testshare`, `/srv/testnfs`).
+- **HoltOS is a media and gaming/entertainment focused distro** (Liam).
+  `docs/holtos-must-haves-and-plan.md` is the feature list and build
+  order; README now credits the forks (KWin/Better Blur, Klassy,
+  Terminus, ...) and states the AI assistance (Claude Fable 5.1).
 - Strix Halo is Liam's next real machine: nothing AMD-specific needed
   beyond what's in the image; hardware detection now logs `vainfo` /
   `vulkaninfo` for AMD/Intel so `hardware.log` shows what the stack sees.

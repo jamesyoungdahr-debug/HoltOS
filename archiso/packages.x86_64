@@ -186,6 +186,27 @@ vulkan-radeon
 vulkan-intel
 intel-media-driver
 libva-mesa-driver
+# --- Gaming (docs/holtos-must-haves-and-plan.md 1.1 / 1.4) ---------------
+# steam brings Proton; Proton GE is fetched from its GitHub releases by
+# holtos-proton-ge. gamescope is the Game Mode compositor (1.2). lib32-*
+# Vulkan drivers are what 32-bit games and Proton's Wine need on
+# AMD/Intel (NVIDIA's lib32-nvidia-utils is staged with its driver and
+# installed by homelab-detect-hardware.sh only when the card is there).
+# gamemode + mangohud (and their lib32 halves) for the in-game
+# performance daemon and overlay. zram-generator for compressed swap
+# (etc/systemd/zram-generator.conf).
+steam
+gamescope
+gamemode
+lib32-gamemode
+mangohud
+lib32-mangohud
+vulkan-icd-loader
+lib32-vulkan-icd-loader
+lib32-vulkan-radeon
+lib32-vulkan-intel
+lib32-mesa
+zram-generator
 # libva-utils (vainfo) and vulkan-tools (vulkaninfo): what
 # homelab-detect-hardware.sh logs for AMD/Intel GPUs into hardware.log,
 # and what a support check runs first on a real machine (Strix Halo).
