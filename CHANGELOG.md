@@ -5,6 +5,18 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.0.6b-alpha] - 2026-09-13
+
+- **HoltOS config updates no longer end "Failed" when they succeeded.** When
+  a release ships a new updater, the running one hands over with
+  `holtos-update-apply config <tag>`, and the new one read the tag as a
+  second, unknown item: the files installed, but the run exited 1 and the
+  Updates window and tray reported a failure (seen on 0.0.6a-alpha, reported
+  from The Den session). It also never used the tag it was handed and
+  looked up the latest release again, which could apply the wrong one if a
+  new release was tagged mid-update. A tag right after `config` is now that
+  item's target; a plain `config` still installs the latest release.
+
 ## [0.0.6a-alpha] - 2026-09-13
 
 - **Updating to a release installs what it needs straight away.** A config

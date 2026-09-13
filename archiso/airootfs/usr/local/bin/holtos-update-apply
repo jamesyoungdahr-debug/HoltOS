@@ -855,13 +855,34 @@ fi
 # installed.
 FORCE=0
 items=()
+targets=()
 for arg in "$@"; do
     case "$arg" in
         --reinstall) FORCE=1 ;;
         available)
-            mapfile -t -O "${#items[@]}" items < <(jq -r '.updates[].id' /var/lib/holtos/update-status.json 2>/dev/null)
+            while read -r id; do
+                [ -n "$id" ] || continue
+                items+=("$id")
+                targets+=("")
+            done < <(jq -r '.updates[].id' /var/lib/holtos/update-status.json 2>/dev/null)
             ;;
-        *) items+=("$arg") ;;
+        v[0-9]*)
+            # A release tag right after "config" is that item's target: the
+            # updater hand-over runs `holtos-update-apply config <tag>`, and
+            # older updaters hand over to this one the same way. It used to be
+            # read as a separate unknown item, which failed every handed-over
+            # config update and dropped the tag it was given.
+            if [ "${#items[@]}" -gt 0 ] && [ "${items[-1]}" = config ] && [ -z "${targets[-1]}" ]; then
+                targets[-1]="$arg"
+            else
+                items+=("$arg")
+                targets+=("")
+            fi
+            ;;
+        *)
+            items+=("$arg")
+            targets+=("")
+            ;;
     esac
 done
 
@@ -875,9 +896,10 @@ fi
 # skips its automatic-exit behavior for commands on the left of "||", so
 # every dispatch below is wrapped that way rather than relying on set -e.
 failed=()
-for item in "${items[@]}"; do
+for i in "${!items[@]}"; do
+    item="${items[$i]}"
     case "$item" in
-        config) update_config || failed+=("$item") ;;
+        config) update_config "${targets[$i]}" || failed+=("$item") ;;
         rollback) rollback_config || failed+=("$item") ;;
         system) update_system || failed+=("$item") ;;
         flatpak) update_flatpak || failed+=("$item") ;;
