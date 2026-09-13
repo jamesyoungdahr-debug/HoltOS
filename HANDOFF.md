@@ -186,12 +186,13 @@ logged "No NVIDIA GPU — nothing to install".
 - **Restart prompt after system updates** — done, verified on screen in
   the VM, pushed as 2c431c5 but not tagged (Liam: no release yet). Goes out
   with the next tagged release; installed systems only see tags.
-- **the-den-client icon**: remaining cause is the client's own logo.svg
-  (invalid XML comment); HoltOS side is done.
+- **the-den-client icon**: fixed 2026-09-13 in the client repo (commit
+  7f601b5, logo.svg's illegal "--" inside its XML comment removed); not
+  pushed/tagged yet, so it ships with the next the-den-client release.
 - **Snapshot semantics** (rescue boot vs rollback) — undecided.
-- **Two orphan public GitHub repos** from before the monorepo decision
-  (`jamesyoungdahr-debug/holtos-glass-effect`, `/holtos-window-decoration`)
-  — `gh repo delete` needs the `delete_repo` scope, so Liam runs it.
+- ~~Two orphan public GitHub repos~~ — **deleted 2026-09-13** (Liam):
+  `jamesyoungdahr-debug/holtos-glass-effect` and `/holtos-window-decoration`
+  are gone from GitHub.
 - **Not tested this session** (verified 2026-09-11, unchanged since):
   `holtos-btrfs-snapshot` + Limine snapshot entries, 6-cycle retention.
 - **Cosmetic, new:** the Bluetooth applet shows on the VM even though

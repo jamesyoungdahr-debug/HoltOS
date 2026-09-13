@@ -30,10 +30,16 @@ CURRENT STATE (2026-09-12, evening)
   "Done. A restart is required to finish this update: <reason>. Restart
   now?" dialog with Restart now / Later. VM address is now 172.25.64.50 (it rebooted at 21:14, which also
   proved the /run marker clears on reboot).
-- the-den-client icon (v0.4.6): app_id is right now (KWin: class
-  the-den-client, desktopFile the-den-client) but src/assets/logo.svg is
-  invalid XML ("--" inside the comment on line 2), so Qt renders it
-  empty -> no window/task icon. Client-side fix + new tag needed.
+- the-den-client icon: FIXED 2026-09-13 in the client repo (C:\projects\
+  the-den-client, commit 7f601b5, on top of v0.4.10 HEAD c58b0c4). Bug was
+  src/assets/logo.svg's "--" inside the XML comment on line 2 (illegal in
+  XML comments, made Qt's parser reject the whole file -> empty icon).
+  Fix drafted by the 4090's model via run_coding_task, two review rounds
+  (wording trimmed too far, then a missing trailing newline fixed by hand
+  after the second miss); comment wording restored, only "--" removed.
+  Committed but NOT pushed/tagged -- ships with the next the-den-client
+  release. theden-4d (peer session on the same checkout) notified to
+  rebase onto it.
 - Local workers: 4090 = qwen3-coder-30b-a3b-instruct, tool calls verified.
   4080 = tool calls worked with qwen2.5-14b-instruct but it hallucinated a
   value it should have read; at 21:00 the 4080 answered 400 (no model
@@ -135,10 +141,9 @@ Both live in forks/ and are built by build-local-repo.sh into local-repo/
 (packaging/*/PKGBUILD, version suffix = commit count: r54 today). Verified
 on screen in build 9. The decoration-frame fix (force-blur the frame even
 when KWin reports the decoration as opaque) is in forks/ and shipped.
-LEFTOVER: two public GitHub repos created before the monorepo decision
+The two leftover public GitHub repos from before the monorepo decision
 (jamesyoungdahr-debug/holtos-glass-effect, /holtos-window-decoration)
-still exist — delete with `gh repo delete` (needs the delete_repo scope,
-so Liam runs it).
+were deleted by Liam 2026-09-13.
 Live-tuning recipe in the VM: kwriteconfig6 --file kwinrc --group
 Effect-holtosglass --key <Key> <value>; qdbus6 org.kde.KWin /Effects
 reconfigureEffect holtosglass. Kvantum opacity: copy the theme to
@@ -163,7 +168,6 @@ OPEN DECISIONS (Liam)
 - Snapshot semantics (rescue boot vs rollback).
 - Real NVIDIA machine test for hardware detection (PLAN step 7) and the
   real-GPU look of the glass: boot build 10+ from the Ventoy stick (D:\).
-- Delete the two orphan fork repos on GitHub.
 
 HOW TO DRIVE THE TEST VM (Hyper-V "holtos-test")
 -------------------------------------------------
