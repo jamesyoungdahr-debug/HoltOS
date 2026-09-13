@@ -182,7 +182,7 @@ logged "No NVIDIA GPU — nothing to install".
 - **Game Mode on real hardware**: boot build 21 on the Strix Halo box,
   "Game Mode" from the app menu, Steam Big Picture on gamescope, "Switch
   to Desktop" from Steam's power menu, and "Start in Game Mode" from the
-  tray. Build 21 ISO still to copy to D:\.
+  tray. (No ISO copy to D:\ any more: Liam updates via the updater.)
 - **Snapshot semantics** (rescue boot vs rollback) — undecided.
 - **Two orphan public GitHub repos** from before the monorepo decision
   (`jamesyoungdahr-debug/holtos-glass-effect`, `/holtos-window-decoration`)

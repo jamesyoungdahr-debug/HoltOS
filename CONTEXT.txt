@@ -18,8 +18,9 @@ CURRENT STATE (2026-09-12, evening)
   the-den-client` -> config v0.0.4-alpha (updater hands over to the
   release's copy), The Den v0.6.1, client v0.4.6 (icons + desktop file
   refreshed). Installed 0.0.3-alpha systems need the curl one-liner from
-  the release notes first (old whitelist). Build 21 ISO still to copy to
-  D:\ when the stick is in.
+  the release notes first (old whitelist). Liam no longer uses the Ventoy
+  stick: releases reach his machines through the updater (no more ISO
+  copies to D:\).
 - Builds 18-20 (2026-09-12 evening): Game Mode (gamescope + Steam Big
   Picture session, SteamOS-style switch both ways, tray toggle), greeter
   session picker, installed-system motd, updater refreshes The Den Client
