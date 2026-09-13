@@ -75,19 +75,37 @@ polkit.addRule(function(action, subject) {
 
 Not written to disk yet -- waiting on decky-loader's own build verification first, per the paragraph above.
 
-### 1.3 Controllers and the living room — planned
+### 1.3 Controllers and the living room — in progress (2026-09-13, branch `defaults`)
 
-`steam-devices` udev rules, Bluetooth (done: bluedevil/bluez), HDMI CEC via
-`libcec` for TV remotes, `xpadneo`/`xone` DKMS for Xbox pads, and audio
-passthrough defaults for an AVR. Add a "Living room" preset in Game Mode:
-TV resolution, HDR on, 4K@120 where possible.
+- **Done**: `steam-devices` udev rules (comes with Steam), Bluetooth
+  (bluedevil/bluez), `libcec` for TV remotes over HDMI-CEC.
+- **Building**: `xpadneo-dkms` (Xbox pads over Bluetooth) and
+  `game-devices-udev` (non-Steam controllers without root) are in the AUR
+  build list. They join `packages.x86_64` once `build-local-repo.sh` has
+  actually built them, so an ISO build never asks for a package the local
+  repo does not have.
+- **Left out on purpose**: `xone` (the Xbox wireless dongle). Its
+  `xone-dongle-firmware` package downloads Microsoft's driver, which the
+  image cannot redistribute; if wanted, it has to be an opt-in download on
+  the user's own machine.
+- **Still planned**: audio passthrough defaults for an AVR, and a "Living
+  room" preset in Game Mode (TV resolution, HDR on, 4K@120 where possible).
 
-### 1.4 Performance defaults — planned
+### 1.4 Performance defaults — done (2026-09-13, branch `defaults`)
 
-`gamemoded` enabled; `amd-pstate` EPP "performance" while a game runs
-(gamemode hook); zram (`zram-generator`, half of RAM); CachyOS-style
-udev/sysctl tweaks (I/O schedulers per disk type, `vm.max_map_count` for
-games). Optional CachyOS kernel later if measurements justify it.
+- **zram**: `zram-generator`, half of RAM, zstd (already shipped; verified
+  on the build 24 live VM: 3.9G of 8G).
+- **I/O schedulers per disk type**:
+  `etc/udev/rules.d/60-holtos-ioschedulers.rules`, from CachyOS-Settings
+  (BFQ for HDDs, mq-deadline for SATA SSDs and SD cards, kyber for NVMe).
+  Verified live: rotational disks switch from `none` to `bfq`.
+- **`vm.max_map_count`**: nothing to do. Arch already sets 1048576 in
+  `/usr/lib/sysctl.d/10-arch.conf` (verified on the VM).
+- **CPU performance while a game runs**: nothing to add. `gamemode`
+  (shipped) switches the CPU governor and platform profile to "performance"
+  and restores them afterwards by default; on `amd-pstate` the performance
+  governor also forces the performance energy preference.
+- Optional CachyOS kernel later if measurements justify it.
 
 ## 2. Apps
 
