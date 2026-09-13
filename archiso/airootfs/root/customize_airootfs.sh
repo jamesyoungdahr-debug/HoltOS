@@ -63,6 +63,15 @@ if ! grep -q '^\[homelab\]' /etc/pacman.conf; then
     cat /usr/share/holtos/pacman-homelab.conf >> /etc/pacman.conf
 fi
 
+# Only HoltOS wallpapers: pacman never unpacks another package's wallpapers
+# (KDE's extra wallpapers, Breeze's "Next"), and the copies already
+# installed into the image are removed. pacman reads NoExtract patterns
+# last to first, so the HoltOS exception wins.
+if ! grep -q '^NoExtract = usr/share/wallpapers/' /etc/pacman.conf; then
+    sed -i '/^\[options\]/a NoExtract = usr/share/wallpapers/* !usr/share/wallpapers/HoltOS*' /etc/pacman.conf
+fi
+find /usr/share/wallpapers -mindepth 1 -maxdepth 1 ! -name 'HoltOS*' -exec rm -rf {} +
+
 # Stage the NVIDIA driver packages on the ISO WITHOUT installing them:
 # homelab-detect-hardware.sh installs them into the target at install
 # time only if an NVIDIA GPU is present (no network needed then). The

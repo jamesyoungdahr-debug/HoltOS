@@ -37,7 +37,7 @@ depends=(accountsservice appstream-qt dbus fontconfig freetype2 glibc icu
          xorg-xrdb xorg-xwayland zlib
          qt6-quick3d qt6-wayland qt6-multimedia qt6-networkauth qcoro-qt6
          kdnssd knotifyconfig kpeople breeze plasma-wayland-protocols
-         plasma-workspace-wallpapers libkscreen networkmanager-qt pipewire
+         libkscreen networkmanager-qt pipewire
          polkit-qt6 qqc2-desktop-style hwdata packagekit-qt6 flatpak)
 makedepends=(cmake extra-cmake-modules git qt6-tools pkgconf wayland-protocols
              kdoctools kwin)

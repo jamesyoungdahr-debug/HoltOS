@@ -61,6 +61,16 @@ missing_z13() {
     done
 }
 
+# Only HoltOS wallpapers: the same pacman NoExtract rule the image ships,
+# and removal of other packages' wallpapers already on the system (KDE's
+# extra wallpapers, Breeze's "Next").
+trim_wallpapers() {
+    if ! grep -q '^NoExtract = usr/share/wallpapers/' /etc/pacman.conf; then
+        sed -i '/^\[options\]/a NoExtract = usr/share/wallpapers/* !usr/share/wallpapers/HoltOS*' /etc/pacman.conf
+    fi
+    find /usr/share/wallpapers -mindepth 1 -maxdepth 1 ! -name 'HoltOS*' -exec rm -rf {} + 2>/dev/null || true
+}
+
 case "${1:-}" in
 check)
     missing="$(missing_required; missing_z13)"
@@ -73,6 +83,7 @@ apply)
         echo "holtos-system-extras apply must run as root" >&2
         exit 1
     fi
+    trim_wallpapers
     required="$(missing_required)"
     z13="$(missing_z13)"
     if [ -z "$required" ] && [ -z "$z13" ]; then

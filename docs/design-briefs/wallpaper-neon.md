@@ -16,13 +16,28 @@ frosted windows and panels.
 - Style: minimal and clean, not busy. Glow must stay recognisable once
   blurred (large soft shapes, no fine detail doing the work).
 
-## Concepts (make 3)
-1. Neon rings: the HoltOS ring mark as glowing neon tubes, off-centre, with
+## Concepts: a suite of 10 (Liam, 2026-09-13)
+One family: same palette, glow softness and calm upper-left, so any of them
+can be the default. Each ships as its own wallpaper package.
+1. Neon Rings: the HoltOS ring mark as glowing neon tubes, off-centre, with
    purple and teal bloom spilling across the frame.
-2. Neon otter sign: a simple otter outline as a neon sign in the lower right,
+2. Neon Otter: a simple otter outline as a neon sign in the lower right,
    purple tube with teal accents, soft haze on a dark wall.
-3. Abstract neon flow: sweeping purple-to-teal light ribbons with a faint
-   amber highlight, glow reaching every quadrant.
+3. Neon Flow: sweeping purple-to-teal light ribbons with a faint amber
+   highlight, glow reaching every quadrant.
+4. Neon Pool: concentric ripple rings on dark water, purple and teal
+   reflections (the old pool-rings idea, now bright).
+5. Neon Horizon: a low synthwave-style horizon line and grid in purple with a
+   teal-to-amber glow above it, no sun disc or text.
+6. Neon Aurora: soft vertical curtains of teal and purple light across a dark
+   sky.
+7. Neon Den: a cosy dark room corner lit by a small purple neon ring and a
+   teal strip light, glow washing the walls (media and gaming mood).
+8. Neon Bokeh: large out-of-focus purple, teal and amber light circles.
+9. Neon Circuit: sparse rounded light traces in purple and teal meeting at a
+   glowing ring node, bottom-right weighted.
+10. Neon Otter Night: the otter mark small and low-right, floating on a dark
+    river that reflects purple and teal neon.
 
 ## Rules
 - Colour in all four quadrants so any window position shows it through blur.

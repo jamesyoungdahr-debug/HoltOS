@@ -252,8 +252,7 @@ update_config() {
         usr/share/plasma/look-and-feel/
         usr/share/plymouth/themes/
         usr/share/sddm/themes/
-        usr/share/wallpapers/HoltOS/
-        usr/share/wallpapers/HoltOS-Otter/
+        'usr/share/wallpapers/HoltOS*/'
         usr/local/bin/steamos-session-select
         'usr/share/wayland-sessions/holtos-*.desktop'
         'etc/polkit-1/rules.d/*holtos*.rules'
