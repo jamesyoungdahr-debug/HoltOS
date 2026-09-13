@@ -216,24 +216,30 @@ update_config() {
         HOLTOS_UPDATE_REEXEC=1 /usr/local/bin/holtos-update-apply config "$latest_tag"
         return $?
     fi
+    # The patterns are quoted so they expand only below, inside the release's
+    # airootfs. Unquoted, bash expanded them right here in the updater's own
+    # working directory: run as a service that is /, so "holtos-*" matched
+    # the scripts already INSTALLED, and files new in a release (a new
+    # script, unit, polkit rule) were never copied. Seen 2026-09-13:
+    # holtos-system-extras and holtos-apps never reached an installed Z13.
     local components=(
-        usr/local/bin/holtos-*
-        usr/local/bin/homelab-*.sh
-        etc/systemd/system/holtos-*.service
-        etc/systemd/system/holtos-*.timer
+        'usr/local/bin/holtos-*'
+        'usr/local/bin/homelab-*.sh'
+        'etc/systemd/system/holtos-*.service'
+        'etc/systemd/system/holtos-*.timer'
         usr/bin/steamos-update
         usr/bin/jupiter-biosupdate
         usr/bin/steamos-polkit-helpers/
-        usr/share/polkit-1/actions/org.holtos.*.policy
+        'usr/share/polkit-1/actions/org.holtos.*.policy'
         etc/flatpak/remotes.d/flathub.flatpakrepo
-        etc/udev/rules.d/60-holtos-*.rules
-        etc/xdg/autostart/holtos-*.desktop
-        usr/share/applications/holtos-*.desktop
+        'etc/udev/rules.d/60-holtos-*.rules'
+        'etc/xdg/autostart/holtos-*.desktop'
+        'usr/share/applications/holtos-*.desktop'
         etc/xdg/kwinrc
         etc/xdg/kcm-about-distrorc
         etc/xdg/ksplashrc
         etc/os-release
-        etc/pacman.d/hooks/*homelab*.hook
+        'etc/pacman.d/hooks/*homelab*.hook'
         etc/sddm.conf.d/holtos.conf
         etc/plymouth/plymouthd.conf
         etc/systemd/zram-generator.conf
@@ -249,8 +255,8 @@ update_config() {
         usr/share/wallpapers/HoltOS/
         usr/share/wallpapers/HoltOS-Otter/
         usr/local/bin/steamos-session-select
-        usr/share/wayland-sessions/holtos-*.desktop
-        etc/polkit-1/rules.d/*holtos*.rules
+        'usr/share/wayland-sessions/holtos-*.desktop'
+        'etc/polkit-1/rules.d/*holtos*.rules'
     )
     local present=()
     shopt -s nullglob

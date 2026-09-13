@@ -5,6 +5,21 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.0.6c-alpha] - 2026-09-13
+
+- **HoltOS updates deliver new files, not just changes to existing ones.**
+  The config update's list of HoltOS files used unquoted patterns such as
+  `usr/local/bin/holtos-*`, which bash expanded in the updater's own working
+  directory instead of the downloaded release. Run as a service that is `/`,
+  so the patterns matched what was already installed, and anything new in a
+  release was never copied: on a ROG Flow Z13 updated to 0.0.6b-alpha,
+  `holtos-system-extras` and `holtos-apps` were missing, so z13ctl and z13gui
+  never installed. New units, polkit rules and udev rules were skipped the
+  same way. The patterns now expand only inside the release. Installs
+  get the fix on this update (the updater hands over to the new copy before
+  it copies files), and the missing scripts and components install in the
+  same run.
+
 ## [0.0.6b-alpha] - 2026-09-13
 
 - **HoltOS config updates no longer end "Failed" when they succeeded.** When
