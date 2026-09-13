@@ -1,0 +1,107 @@
+#!/bin/bash
+# Keeps an installed HoltOS in line with what its current release expects,
+# beyond the files the config update syncs: packages a release depends on
+# (a config update never installs packages, so a new HoltOS tool reaching an
+# older install found its dependencies missing), and extras that belong only
+# on specific hardware, installed only when that hardware is present.
+#
+#   holtos-system-extras check   list what is missing, one package per line;
+#                                exit 0 when something is missing, 1 when not
+#   holtos-system-extras apply   install what is missing (root)
+#
+# What a release expects lives in files the config update syncs, so a
+# release can change it without changing this script:
+#   /usr/share/holtos/required-packages   one package name per line
+#   /usr/share/holtos/model-extras.conf   KEY=yes switches for model extras
+set -uo pipefail
+
+REQUIRED=/usr/share/holtos/required-packages
+MODELS=/usr/share/holtos/model-extras.conf
+Z13_PACKAGES="z13ctl-bin z13gui-bin"
+
+model_enabled() {   # KEY
+    grep -qx "$1=yes" "$MODELS" 2>/dev/null
+}
+
+missing_required() {
+    local pkg
+    [ -f "$REQUIRED" ] || return 0
+    while read -r pkg; do
+        pkg="${pkg%%#*}"
+        pkg="${pkg//[[:space:]]/}"
+        [ -n "$pkg" ] || continue
+        [[ "$pkg" =~ ^[a-z0-9@._+-]+$ ]] || continue
+        pacman -Q "$pkg" >/dev/null 2>&1 || echo "$pkg"
+    done < "$REQUIRED"
+}
+
+# ASUS ROG Flow Z13 (2025, GZ302): its DMI product and board names carry
+# GZ302 ("ROG Flow Z13 GZ302EA_GZ302EA"); the ASUS USB IDs z13ctl drives
+# (0b05:18c6, 0b05:1a30) are the fallback.
+is_asus_z13_2025() {
+    local f
+    for f in /sys/class/dmi/id/product_name /sys/class/dmi/id/board_name; do
+        grep -q "GZ302" "$f" 2>/dev/null && return 0
+    done
+    for f in /sys/bus/usb/devices/*/idVendor; do
+        [ "$(cat "$f" 2>/dev/null)" = "0b05" ] || continue
+        case "$(cat "${f%idVendor}idProduct" 2>/dev/null)" in
+            18c6|1a30) return 0 ;;
+        esac
+    done
+    return 1
+}
+
+missing_z13() {
+    local pkg
+    model_enabled ASUS_Z13_2025 || return 0
+    is_asus_z13_2025 || return 0
+    for pkg in $Z13_PACKAGES; do
+        pacman -Q "$pkg" >/dev/null 2>&1 || echo "$pkg"
+    done
+}
+
+case "${1:-}" in
+check)
+    missing="$(missing_required; missing_z13)"
+    [ -n "$missing" ] || exit 1
+    echo "$missing"
+    exit 0
+    ;;
+apply)
+    if [ "$(id -u)" -ne 0 ]; then
+        echo "holtos-system-extras apply must run as root" >&2
+        exit 1
+    fi
+    required="$(missing_required)"
+    z13="$(missing_z13)"
+    if [ -z "$required" ] && [ -z "$z13" ]; then
+        echo "==> No HoltOS components missing"
+        exit 0
+    fi
+    rc=0
+    # A full -Syu with the new packages, never a bare -S: installing against
+    # a refreshed database without upgrading is a partial upgrade on Arch.
+    # shellcheck disable=SC2086
+    if ! pacman -Syu --noconfirm --needed $required $z13; then
+        echo "==> Installing HoltOS components failed" >&2
+        exit 1
+    fi
+    [ -n "$required" ] && echo "==> Installed packages this HoltOS release needs: $(echo $required)"
+    if [ -n "$z13" ]; then
+        echo "==> ASUS ROG Flow Z13 (2025) detected; setting up its controls"
+        z13ctl setup || { echo "==> WARNING: z13ctl setup failed; run 'sudo z13ctl setup' after a reboot" >&2; rc=1; }
+        systemctl --global enable z13ctl.socket z13ctl.service z13gui.service >/dev/null 2>&1 || true
+        # z13ctl grants device access to the users group.
+        getent passwd | awk -F: '$3 >= 1000 && $3 < 65534 {print $1}' | while read -r user; do
+            usermod -aG users "$user"
+        done
+        echo "==> Z13 controls installed; log out and back in to start them"
+    fi
+    exit "$rc"
+    ;;
+*)
+    echo "Usage: holtos-system-extras check|apply" >&2
+    exit 2
+    ;;
+esac

@@ -62,6 +62,7 @@ NAMES = {
     "system": "System packages",
     "flatpak": "Flatpak apps",
     "firmware": "Device firmware",
+    "extras": "HoltOS components",
     "rollback": "Rollback",
 }
 STAGE_TEXT = {
@@ -427,7 +428,7 @@ class HistoryTab(QWidget):
         entries.reverse()
         self.table.setRowCount(len(entries))
         for row, parts in enumerate(entries):
-            version = "updated" if parts[1] in ("system", "flatpak", "firmware") else parts[2]
+            version = "updated" if parts[1] in ("system", "flatpak", "firmware", "extras") else parts[2]
             cells = (friendly_time(parts[0]), NAMES.get(parts[1], parts[1]), version)
             for column, text in enumerate(cells):
                 self.table.setItem(row, column, QTableWidgetItem(text))

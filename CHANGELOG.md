@@ -5,6 +5,19 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.0.5b-alpha] - 2026-09-13
+
+- **The updater installs the packages a HoltOS release needs.** A config
+  update only syncs HoltOS' own files, so installs updated to 0.0.5a-alpha
+  got the new updater and HoltOS Apps without pacman-contrib, fakeroot,
+  fwupd, Flatpak or libcec. The new `holtos-system-extras` installs whatever
+  on the release's `required-packages` list is missing (as a full
+  `pacman -Syu --needed`, never a partial upgrade). HoltOS Updates lists it
+  as "HoltOS components", and every system update runs it at the end.
+- **Hardware-specific extras**: the same tool installs extras only on
+  matching hardware. The first, for the 2025 ASUS ROG Flow Z13 (z13ctl and
+  z13gui), is switched off in this release.
+
 ## [0.0.5a-alpha] - 2026-09-13
 
 The "a" marks a release made mainly of big fixes.

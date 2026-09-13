@@ -154,6 +154,11 @@ else
     errors+=("checkupdates is missing (pacman-contrib)")
 fi
 
+# Packages the running release needs, and hardware extras, that are missing.
+if extras_list="$(/usr/local/bin/holtos-system-extras check 2>/dev/null)"; then
+    add_update extras "HoltOS components" system "" "$(wc -l <<< "$extras_list") to install" "$extras_list" false
+fi
+
 state=up_to_date
 [ "${#updates[@]}" -gt 0 ] && state=available
 if [ "${#updates[@]}" -eq 0 ] && [ "${#errors[@]}" -gt 0 ]; then
@@ -203,7 +208,7 @@ for update in "${updates[@]}"; do
                 install_ids+=("$id")
             fi
             ;;
-        system|firmware)
+        system|firmware|extras)
             if [ "$AUTO_INSTALL" = all ] && [ "$in_window" -eq 1 ]; then
                 install_ids+=("$id")
             elif [ "$id" = system ]; then

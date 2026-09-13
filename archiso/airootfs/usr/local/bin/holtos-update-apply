@@ -773,6 +773,10 @@ update_system() {
         printf '%s\n' "$reboot_reason" > /run/holtos-reboot-required
         echo "==> A restart is required to finish this update: $reboot_reason."
     fi
+    # The package database is fresh now, so add anything this release needs
+    # that is still missing (holtos-system-extras); best-effort, a missing
+    # extra must not turn a finished system update into a failure.
+    /usr/local/bin/holtos-system-extras apply || echo "==> WARNING: some HoltOS components could not be installed" >&2
     progress system done 100
 }
 
@@ -820,13 +824,23 @@ update_firmware() {
     progress firmware done 100
 }
 
+# update_extras — packages this HoltOS release needs and hardware-specific
+# extras (holtos-system-extras), which a config update alone never installs.
+update_extras() {
+    echo "==> Installing missing HoltOS components..."
+    progress extras install -1
+    /usr/local/bin/holtos-system-extras apply || return 1
+    log_history extras components "$(date -u +%FT%TZ)"
+    progress extras done 100
+}
+
 if [ "$(id -u)" -ne 0 ]; then
     echo "holtos-update-apply must run as root (use: pkexec holtos-update-apply ...)" >&2
     exit 1
 fi
 
 if [ "$#" -eq 0 ]; then
-    echo "Usage: holtos-update-apply [--reinstall] <available|config|the-den|the-den-client|system|flatpak|firmware|rollback|vendor> ..." >&2
+    echo "Usage: holtos-update-apply [--reinstall] <available|config|the-den|the-den-client|system|flatpak|firmware|extras|rollback|vendor> ..." >&2
     exit 1
 fi
 
@@ -862,6 +876,7 @@ for item in "${items[@]}"; do
         system) update_system || failed+=("$item") ;;
         flatpak) update_flatpak || failed+=("$item") ;;
         firmware) update_firmware || failed+=("$item") ;;
+        extras) update_extras || failed+=("$item") ;;
         the-den) update_the_den || failed+=("$item") ;;
         the-den-client) update_the_den_client || failed+=("$item") ;;
         vendor) vendor_install || failed+=("$item") ;;

@@ -1,0 +1,11 @@
+# Packages this HoltOS release needs on every installed system. A config
+# update never installs packages, so holtos-system-extras installs whatever
+# on this list is missing (one package name per line).
+# 0.0.5a-alpha: the updater (checkupdates needs pacman-contrib and fakeroot,
+# firmware updates need fwupd), HoltOS Apps (Flatpak) and TV remotes (libcec).
+pacman-contrib
+fakeroot
+fwupd
+flatpak
+flatpak-kcm
+libcec
