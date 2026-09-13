@@ -1,0 +1,4 @@
+# System-wide default Plasma desktop theme for HoltOS: our own compiled
+# theme (holtos-window-decoration package), not stock Breeze/Breeze Dark.
+[Theme]
+name=klassy-dark

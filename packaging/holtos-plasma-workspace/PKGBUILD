@@ -1,0 +1,45 @@
+# HoltOS Plasma Workspace — the plasma-workspace fork HoltOS owns (fork of KDE's
+# plasma-workspace at github.com/jamesyoungdahr-debug/holtos-plasma-workspace, branch
+# "holtos", pinned off tag v6.7.5). This builds a vanilla Plasma workspace so HoltOS
+# can eventually customize the Plasma shell/panel/Kirigami chrome directly.
+pkgname=holtos-plasma-workspace
+pkgver=6.7.5.r${HOLTOS_REV:-0}
+pkgrel=1
+pkgdesc="HoltOS's fork of plasma-workspace (Milestone 1: vanilla build, no HoltOS customization yet)"
+arch=(x86_64)
+url="https://github.com/jamesyoungdahr-debug/holtos-plasma-workspace"
+license=(GPL-2.0-or-later GPL-3.0-or-later LGPL-2.1-or-later)
+provides=(plasma-workspace=6.7.5)
+conflicts=(plasma-workspace)
+depends=(qt6-base qt6-declarative qt6-quick3d qt6-svg qt6-wayland qt6-multimedia
+         qt6-networkauth qt6-location qcoro-qt6
+         plasma-activities plasma-activities-stats kauth kbookmarks kcmutils kcompletion
+         kconfig kconfigwidgets kcoreaddons kcrash kdbusaddons kdeclarative
+         kglobalaccel kguiaddons ki18n kiconthemes kidletime kio kirigami
+         kirigami-addons kitemmodels kjobwidgets kdnssd knewstuff
+         knotifications knotifyconfig kpackage kpeople kquickcharts
+         krunner kscreenlocker kservice ksvg ktexteditor ktextwidgets
+         kuserfeedback kwallet kwidgetsaddons kwindowsystem kxmlgui
+         breeze plasma-wayland-protocols plasma-workspace-wallpapers
+         layer-shell-qt libkscreen libksysguard libplasma
+         appstream-qt libcanberra libqalculate networkmanager-qt
+         pipewire polkit-qt6 prison qqc2-desktop-style
+         xcb-util-cursor xorg-xwayland dbus icu freetype2 fontconfig
+         zlib libxcrypt hwdata packagekit-qt6 flatpak kded kholidays kstatusnotifieritem kwayland)
+makedepends=(cmake extra-cmake-modules git qt6-tools pkgconf wayland-protocols
+             kdoctools kwin)
+options=(!debug)
+source=("git+${url}.git#branch=holtos")
+sha256sums=('SKIP')
+
+build() {
+    cmake -B build -S "${pkgname}" \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_TESTING=OFF
+    cmake --build build
+}
+
+package() {
+    DESTDIR="${pkgdir}" cmake --install build
+}

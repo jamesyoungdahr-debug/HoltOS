@@ -1,16 +1,96 @@
 HoltOS — running context file (plain text, kept current by the agent)
 =====================================================================
-Last updated: 2026-09-12 (evening; Game Mode + fixes, builds 18-20)
+Last updated: 2026-09-13 (night; Glass v2 pass + KWin/plasma-workspace fork decision)
 Read this first when resuming. Newest state at the top of each section.
 
 WHAT HOLTOS IS
 --------------
 Arch-based archiso + Calamares + Limine distro with KDE Plasma 6.7.
 Repo: C:\projects\holtos  (GitHub jamesyoungdahr-debug/HoltOS, PUBLIC, branch master)
-Docs in repo: README.md, BUILD.md, PLAN.md, HANDOFF.md, CHANGELOG.md, BRANDING-STATUS.md
+Docs in repo: README.md, BUILD.md, PLAN.md, HANDOFF.md, CHANGELOG.md, BRANDING-STATUS.md,
+docs/holtos-plasma-fork-plan.md (new)
 Owner: Liam (GitHub jamesyoungdahr-debug, git user Vectorly)
 
-CURRENT STATE (2026-09-12, evening)
+CURRENT STATE (2026-09-13, night)
+----------------------------------
+- HOLTOS GLASS v2 (uncommitted, live-tuned in the VM only — see below for
+  exactly what's baked in vs. not): Liam's reference photo showed a much
+  softer, brighter "milk glass" look than HoltOS ships. Root-caused in the
+  VM (not guessed): the blur effect itself is fine (proved by swapping in
+  stock unmodified KWin blur — identical flat result), the real cause was
+  (1) HoltOS's own default wallpaper is nearly solid black outside one
+  corner, so there's almost no color for any blur to reveal, and (2)
+  Kvantum's window/dialog fill was too opaque (55%/72%) to let much of
+  even a colorful background through. Swapping the VM's wallpaper to KDE's
+  stock "Next" wallpaper live confirmed this: Dolphin instantly showed
+  real frosted-glass color. Tuned live in the VM:
+    kwinrc [Effect-holtosglass]: BlurStrength 12->15 (max), NoiseStrength
+      2->4, Saturation 150->100, Brightness 100 (unchanged), TintStrength
+      45->0 (Liam: "let's not tint it, exactly like the example" — no
+      artificial color cast, let the real wallpaper show through)
+    Kvantum HoltOSGlass.svg (LIVE VM ONLY, NOT in the repo file yet):
+      window-normal opacity .55->.40, dialog-normal .72->.55
+    Konsole HoltOS.colorscheme: Opacity 1->0.75, added Blur=true (this one
+      IS committed to the repo file, see below) — confirmed BRANDING-
+      STATUS.md's original intent ("Dolphin and Konsole translucent...")
+      had regressed to fully opaque at some point; now fixed
+    Klassy titlebar (etc/skel/.config/klassy/klassyrc, LIVE VM ONLY):
+      tried ActiveTitleBarOpacity 70->45 / Inactive 60->40 to match the
+      content area so the whole window reads as one piece of glass, not a
+      solid bar on top of glass — config write confirmed correct but the
+      decoration plugin caches it once per session; reopening the app
+      window did NOT pick it up. UNVERIFIED — needs an actual logout/
+      login to confirm, not yet done (didn't want to risk the VM mid­-
+      comparison).
+  NOT YET COMMITTED to the repo: the Kvantum SVG alpha change and the
+  Klassy titlebar opacity change only exist live in the VM's own /usr and
+  ~/.config files (edited directly over SSH for fast iteration). Only the
+  kwinrc, Konsole colorscheme, and new plasmarc file below went through
+  the local-model handoff + review flow and are sitting as uncommitted
+  changes in the repo working tree.
+- FORKED KDE'S OWN ENGINES for full design control (Liam's call, after the
+  above tuning still couldn't reach the reference's smoothness and after
+  discovering System Settings' Kirigami sidebar isn't touchable by KWin or
+  Kvantum at all): `jamesyoungdahr-debug/holtos-kwin` (from KDE/kwin) and
+  `jamesyoungdahr-debug/holtos-plasma-workspace` (from KDE/plasma-workspace),
+  both cloned to C:\projects\, both pinned to tag v6.7.5 (matches what
+  HoltOS actually ships), both with a new `holtos` branch off that tag.
+  Full milestone plan in docs/holtos-plasma-fork-plan.md — this is a large,
+  ongoing commitment (two of KDE's biggest C++ codebases, maintained
+  against upstream indefinitely), tracked as its own project, NOT part of
+  a quick pass. Milestone 0 (scaffolding) in progress; fetching Arch's
+  real kwin/plasma-workspace PKGBUILDs as the packaging basis is blocked
+  (archlinux.org's GitLab served a bot-check page from this network,
+  needs a different source next time — pacman/asp/AUR RPC, or a plain
+  browser fetch elsewhere).
+- GPU PASSTHROUGH ATTEMPTED AND REVERTED: tried to give the test VM real
+  hardware-accelerated rendering (it currently renders via llvmpipe/
+  software, confirmed via `glxinfo`) by DDA-passing the host's idle AMD
+  integrated GPU (NOT the 4090 — Liam chose integrated-only specifically
+  to keep the 4090 free for LM Studio coding handoffs). Host GPU-P is set
+  up and both GPUs show as partitionable, but GPU-P only works for Windows
+  guests (it copies host WDDM driver files into the guest) — a Linux VM
+  needs real DDA instead. Disabled + dismounted the AMD iGPU from the
+  host, assigned it to holtos-test, but `Start-VM` failed: "a hypervisor
+  feature is not available to the user" — the classic symptom of IOMMU
+  (Intel VT-d / AMD-Vi) being off in the host's BIOS. Not fixable from
+  Windows. **Cleanly reverted**: GPU re-mounted and re-enabled on the
+  host, VM confirmed running normally again on llvmpipe as before. Liam
+  is rebooting to check/enable the BIOS setting (IOMMU / AMD-Vi / SVM
+  Mode) himself; redo the same DDA steps once that's on.
+- LM Studio routing: Liam upgraded the 4080 from secondary/fallback to a
+  full co-primary worker alongside the 4090 ("we can also make the 4080 a
+  primary to speed work up") — hand independent units to both at once by
+  default now, not just when the 4090 is busy. See memory
+  lmstudio-parallel-routing.md.
+- Standing process note from Liam this session: plan new/large requests
+  and present the plan before executing, not mid-way through — see memory
+  plan-before-executing.md. Applies going forward to anything sizeable
+  (the KWin/plasma-workspace fork decision and the GPU passthrough attempt
+  both should have been planned-and-presented first; the fork one got a
+  plan doc after Liam had to stop and ask for it).
+
+PREVIOUS STATE (2026-09-12, evening)
 -----------------------------------
 - PUSHED, NOT TAGGED (commit 2c431c5; Liam: "commit no release", then
   "push but dont tag"): restart prompt after system-package updates. Ships

@@ -53,8 +53,10 @@ if [ -d /pkgbuilds ]; then
             rm -rf "/tmp/build-${pkg}"
             mkdir -p "/tmp/build-${pkg}"
             cp "/pkgbuilds/${pkg}/"* "/tmp/build-${pkg}/"
-            [ -d "/forks/${pkg}" ] || { echo "no /forks/${pkg} source tree" >&2; exit 1; }
-            tar -cf "/tmp/build-${pkg}/${pkg}.tar" -C /forks "${pkg}"
+            if [ -d "/forks/${pkg}" ]; then
+                # Some HoltOS packages (like holtos-kwin, holtos-plasma-workspace) are too large to vendor into forks/ and instead have a git source directly in their PKGBUILD, so there's no /forks tree to tar for them.
+                tar -cf "/tmp/build-${pkg}/${pkg}.tar" -C /forks "${pkg}"
+            fi
             chown -R builder:builder "/tmp/build-${pkg}"
             su - builder -c "cd /tmp/build-${pkg} && HOLTOS_REV='${HOLTOS_REV:-0}' makepkg -s --noconfirm --needed"
             # An older build of the same package would otherwise sit next to

@@ -1,0 +1,45 @@
+# HoltOS KWin — the full KWin build HoltOS owns (fork of KDE's kwin at
+# github.com/jamesyoungdahr-debug/holtos-kwin, branch "holtos", pinned off
+# tag v6.7.5). Source: the holtos-kwin repo in the HoltOS fork. This package
+# builds a vanilla KWin with no HoltOS customizations yet; HoltOS will
+# eventually customize KWin's glass/blur rendering directly instead of through
+# the holtos-glass-effect plugin.
+pkgname=holtos-kwin
+pkgver=6.7.5.r${HOLTOS_REV:-0}
+pkgrel=1
+pkgdesc="HoltOS's fork of KWin (Milestone 1: vanilla build, no HoltOS customization yet)"
+arch=(x86_64)
+url="https://github.com/jamesyoungdahr-debug/holtos-kwin"
+license=(GPL-2.0-or-later GPL-3.0-or-later)
+provides=(kwin=6.7.5)
+conflicts=(kwin)
+depends=(qt6-base qt6-declarative qt6-multimedia qt6-sensors qt6-svg qt6-wayland
+         kcmutils kcompletion kconfig kconfigwidgets kcoreaddons kcrash kdbusaddons
+         kdeclarative kglobalaccel ki18n kiconthemes kidletime kirigami
+         knewstuff knotifications kpackage kpipewire krunner kscreenlocker
+         kservice kstatusnotifieritem ktextwidgets kwidgetsaddons kwindowsystem
+         kxmlgui breeze plasma-activities plasma-wayland-protocols
+         libcanberra libdisplay-info libepoxy libinput libxcvt libxkbcommon
+         pipewire wayland wayland-protocols xcb-util-cursor xorg-xwayland
+         libxcb xcb-util-wm libei lcms2 fontconfig freetype2 hwdata libdrm
+         mesa polkit-qt6 qcoro-qt6 kdecoration kauth kcolorscheme kguiaddons ksvg
+         knighttime kwayland)
+makedepends=(cmake extra-cmake-modules git qt6-tools vulkan-headers pkgconf
+             wayland-protocols kdoctools)
+options=(!debug)
+source=("git+${url}.git#branch=holtos")
+sha256sums=('SKIP')
+
+# global shortcuts disabled for now because Arch's kglobalaccel package doesn't appear to export the KGlobalAccelD CMake config KWin's build looks for; revisit once confirmed whether that's a real packaging gap or a wrong dependency
+build() {
+    cmake -B build -S "${pkgname}" \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_TESTING=OFF \
+        -DKWIN_BUILD_GLOBALSHORTCUTS=OFF
+    cmake --build build
+}
+
+package() {
+    DESTDIR="${pkgdir}" cmake --install build
+}

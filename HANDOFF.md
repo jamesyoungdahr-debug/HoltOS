@@ -1,4 +1,4 @@
-# HoltOS Session Handoff — updated 2026-09-12
+# HoltOS Session Handoff — updated 2026-09-13
 
 What shipped, what broke, what got fixed, and what's still open — for
 whoever picks this branch up next. Treat nothing here as already-shared
@@ -157,6 +157,48 @@ logged "No NVIDIA GPU — nothing to install".
   on install; installed motd is a one-liner instead of the live text.
 - **chromium** added: The Den v0.5.1 depends on it; build-vendor-apps
   stops the build otherwise.
+
+## HoltOS Glass v2 + KDE engine fork (2026-09-13, in progress)
+
+- Diagnosed live in the VM why HoltOS's glass didn't match Liam's
+  reference photo: not a bug in the blur effect (proved by swapping in
+  stock unmodified KWin blur — same flat result), but HoltOS's own default
+  wallpaper is nearly solid black outside one corner, plus Kvantum's
+  window/dialog fill was too opaque (55%/72%) to show much of a background
+  even when one has color. Confirmed by swapping the VM to KDE's stock
+  colorful wallpaper live — Dolphin immediately showed real glass.
+- Tuned and validated live: kwinrc's `[Effect-holtosglass]` (BlurStrength
+  to max 15, no tint per Liam's "look exactly like the example", Saturation
+  back to 100) and Konsole's colorscheme (Opacity 1->0.75 + Blur=true,
+  restoring translucency BRANDING-STATUS.md already documented as intended
+  but had regressed to fully opaque). Both committed as uncommitted repo
+  changes (not yet pushed), reviewed, ready to fold into the next commit.
+- Kvantum SVG alpha (.40/.55) and Klassy title bar opacity (45/40) were
+  only tuned live in the VM's own files, not yet ported into the repo —
+  the title bar change specifically is unverified (Klassy's decoration
+  plugin caches opacity once per session; needs a logout/login to confirm
+  it actually applies, not done yet).
+- **Bigger decision**: Liam chose to fork KWin and plasma-workspace
+  outright for full engine-level control, rather than keep tuning the
+  existing lightweight plugin forks (`holtos-glass-effect`,
+  `holtos-window-decoration`) — those have a real ceiling (dual-Kawase
+  blur can't reach the reference's softness; System Settings' Kirigami
+  sidebar isn't reachable by a KWin plugin or Kvantum at all). Forked to
+  `jamesyoungdahr-debug/holtos-kwin` and `holtos-plasma-workspace`, pinned
+  to v6.7.5, `holtos` branch created in each. Full plan with milestones:
+  `docs/holtos-plasma-fork-plan.md`. This is a big, ongoing commitment
+  (two large KDE C++ codebases, maintained against upstream indefinitely)
+  — treat as its own project, not a quick pass. Nothing beyond forking +
+  pinning the tag has happened yet.
+- Tried to get the test VM real GPU-accelerated rendering (it runs on
+  llvmpipe/software today) by DDA-passing the host's idle AMD integrated
+  GPU to it. Failed: the host's BIOS doesn't have IOMMU (VT-d/AMD-Vi)
+  enabled, which DDA requires — Windows error was "a hypervisor feature is
+  not available to the user." Cleanly reverted (GPU back on the host,
+  re-enabled, VM confirmed running normally). Liam is rebooting to check
+  the BIOS setting; redo the same DDA steps once it's on. Deliberately did
+  NOT pass through the 4090 too — that would take it away from LM Studio
+  entirely while assigned, and the 4090 was still needed for coding.
 
 ## Still open
 

@@ -58,5 +58,6 @@ Color=255,255,255
 
 [General]
 Description=HoltOS
-Opacity=1
+Opacity=0.75
+Blur=true
 Wallpaper=

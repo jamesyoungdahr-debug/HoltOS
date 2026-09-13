@@ -16,11 +16,11 @@ contrastEnabled=true
 [Effect-holtosglass]
 BlurStrength=12
 NoiseStrength=2
-Saturation=150
+Saturation=100
 Contrast=100
 Brightness=100
-TintColor=#171423
-TintStrength=45
+TintColor=#4A3D66
+TintStrength=0
 ForceBlur=true
 ForceBlurDecorations=true
 ForceBlurMenus=true
