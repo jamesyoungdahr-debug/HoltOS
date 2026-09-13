@@ -13,6 +13,16 @@ Owner: Liam (GitHub jamesyoungdahr-debug, git user Vectorly)
 
 CURRENT STATE (2026-09-13, night)
 ----------------------------------
+- NOW ON MASTER, PUSHED (2026-09-13, afternoon): Milestone 2 fix (build 23
+  verified), the Windows-style updater (verified on the build 24 live VM),
+  HoltOS Apps (install/remove verified on the build 24 live VM), per-disk I/O
+  schedulers, libcec, and the xpadneo-dkms / game-devices-udev controller
+  packages (built into local-repo, added to packages.x86_64). Not released or
+  tagged; `tools/publish-packages.sh` not rerun. NEXT: build ISO 25 (apps,
+  defaults, controllers, Flathub repo created at build time), then a fresh
+  erase-disk install to verify the tray, update timer and automatic installs
+  on an installed system. Worktree C:\projects\holtos-updater (branches
+  updater/apps/defaults) is merged and can be removed. Details in HANDOFF.md.
 - UPDATER REDESIGN (2026-09-13, branch `updater`, worktree
   C:\projects\holtos-updater): Windows-style updater built and verified on
   the build 23 live VM. Details, and what still needs an installed system

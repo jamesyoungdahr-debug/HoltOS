@@ -342,8 +342,9 @@ the settings helper (security-sensitive, written by hand).
   disks switch to `bfq`) and `libcec`. Already covered, verified on the VM:
   zram (3.9G, zstd), `vm.max_map_count` 1048576 from Arch's own
   `10-arch.conf`, and gamemode's default performance governor and profile.
-- **Controller drivers, not in the image yet**: `xpadneo-dkms` and
-  `game-devices-udev` are in the AUR build list. The first build exposed two
+- **Controller drivers, built and added to `packages.x86_64`** (not yet
+  booted in an image): `xpadneo-dkms` 0.10.4 and `game-devices-udev` 1.0
+  are in `local-repo/` and its database. The first build exposed two
   problems: installing each built package inside the container ran DKMS
   against a kernel the container does not have (now `pacman -U --dbonly
   --nodeps`, which also protects `zfs-dkms`), and game-devices-udev's signed
