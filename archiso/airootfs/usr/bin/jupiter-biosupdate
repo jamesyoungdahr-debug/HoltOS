@@ -1,0 +1,6 @@
+#!/bin/bash
+# Steam in Game Mode (started with -steamdeck) asks about Steam Deck BIOS
+# updates through this. HoltOS never updates a BIOS this way: device
+# firmware goes through fwupd in the regular updater. Succeed and do
+# nothing, like gamescope-session-steam's own stub.
+exit 0

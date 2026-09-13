@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC
+ "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<!-- HoltOS: the Steam client in Game Mode runs these helpers through pkexec
+     for its System > Software Updates page. Admin authentication by
+     default; etc/polkit-1/rules.d/51-holtos-updates.rules lets the active
+     local wheel user through without a prompt (a controller has no
+     keyboard). Never allow_any or allow_inactive: that would let remote or
+     background sessions run the updater as root. Written by hand:
+     security-relevant. -->
+<policyconfig>
+  <vendor>HoltOS</vendor>
+  <vendor_url>https://github.com/jamesyoungdahr-debug/HoltOS</vendor_url>
+
+  <action id="org.holtos.policykit.steamos-update">
+    <description>Install HoltOS updates from Steam</description>
+    <message>Authentication is required to install system updates</message>
+    <icon_name>system-software-update</icon_name>
+    <defaults>
+      <allow_any>no</allow_any>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/bin/steamos-polkit-helpers/steamos-update</annotate>
+  </action>
+
+  <action id="org.holtos.policykit.jupiter-biosupdate">
+    <description>Steam Deck BIOS update check (does nothing on HoltOS)</description>
+    <message>Authentication is required to check for BIOS updates</message>
+    <icon_name>system-software-update</icon_name>
+    <defaults>
+      <allow_any>no</allow_any>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/bin/steamos-polkit-helpers/jupiter-biosupdate</annotate>
+  </action>
+</policyconfig>

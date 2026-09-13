@@ -54,6 +54,13 @@ GAMESCOPE_EXIT=$?
 # Log exit status and end session
 log "Gamescope exited with code $GAMESCOPE_EXIT."
 
+# Check for updates on the way out of Game Mode (Liam, 2026-09-13) unless
+# turned off in HoltOS Updates > Settings. The check is a root service;
+# --no-block so the switch back to the desktop never waits on the network.
+if ! grep -qx 'CHECK_AFTER_GAMEMODE=no' /etc/holtos/updates.conf 2>/dev/null; then
+    systemctl start --no-block holtos-update-check.service 2>/dev/null || true
+fi
+
 # Game Mode that died within a few seconds of starting (no GPU, broken
 # driver, gamescope crash) must not leave a black screen: ask for a
 # one-shot relogin straight back into Plasma instead of just clearing

@@ -1,0 +1,36 @@
+#!/bin/bash
+# Installs updates as root and records progress where the update window and
+# the tray can follow it without privileges: /run/holtos-update/progress.log
+# receives holtos-update-apply's output, including its "@@" progress lines,
+# and ends with "@@ all finished <exit code>". Started by
+# holtos-update-install.service (the update window's "Install now") with no
+# arguments, meaning everything holtos-update-status found, or by
+# holtos-update-status --auto with the items it may install on its own.
+set -uo pipefail
+
+LOG_DIR=/run/holtos-update
+LOG="$LOG_DIR/progress.log"
+
+if [ "$(id -u)" -ne 0 ]; then
+    echo "holtos-update-install must run as root" >&2
+    exit 1
+fi
+
+# One install at a time; a second request waits for the first to finish.
+exec 8> /run/holtos-update-install.lock
+flock 8
+
+mkdir -p "$LOG_DIR"
+chmod 755 "$LOG_DIR"
+: > "$LOG"
+chmod 644 "$LOG"
+
+[ "$#" -gt 0 ] || set -- available
+/usr/local/bin/holtos-update-apply "$@" >> "$LOG" 2>&1
+rc=$?
+echo "@@ all finished $rc" >> "$LOG"
+
+# Refresh the status so the window, tray and Steam stop offering what was
+# just installed.
+/usr/local/bin/holtos-update-status --quiet >/dev/null 2>&1 || true
+exit "$rc"

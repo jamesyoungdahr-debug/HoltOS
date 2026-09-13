@@ -1,0 +1,14 @@
+[Unit]
+Description=HoltOS: check for updates on a schedule
+Documentation=file:///usr/local/bin/holtos-update-status
+
+[Timer]
+# First check a few minutes after boot, then at the interval chosen in
+# HoltOS Updates > Settings (holtos-update-settings overrides
+# OnUnitActiveSec in holtos-update-check.timer.d/interval.conf).
+OnBootSec=5min
+OnUnitActiveSec=6h
+RandomizedDelaySec=5min
+
+[Install]
+WantedBy=timers.target

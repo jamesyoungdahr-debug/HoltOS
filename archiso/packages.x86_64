@@ -131,6 +131,12 @@ curl
 jq
 yad
 libnotify
+# Updater: checkupdates (pacman-contrib; it needs fakeroot, only an
+# optional dependency there) lists system updates without touching
+# pacman's sync database; fwupd updates device firmware from LVFS.
+pacman-contrib
+fakeroot
+fwupd
 breeze-gtk
 
 # The Den (jamesyoungdahr-debug/the-den) — the movie/TV library manager

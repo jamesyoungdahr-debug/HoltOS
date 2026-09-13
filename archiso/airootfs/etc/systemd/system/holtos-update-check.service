@@ -1,0 +1,12 @@
+[Unit]
+Description=HoltOS: check for updates and install what the updater settings allow
+Documentation=file:///usr/local/bin/holtos-update-status
+Wants=network-online.target
+After=network-online.target
+ConditionPathExists=!/run/archiso
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/holtos-update-status --auto --quiet
+Nice=10
+IOSchedulingClass=idle

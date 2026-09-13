@@ -2,7 +2,7 @@
 Type=Application
 Name=HoltOS Updater
 Comment=Check for and apply HoltOS updates
-Exec=/usr/local/bin/holtos-update-picker
+Exec=/usr/local/bin/holtos-updates
 Icon=holtos-logo
 Categories=System;
 Terminal=false

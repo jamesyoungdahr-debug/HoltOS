@@ -1,0 +1,12 @@
+#!/bin/bash
+# The path the Steam client runs for System > Software Updates. Re-runs
+# itself through pkexec (policy org.holtos.policykit.steamos-update, no
+# prompt for the active local admin per 51-holtos-updates.rules) and hands
+# over to /usr/bin/steamos-update as root with Steam's arguments.
+set -eu
+
+if [[ $EUID -ne 0 ]]; then
+    exec pkexec --disable-internal-agent "$0" "$@"
+fi
+
+exec /usr/bin/steamos-update "$@"

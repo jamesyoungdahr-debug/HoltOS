@@ -1,12 +1,15 @@
 #!/bin/bash
-# Applies updates for the specific items named on argv, run as root (the
-# tray's holtos-update-picker launches this via a single pkexec call so
-# picking several items only prompts for a password once). Each arg is one
-# of: "config" (the homelab-*.sh install/boot scripts), "the-den" /
-# "the-den-client" (companion apps, separately-maintained repos — see
-# below), "rollback" (re-applies the config release before the
-# currently-deployed one), or "system" (plain `pacman -Syu`, for the
-# kernel/OS packages no git repo has anything to do with).
+# Applies updates for the specific items named on argv, run as root: by
+# holtos-update-install (the update window's "Install now" and automatic
+# installs), by steamos-update (Steam's Software Updates page in Game Mode),
+# or by hand through pkexec. Each arg is one of: "available" (everything
+# holtos-update-status last found), "config" (HoltOS itself: scripts, units,
+# theme), "the-den" / "the-den-client" (companion apps, separately-maintained
+# repos — see below), "system" (every Arch package: kernel, firmware, drivers
+# and the rest, as pacman -Syu in a download step and an install step),
+# "flatpak", "firmware" (fwupd), or "rollback" (re-applies the config release
+# before the currently-deployed one). A release that is already installed is
+# skipped unless --reinstall is given.
 #
 # (The per-service `podman pull` items and the Authentik pair are gone
 # along with the container stack itself — 2026-09-11, see PLAN.md.)
@@ -17,7 +20,7 @@
 # work never lands on a running system.
 #
 # Every applied item is appended to /var/lib/holtos/history.log (world-
-# readable — see holtos-update-history) as a small audit trail, and it's
+# readable; the update window's History tab shows it) as a small audit trail, and it's
 # what rollback reads to find "the release before this one".
 #
 # config/system also take a Btrfs snapshot (holtos-btrfs-snapshot) right
@@ -35,6 +38,56 @@ log_history() {
     chmod 644 "$HISTORY"
 }
 
+# Machine-readable progress for the update window, the tray and Steam's
+# Software Updates page, interleaved with the human "==>" lines:
+#   @@ <item> <stage> <percent> [bytes]
+# stage is check, download, install, done, skip or fail; percent is 0-100,
+# or -1 when the total size is unknown (bytes then says how far it got).
+progress() {
+    printf '@@ %s %s %s %s\n' "$1" "$2" "${3:--1}" "${4:-}"
+}
+
+# installed_commit <item> — the commit currently installed for an item:
+# deployed-commit for HoltOS itself, the item's newest history.log entry
+# for everything else. Empty when unknown.
+installed_commit() {
+    if [ "$1" = config ]; then
+        cat /var/lib/holtos/deployed-commit 2>/dev/null
+        return 0
+    fi
+    awk -F'\t' -v it="$1" '$2==it{c=$4} END{print c}' "$HISTORY" 2>/dev/null
+}
+
+# installed_tag <item> — the release tag currently installed: the item's
+# newest history.log entry, or for HoltOS itself the version in os-release
+# when no config update has been recorded yet (a fresh install).
+installed_tag() {
+    local tag
+    tag="$(awk -F'\t' -v it="$1" '$2==it{t=$3} END{print t}' "$HISTORY" 2>/dev/null)"
+    if [ -z "$tag" ] && [ "$1" = config ]; then
+        tag="$(. /etc/os-release 2>/dev/null; echo "${VERSION_ID:+v$VERSION_ID}")"
+    fi
+    printf '%s\n' "$tag"
+}
+
+# already_current <item> <latest commit> <latest tag> — true (and reports
+# it) when that release is already installed, unless --reinstall was given:
+# the same commit, or the same tag (an image built from an untagged commit
+# of that version). Without this every update re-downloaded and
+# reinstalled the latest release even when nothing had changed.
+already_current() {
+    [ "${FORCE:-0}" -eq 1 ] && return 1
+    if [ -n "$2" ] && [ "$2" = "$(installed_commit "$1")" ]; then
+        :
+    elif [ -n "$3" ] && [ "$3" = "$(installed_tag "$1")" ]; then
+        :
+    else
+        return 1
+    fi
+    echo "==> $1 is already at $3; nothing to do"
+    progress "$1" skip 100
+}
+
 # resolve_release <owner/repo> [target_tag] — prints "<commit>\t<tag>" for
 # either the latest v* tag (no target_tag given) or that exact tag
 # (verifying it actually exists on the remote). Returns 1 if nothing found.
@@ -44,7 +97,7 @@ log_history() {
 # repo's own v0.0.1-alpha: `git ls-remote --tags` shows a
 # `refs/tags/v0.0.1-alpha^{}` peeled line with a DIFFERENT sha from the
 # plain ref) returns the tag OBJECT's own sha, not the commit it points to.
-# holtos-update-check compares that against a real commit sha (deployed-
+# holtos-update-status compares that against a real commit sha (deployed-
 # commit, seeded from `git rev-parse HEAD` by build.sh and updated below) —
 # they'd never match even when already up to date, so the tray's
 # background check would report "update available" forever. Fix: query
@@ -70,12 +123,37 @@ resolve_release() {
     printf '%s\t%s\n' "$sha" "$tag"
 }
 
-# download_release <owner/repo> <tag> <dest_dir> — extracts the tag's
-# source tarball into dest_dir (must already exist).
+# download_release <owner/repo> <tag> <dest_dir> [item] — extracts the
+# tag's source tarball into dest_dir (must already exist). With an item,
+# reports download progress for it: a percentage when GitHub sends the size,
+# otherwise -1 plus the bytes received so far.
 download_release() {
-    local repo="$1" tag="$2" dest="$3" tmp_tar
+    local repo="$1" tag="$2" dest="$3" item="${4:-}" tmp_tar url total size pct pid
     tmp_tar="$(mktemp)"
-    curl -fsSL "https://github.com/$repo/archive/refs/tags/${tag}.tar.gz" -o "$tmp_tar"
+    url="https://github.com/$repo/archive/refs/tags/${tag}.tar.gz"
+    total="$(curl -fsSIL --max-time 20 "$url" 2>/dev/null \
+        | tr -d '\r' | awk 'tolower($1)=="content-length:"{n=$2} END{print n+0}')"
+    curl -fsSL "$url" -o "$tmp_tar" &
+    pid=$!
+    while kill -0 "$pid" 2>/dev/null; do
+        if [ -n "$item" ]; then
+            size="$(stat -c %s "$tmp_tar" 2>/dev/null || echo 0)"
+            if [ "${total:-0}" -gt 0 ]; then
+                pct=$(( size * 100 / total ))
+                [ "$pct" -gt 99 ] && pct=99
+            else
+                pct=-1
+            fi
+            progress "$item" download "$pct" "$size"
+        fi
+        sleep 0.5
+    done
+    if ! wait "$pid"; then
+        rm -f "$tmp_tar"
+        echo "Download of $repo $tag failed." >&2
+        return 1
+    fi
+    [ -n "$item" ] && progress "$item" download 100
     tar -xzf "$tmp_tar" -C "$dest" --strip-components=1
     rm -f "$tmp_tar"
 }
@@ -91,9 +169,15 @@ update_config() {
     mkdir -p "$(dirname "$state")"
 
     echo "==> Looking up the release..."
+    progress config check -1
     if ! IFS=$'\t' read -r new_commit latest_tag < <(resolve_release "$repo" "$target_tag"); then
         echo "No tagged HoltOS release found${target_tag:+ ($target_tag)}." >&2
         return 1
+    fi
+    # A named tag (rollback, or the handed-over updater finishing a release)
+    # is always applied; only "latest" can already be installed.
+    if [ -z "$target_tag" ] && already_current config "$new_commit" "$latest_tag"; then
+        return 0
     fi
 
     # Best-effort, and only once we know there's actually something to
@@ -105,7 +189,8 @@ update_config() {
 
     echo "==> Downloading $latest_tag..."
     src_dir="$(mktemp -d)"
-    download_release "$repo" "$latest_tag" "$src_dir"
+    download_release "$repo" "$latest_tag" "$src_dir" config || { rm -rf "$src_dir"; return 1; }
+    progress config install -1
 
     # Every HoltOS-owned component comes from the release tarball — never
     # fetched ad hoc from Arch (Liam, 2026-09-12: "we shouldn't be
@@ -135,6 +220,11 @@ update_config() {
         usr/local/bin/holtos-*
         usr/local/bin/homelab-*.sh
         etc/systemd/system/holtos-*.service
+        etc/systemd/system/holtos-*.timer
+        usr/bin/steamos-update
+        usr/bin/jupiter-biosupdate
+        usr/bin/steamos-polkit-helpers/
+        usr/share/polkit-1/actions/org.holtos.*.policy
         etc/xdg/autostart/holtos-*.desktop
         usr/share/applications/holtos-*.desktop
         etc/xdg/kwinrc
@@ -171,7 +261,8 @@ update_config() {
         return 1
     fi
     ( cd "$airootfs" && rsync -aR --itemize-changes "${present[@]}" / ) | grep -E '^[<>c]' | sed 's/^/    /' || true
-    chmod +x /usr/local/bin/holtos-* /usr/local/bin/homelab-*.sh /usr/local/bin/steamos-session-select 2>/dev/null || true
+    chmod +x /usr/local/bin/holtos-* /usr/local/bin/homelab-*.sh /usr/local/bin/steamos-session-select \
+        /usr/bin/steamos-update /usr/bin/jupiter-biosupdate /usr/bin/steamos-polkit-helpers/* 2>/dev/null || true
     rm -rf "$src_dir"
 
     # New units in this release start working on the next boot.
@@ -212,6 +303,7 @@ update_config() {
     echo "$new_commit" > "$state"
     log_history config "$latest_tag" "$new_commit"
     echo "==> Config updated to $latest_tag"
+    progress config done 100
 }
 
 rollback_config() {
@@ -286,16 +378,22 @@ update_the_den() {
     local new_commit latest_tag src_dir
 
     echo "==> Looking up the latest The Den release..."
+    progress the-den check -1
     if ! IFS=$'\t' read -r new_commit latest_tag < <(resolve_release "$repo" "$target_tag"); then
         echo "No tagged The Den release found${target_tag:+ ($target_tag)}." >&2
         return 1
     fi
+    if [ -z "$target_tag" ] && already_current the-den "$new_commit" "$latest_tag"; then
+        return 0
+    fi
 
     echo "==> Downloading The Den $latest_tag..."
     src_dir="$(mktemp -d)"
-    download_release "$repo" "$latest_tag" "$src_dir"
-    install_the_den "$src_dir" "$latest_tag" "$new_commit"
+    download_release "$repo" "$latest_tag" "$src_dir" the-den || { rm -rf "$src_dir"; return 1; }
+    progress the-den install -1
+    install_the_den "$src_dir" "$latest_tag" "$new_commit" || { rm -rf "$src_dir"; return 1; }
     rm -rf "$src_dir"
+    progress the-den done 100
 }
 
 # install_the_den <src_dir> <tag> <commit> — installs (first time) or
@@ -462,16 +560,22 @@ update_the_den_client() {
     local new_commit latest_tag src_dir
 
     echo "==> Looking up the latest The Den Client release..."
+    progress the-den-client check -1
     if ! IFS=$'\t' read -r new_commit latest_tag < <(resolve_release "$repo" "$target_tag"); then
         echo "No tagged The Den Client release found${target_tag:+ ($target_tag)}." >&2
         return 1
     fi
+    if [ -z "$target_tag" ] && already_current the-den-client "$new_commit" "$latest_tag"; then
+        return 0
+    fi
 
     echo "==> Downloading The Den Client $latest_tag..."
     src_dir="$(mktemp -d)"
-    download_release "$repo" "$latest_tag" "$src_dir"
-    install_the_den_client "$src_dir" "$latest_tag" "$new_commit"
+    download_release "$repo" "$latest_tag" "$src_dir" the-den-client || { rm -rf "$src_dir"; return 1; }
+    progress the-den-client install -1
+    install_the_den_client "$src_dir" "$latest_tag" "$new_commit" || { rm -rf "$src_dir"; return 1; }
     rm -rf "$src_dir"
+    progress the-den-client done 100
 }
 
 # install_the_den_client <src_dir> <tag> <commit> — same split as
@@ -543,28 +647,119 @@ update_system() {
     # the update most likely to actually break boot.
     /usr/local/bin/holtos-btrfs-snapshot system || echo "==> WARNING: pre-update snapshot failed, continuing without one" >&2
 
-    echo "==> Updating system packages (pacman -Syu)..."
-    local before
-    before="$(date -u +%FT%TZ)"
-    pacman -Syu --noconfirm
+    local before total start now pct pid dl_log
+    # pacman.log stamps entries in local time ("[2026-09-13T11:00:00-0400]"),
+    # so the restart check below must compare against local time too; a UTC
+    # stamp missed upgrades on any machine not set to UTC.
+    before="$(date +%FT%T)"
+
+    echo "==> Refreshing package databases..."
+    progress system check -1
+    pacman -Sy --noconfirm || return 1
+
+    # A stale keyring is the usual reason an install that sat unused for a
+    # while cannot update: packages signed by newer keys fail verification.
+    # Updating it first is Arch's own advice for exactly that case.
+    if pacman -Qu archlinux-keyring >/dev/null 2>&1; then
+        echo "==> Updating the Arch keyring first..."
+        pacman -S --noconfirm --needed archlinux-keyring || return 1
+    fi
+
+    # Download everything first, reporting a percentage as pacman's cache
+    # grows towards the total download size, then install: the kernel,
+    # firmware, drivers and every other package, exactly as pacman -Syu.
+    echo "==> Downloading system updates..."
+    total="$(pacman -Sup --print-format '%s' 2>/dev/null | awk '{s+=$1} END{print s+0}')"
+    start="$(du -sb /var/cache/pacman/pkg 2>/dev/null | cut -f1)"
+    dl_log="$(mktemp)"
+    pacman -Suw --noconfirm > "$dl_log" 2>&1 &
+    pid=$!
+    while kill -0 "$pid" 2>/dev/null; do
+        now="$(du -sb /var/cache/pacman/pkg 2>/dev/null | cut -f1)"
+        if [ "${total:-0}" -gt 0 ]; then
+            pct=$(( (now - start) * 100 / total ))
+            [ "$pct" -lt 0 ] && pct=0
+            [ "$pct" -gt 99 ] && pct=99
+        else
+            pct=-1
+        fi
+        progress system download "$pct" "$(( now - start ))"
+        sleep 1
+    done
+    if ! wait "$pid"; then
+        cat "$dl_log" >&2
+        rm -f "$dl_log"
+        return 1
+    fi
+    rm -f "$dl_log"
+    progress system download 100
+
+    echo "==> Installing system updates (pacman -Su)..."
+    progress system install -1
+    pacman -Su --noconfirm || return 1
     log_history system pacman "$(date -u +%FT%TZ)"
 
     # Tell the user when a reboot is needed to finish the update (Liam,
     # 2026-09-12): the running kernel's module directory is gone (kernel
     # replaced), or pacman upgraded a component that only takes effect
-    # after a reboot. The marker in /run vanishes on reboot by itself;
-    # holtos-update-picker reads it and offers "Restart now".
+    # after a reboot. The marker in /run vanishes on reboot by itself; the
+    # update window, the tray and Steam read it and offer a restart.
     local reboot_reason=""
     if [ ! -d "/usr/lib/modules/$(uname -r)" ]; then
         reboot_reason="the kernel was updated"
     elif awk -v since="[$before" '$1 >= since' /var/log/pacman.log 2>/dev/null \
-            | grep -qE '\] upgraded (linux|linux-lts|linux-firmware|systemd|mesa|lib32-mesa|amd-ucode|intel-ucode|nvidia[a-z0-9-]*|pipewire|plasma-desktop|kwin|sddm) '; then
+            | grep -qE '\] upgraded (linux|linux-lts|linux-zen|linux-firmware|systemd|mesa|lib32-mesa|amd-ucode|intel-ucode|nvidia[a-z0-9-]*|pipewire|plasma-desktop|kwin|holtos-kwin|holtos-plasma-workspace|sddm) '; then
         reboot_reason="core system components were updated"
     fi
     if [ -n "$reboot_reason" ]; then
         printf '%s\n' "$reboot_reason" > /run/holtos-reboot-required
         echo "==> A restart is required to finish this update: $reboot_reason."
     fi
+    progress system done 100
+}
+
+# update_flatpak — every system-wide Flatpak app and runtime, then the
+# runtimes nothing uses any more.
+update_flatpak() {
+    if ! command -v flatpak >/dev/null 2>&1; then
+        echo "==> Flatpak is not installed; nothing to update"
+        progress flatpak skip 100
+        return 0
+    fi
+    echo "==> Updating Flatpak apps and runtimes..."
+    progress flatpak install -1
+    flatpak update --system --noninteractive -y || return 1
+    flatpak uninstall --system --unused --noninteractive -y || true
+    log_history flatpak flatpak "$(date -u +%FT%TZ)"
+    progress flatpak done 100
+}
+
+# update_firmware — device firmware from LVFS through fwupd. Most firmware
+# is flashed during the next boot, so a successful update asks for a
+# restart.
+update_firmware() {
+    if ! command -v fwupdmgr >/dev/null 2>&1; then
+        echo "==> fwupd is not installed; nothing to update"
+        progress firmware skip 100
+        return 0
+    fi
+    echo "==> Refreshing firmware metadata..."
+    progress firmware download -1
+    fwupdmgr refresh --force >/dev/null 2>&1 || true
+    echo "==> Updating device firmware..."
+    progress firmware install -1
+    local rc=0
+    fwupdmgr update --assume-yes --no-reboot-check || rc=$?
+    # fwupdmgr exits 2 when there was nothing to do.
+    if [ "$rc" -eq 2 ]; then
+        progress firmware skip 100
+        return 0
+    fi
+    [ "$rc" -eq 0 ] || return 1
+    log_history firmware fwupd "$(date -u +%FT%TZ)"
+    printf '%s\n' "device firmware was updated" > /run/holtos-reboot-required
+    echo "==> A restart is required to finish this update: device firmware was updated."
+    progress firmware done 100
 }
 
 if [ "$(id -u)" -ne 0 ]; then
@@ -573,8 +768,28 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 if [ "$#" -eq 0 ]; then
-    echo "Usage: holtos-update-apply <config|the-den|the-den-client|rollback|system|vendor> ..." >&2
+    echo "Usage: holtos-update-apply [--reinstall] <available|config|the-den|the-den-client|system|flatpak|firmware|rollback|vendor> ..." >&2
     exit 1
+fi
+
+# "available" stands for everything holtos-update-status last found, in the
+# order it lists them; --reinstall re-applies releases that are already
+# installed.
+FORCE=0
+items=()
+for arg in "$@"; do
+    case "$arg" in
+        --reinstall) FORCE=1 ;;
+        available)
+            mapfile -t -O "${#items[@]}" items < <(jq -r '.updates[].id' /var/lib/holtos/update-status.json 2>/dev/null)
+            ;;
+        *) items+=("$arg") ;;
+    esac
+done
+
+if [ "${#items[@]}" -eq 0 ]; then
+    echo "==> Nothing to update."
+    exit 0
 fi
 
 # Each item is attempted independently — one failing (e.g. The Den has no
@@ -582,16 +797,21 @@ fi
 # skips its automatic-exit behavior for commands on the left of "||", so
 # every dispatch below is wrapped that way rather than relying on set -e.
 failed=()
-for item in "$@"; do
+for item in "${items[@]}"; do
     case "$item" in
         config) update_config || failed+=("$item") ;;
         rollback) rollback_config || failed+=("$item") ;;
         system) update_system || failed+=("$item") ;;
+        flatpak) update_flatpak || failed+=("$item") ;;
+        firmware) update_firmware || failed+=("$item") ;;
         the-den) update_the_den || failed+=("$item") ;;
         the-den-client) update_the_den_client || failed+=("$item") ;;
         vendor) vendor_install || failed+=("$item") ;;
         *) echo "Unknown item: $item" >&2; failed+=("$item") ;;
     esac
+    if [ "${#failed[@]}" -gt 0 ] && [ "${failed[-1]}" = "$item" ]; then
+        progress "$item" fail 0
+    fi
 done
 
 if [ "${#failed[@]}" -gt 0 ]; then

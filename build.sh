@@ -15,7 +15,7 @@ if compgen -G "out/*.iso" > /dev/null; then
     echo "Backed up previous ISO(s) to out/backups/$ts/"
 fi
 
-# Seed the state file holtos-update-check compares against, so a fresh
+# Seed the state file holtos-update-status compares against, so a fresh
 # install doesn't immediately think it's out of date against the very
 # commit it was built from.
 mkdir -p archiso/airootfs/var/lib/holtos

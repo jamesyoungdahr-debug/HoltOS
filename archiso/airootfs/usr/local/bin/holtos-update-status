@@ -1,0 +1,226 @@
+#!/bin/bash
+# Checks every HoltOS update source and records the result in
+# /var/lib/holtos/update-status.json, which the update window, the tray and
+# Steam's Software Updates page (steamos-update) all read. Nothing is
+# installed unless --auto is given, and the check never touches pacman's
+# real sync database (checkupdates keeps its own copy).
+#
+#   holtos-update-status            check, print a one-line summary
+#   holtos-update-status --quiet    check, print nothing
+#   holtos-update-status --auto     check, then download/install whatever
+#                                   /etc/holtos/updates.conf allows
+set -uo pipefail
+
+STATUS=/var/lib/holtos/update-status.json
+HISTORY=/var/lib/holtos/history.log
+CONF=/etc/holtos/updates.conf
+HOLTOS_REPO=jamesyoungdahr-debug/HoltOS
+
+AUTO=0
+QUIET=0
+for arg in "$@"; do
+    case "$arg" in
+        --auto) AUTO=1 ;;
+        --quiet) QUIET=1 ;;
+        *) echo "Usage: holtos-update-status [--auto] [--quiet]" >&2; exit 2 ;;
+    esac
+done
+
+if [ "$(id -u)" -ne 0 ]; then
+    echo "holtos-update-status must run as root" >&2
+    exit 1
+fi
+
+mkdir -p "$(dirname "$STATUS")"
+
+# The timer, the update window and Steam can all ask at once.
+exec 9> /run/holtos-update-status.lock
+flock -w 900 9 || { echo "another update check is still running" >&2; exit 1; }
+
+now() { date -u +%FT%TZ; }
+
+write_status() {
+    local tmp
+    tmp="$(mktemp "$STATUS.XXXXXX")"
+    cat > "$tmp"
+    chmod 644 "$tmp"
+    mv -f "$tmp" "$STATUS"
+}
+
+# Keep the previous result on screen while the new check runs.
+previous='{"updates":[]}'
+[ -s "$STATUS" ] && previous="$(cat "$STATUS")"
+if ! jq --arg at "$(now)" '.state = "checking" | .started_at = $at' <<< "$previous" 2>/dev/null | write_status; then
+    printf '{"state":"checking","updates":[]}\n' | write_status
+fi
+
+# Same peeled-tag lookup as holtos-update-apply's resolve_release: prints
+# "<commit>\t<tag>" for the newest v* tag of an owner/repo.
+latest_release() {
+    local raw tag sha
+    raw="$(git ls-remote --tags --sort=-v:refname "https://github.com/$1.git" 'v*' 2>/dev/null)" || return 1
+    [ -n "$raw" ] || return 1
+    tag="$(head -1 <<< "$raw" | cut -f2)"
+    tag="${tag%^\{\}}"
+    tag="${tag#refs/tags/}"
+    sha="$(awk -F'\t' -v want="refs/tags/${tag}^{}" '$2==want{print $1}' <<< "$raw")"
+    [ -n "$sha" ] || sha="$(awk -F'\t' -v want="refs/tags/${tag}" '$2==want{print $1}' <<< "$raw")"
+    [ -n "$sha" ] || return 1
+    printf '%s\t%s\n' "$sha" "$tag"
+}
+
+# history.log columns: date, item, tag, commit. Prints the given column of
+# the item's most recent entry.
+installed_field() {
+    awk -F'\t' -v it="$1" -v col="$2" '$2==it{v=$col} END{print v}' "$HISTORY" 2>/dev/null
+}
+
+release_notes() {
+    curl -fsSL --max-time 15 "https://api.github.com/repos/$1/releases/tags/$2" 2>/dev/null \
+        | jq -r '.body // empty' 2>/dev/null | head -c 4000
+}
+
+updates=()
+errors=()
+
+# add_update <id> <name> <kind> <current> <new> <notes> <restart: true|false>
+add_update() {
+    updates+=("$(jq -cn --arg id "$1" --arg name "$2" --arg kind "$3" --arg current "$4" \
+        --arg new "$5" --arg notes "$6" --argjson restart "$7" \
+        '{id:$id, name:$name, kind:$kind, current:$current, new:$new, notes:$notes, restart:$restart}')")
+}
+
+# check_release <id> <name> <kind> <owner/repo> <installed commit> <installed tag>
+check_release() {
+    local commit tag
+    if ! IFS=$'\t' read -r commit tag < <(latest_release "$4"); then
+        errors+=("could not reach the $2 release list")
+        return
+    fi
+    # The same release is not an update, even when the installed commit
+    # differs (an image built from an untagged commit of that version).
+    if [ "$commit" = "$5" ] || { [ -n "$6" ] && [ "$tag" = "$6" ]; }; then
+        return
+    fi
+    add_update "$1" "$2" "$3" "${6:-unknown}" "$tag" "$(release_notes "$4" "$tag")" false
+}
+
+VERSION_ID="$(. /etc/os-release 2>/dev/null; echo "${VERSION_ID:-}")"
+config_tag="$(installed_field config 3)"
+check_release config "HoltOS" holtos "$HOLTOS_REPO" \
+    "$(cat /var/lib/holtos/deployed-commit 2>/dev/null)" "${config_tag:-${VERSION_ID:+v$VERSION_ID}}"
+
+if [ -d /opt/the-den ]; then
+    check_release the-den "The Den" app jamesyoungdahr-debug/the-den \
+        "$(installed_field the-den 4)" "$(installed_field the-den 3)"
+fi
+if [ -d /opt/the-den-client ]; then
+    check_release the-den-client "The Den Client" app jamesyoungdahr-debug/the-den-client \
+        "$(installed_field the-den-client 4)" "$(installed_field the-den-client 3)"
+fi
+
+if command -v flatpak >/dev/null 2>&1; then
+    flatpak_list="$(flatpak remote-ls --updates --system --columns=name,application,version 2>/dev/null)"
+    if [ -n "$flatpak_list" ]; then
+        add_update flatpak "Flatpak apps" app "" "$(wc -l <<< "$flatpak_list") update(s)" "$flatpak_list" false
+    fi
+fi
+
+if command -v fwupdmgr >/dev/null 2>&1; then
+    firmware_json="$(fwupdmgr get-updates --json 2>/dev/null)"
+    if [ -n "$firmware_json" ] && jq -e '(.Devices // []) | length > 0' <<< "$firmware_json" >/dev/null 2>&1; then
+        firmware_list="$(jq -r '.Devices[] | "\(.Name): \(.Version // "?") -> \(.Releases[0].Version // "?")"' <<< "$firmware_json")"
+        add_update firmware "Device firmware" system "" "$(jq '.Devices | length' <<< "$firmware_json") device(s)" "$firmware_list" true
+    fi
+fi
+
+if command -v checkupdates >/dev/null 2>&1; then
+    package_list="$(checkupdates 2>/dev/null)"
+    rc=$?
+    if [ "$rc" -eq 0 ] && [ -n "$package_list" ]; then
+        restart=false
+        if grep -qE '^(linux|linux-lts|linux-zen|linux-firmware|systemd|mesa|amd-ucode|intel-ucode|nvidia[a-z0-9-]*|holtos-kwin|holtos-plasma-workspace|sddm) ' <<< "$package_list"; then
+            restart=true
+        fi
+        label="$(wc -l <<< "$package_list") package(s)"
+        if grep -qE '^(linux|linux-lts|linux-zen) ' <<< "$package_list"; then
+            label="$label, new kernel"
+        fi
+        add_update system "System packages" system "" "$label" "$package_list" "$restart"
+    elif [ "$rc" -ne 2 ]; then
+        errors+=("could not check system packages")
+    fi
+else
+    errors+=("checkupdates is missing (pacman-contrib)")
+fi
+
+state=up_to_date
+[ "${#updates[@]}" -gt 0 ] && state=available
+if [ "${#updates[@]}" -eq 0 ] && [ "${#errors[@]}" -gt 0 ]; then
+    state=error
+fi
+error_text="$(printf '%s\n' "${errors[@]}" | sed '/^$/d')"
+printf '%s\n' "${updates[@]}" | jq -s --arg state "$state" --arg at "$(now)" --arg error "$error_text" \
+    '{state:$state, checked_at:$at, error:$error, updates:[.[] | select(type == "object")]}' | write_status
+
+if [ "$QUIET" -eq 0 ]; then
+    case "$state" in
+        available) echo "${#updates[@]} update(s) available" ;;
+        up_to_date) echo "Up to date" ;;
+        error) echo "Update check failed: $error_text" ;;
+    esac
+fi
+
+[ "$AUTO" -eq 1 ] || exit 0
+
+AUTO_DOWNLOAD=yes
+AUTO_INSTALL=apps
+INSTALL_WINDOW=""
+if [ -f "$CONF" ]; then
+    while IFS='=' read -r key value; do
+        value="${value%\"}"
+        value="${value#\"}"
+        case "$key" in
+            AUTO_DOWNLOAD) AUTO_DOWNLOAD="$value" ;;
+            AUTO_INSTALL) AUTO_INSTALL="$value" ;;
+            INSTALL_WINDOW) INSTALL_WINDOW="$value" ;;
+        esac
+    done < "$CONF"
+fi
+
+in_window=1
+if [ -n "$INSTALL_WINDOW" ] && [ "$(date +%H)" != "${INSTALL_WINDOW%%:*}" ]; then
+    in_window=0
+fi
+
+install_ids=()
+system_pending=0
+for update in "${updates[@]}"; do
+    id="$(jq -r .id <<< "$update")"
+    case "$id" in
+        config|the-den|the-den-client|flatpak)
+            if [ "$AUTO_INSTALL" = apps ] || [ "$AUTO_INSTALL" = all ]; then
+                install_ids+=("$id")
+            fi
+            ;;
+        system|firmware)
+            if [ "$AUTO_INSTALL" = all ] && [ "$in_window" -eq 1 ]; then
+                install_ids+=("$id")
+            elif [ "$id" = system ]; then
+                system_pending=1
+            fi
+            ;;
+    esac
+done
+
+# Download ahead of time so installing later is quick; checkupdates -d
+# fills pacman's cache without touching the real sync database.
+if [ "$AUTO_DOWNLOAD" = yes ] && [ "$system_pending" -eq 1 ]; then
+    checkupdates -d >/dev/null 2>&1 || true
+fi
+
+if [ "${#install_ids[@]}" -gt 0 ]; then
+    flock -u 9
+    /usr/local/bin/holtos-update-install "${install_ids[@]}" || true
+fi
+exit 0

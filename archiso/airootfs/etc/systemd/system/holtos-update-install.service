@@ -1,0 +1,10 @@
+[Unit]
+Description=HoltOS: install available updates
+Documentation=file:///usr/local/bin/holtos-update-install
+Wants=network-online.target
+After=network-online.target
+ConditionPathExists=!/run/archiso
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/holtos-update-install

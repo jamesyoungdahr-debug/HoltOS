@@ -1,0 +1,538 @@
+#!/usr/bin/env python3
+"""HoltOS Updates: the update window.
+
+Shows what the updater is doing without anyone having to ask it: the result
+of the last check (checking, up to date, or N updates), each available
+update with its installed and new version and release notes, live progress
+while updates download and install, the update history, and the updater
+settings.
+
+Everything privileged runs in root services started through systemd:
+polkit lets the active local admin start exactly holtos-update-check and
+holtos-update-install (etc/polkit-1/rules.d/51-holtos-updates.rules). This
+window only reads /var/lib/holtos/update-status.json,
+/run/holtos-update/progress.log and /var/lib/holtos/history.log. Settings
+are saved with pkexec holtos-update-settings, which validates every value.
+"""
+import html
+import json
+import os
+import subprocess
+import sys
+from datetime import datetime, timezone
+
+from PySide6.QtCore import Qt, QTime, QTimer
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import (
+    QApplication, QCheckBox, QComboBox, QFormLayout, QFrame, QHBoxLayout,
+    QHeaderView, QLabel, QMessageBox, QProgressBar, QPushButton, QScrollArea,
+    QTableWidget, QTableWidgetItem, QTabWidget, QTimeEdit, QToolButton,
+    QVBoxLayout, QWidget,
+)
+
+ICON_PATH = "/usr/share/icons/hicolor/scalable/apps/holtos-logo.svg"
+STATUS_PATH = "/var/lib/holtos/update-status.json"
+PROGRESS_PATH = "/run/holtos-update/progress.log"
+HISTORY_PATH = "/var/lib/holtos/history.log"
+REBOOT_MARKER = "/run/holtos-reboot-required"
+CONF_PATH = "/etc/holtos/updates.conf"
+
+DEFAULTS = {
+    "CHECK_INTERVAL": "6h",
+    "AUTO_DOWNLOAD": "yes",
+    "AUTO_INSTALL": "apps",
+    "INSTALL_WINDOW": "",
+    "CHECK_AFTER_GAMEMODE": "yes",
+}
+INTERVALS = [
+    ("1h", "Every hour"),
+    ("6h", "Every 6 hours"),
+    ("daily", "Once a day"),
+    ("weekly", "Once a week"),
+]
+AUTO_INSTALL_CHOICES = [
+    ("off", "Never, I'll install them myself"),
+    ("apps", "HoltOS and apps (ask before system packages)"),
+    ("all", "Everything, including system packages and firmware"),
+]
+NAMES = {
+    "config": "HoltOS",
+    "the-den": "The Den",
+    "the-den-client": "The Den Client",
+    "system": "System packages",
+    "flatpak": "Flatpak apps",
+    "firmware": "Device firmware",
+    "rollback": "Rollback",
+}
+STAGE_TEXT = {
+    "queued": "Waiting...",
+    "check": "Checking...",
+    "download": "Downloading...",
+    "install": "Installing...",
+    "done": "Installed",
+    "skip": "Already up to date",
+    "fail": "Failed",
+}
+BUSY_STAGES = ("queued", "check", "download", "install")
+
+
+def read_json(path):
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return None
+
+
+def read_settings():
+    settings = dict(DEFAULTS)
+    try:
+        with open(CONF_PATH) as f:
+            for line in f:
+                key, sep, value = line.strip().partition("=")
+                if sep and key in settings:
+                    settings[key] = value.strip('"')
+    except OSError:
+        pass
+    return settings
+
+
+def friendly_time(stamp):
+    if not stamp:
+        return "never"
+    try:
+        when = datetime.strptime(stamp, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc).astimezone()
+    except ValueError:
+        return stamp
+    if when.date() == datetime.now().astimezone().date():
+        return when.strftime("today at %H:%M")
+    return when.strftime("%d %b at %H:%M")
+
+
+def human_bytes(count):
+    size = float(count)
+    for unit in ("B", "KB", "MB"):
+        if size < 1024:
+            return f"{size:.0f} {unit}" if unit == "B" else f"{size:.1f} {unit}"
+        size /= 1024
+    return f"{size:.1f} GB"
+
+
+def start_unit(unit):
+    """Starts a root service without waiting for it; returns an error or None."""
+    proc = subprocess.run(
+        ["systemctl", "start", "--no-block", unit],
+        capture_output=True, text=True,
+    )
+    if proc.returncode != 0:
+        return proc.stderr.strip() or f"systemctl exited with {proc.returncode}"
+    return None
+
+
+class UpdateRow(QFrame):
+    def __init__(self, update):
+        super().__init__()
+        self.setFrameShape(QFrame.StyledPanel)
+        layout = QVBoxLayout(self)
+
+        top = QHBoxLayout()
+        name = update.get("name") or NAMES.get(update.get("id", ""), update.get("id", "?"))
+        top.addWidget(QLabel(f"<b>{html.escape(name)}</b>"))
+        top.addStretch()
+        current = update.get("current") or ""
+        new = update.get("new") or ""
+        version = QLabel(f"{current} \u2192 {new}" if current else new)
+        version.setTextFormat(Qt.PlainText)
+        top.addWidget(version)
+        layout.addLayout(top)
+
+        if update.get("restart"):
+            layout.addWidget(QLabel("Needs a restart to finish."))
+
+        self.status = QLabel("Ready to install")
+        self.bar = QProgressBar()
+        self.bar.setRange(0, 100)
+        self.bar.setVisible(False)
+        layout.addWidget(self.status)
+        layout.addWidget(self.bar)
+
+        self.notes = None
+        notes = (update.get("notes") or "").strip()
+        if notes:
+            self.toggle = QToolButton()
+            self.toggle.setText("Show details")
+            self.toggle.setCheckable(True)
+            self.toggle.toggled.connect(self.show_notes)
+            self.notes = QLabel(notes)
+            self.notes.setTextFormat(Qt.PlainText)
+            self.notes.setWordWrap(True)
+            self.notes.setTextInteractionFlags(Qt.TextSelectableByMouse)
+            self.notes.setVisible(False)
+            layout.addWidget(self.toggle, alignment=Qt.AlignLeft)
+            layout.addWidget(self.notes)
+
+    def show_notes(self, shown):
+        self.notes.setVisible(shown)
+        self.toggle.setText("Hide details" if shown else "Show details")
+
+    def set_progress(self, stage, pct, received):
+        text = STAGE_TEXT.get(stage, stage)
+        if stage == "download":
+            if pct >= 0:
+                text = f"Downloading {pct}%"
+            elif received:
+                text = f"Downloading... {human_bytes(received)}"
+        self.status.setText(text)
+        busy = stage in BUSY_STAGES
+        self.bar.setVisible(busy)
+        if stage == "download" and pct >= 0:
+            self.bar.setRange(0, 100)
+            self.bar.setValue(pct)
+        elif busy:
+            self.bar.setRange(0, 0)
+
+
+class UpdatesTab(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.rows = {}
+        self.installing = False
+        self.shown_updates = None
+        self.result_note = ""
+
+        layout = QVBoxLayout(self)
+        header = QHBoxLayout()
+        self.title = QLabel()
+        self.title.setStyleSheet("font-size: 16pt; font-weight: 600;")
+        header.addWidget(self.title)
+        header.addStretch()
+        self.check_button = QPushButton("Check for updates")
+        self.check_button.clicked.connect(self.check_now)
+        header.addWidget(self.check_button)
+        layout.addLayout(header)
+
+        self.subtitle = QLabel()
+        self.subtitle.setWordWrap(True)
+        layout.addWidget(self.subtitle)
+        self.busy = QProgressBar()
+        self.busy.setRange(0, 0)
+        self.busy.setVisible(False)
+        layout.addWidget(self.busy)
+
+        self.restart_banner = QFrame()
+        self.restart_banner.setFrameShape(QFrame.StyledPanel)
+        banner = QHBoxLayout(self.restart_banner)
+        self.restart_text = QLabel()
+        self.restart_text.setWordWrap(True)
+        banner.addWidget(self.restart_text, 1)
+        restart = QPushButton("Restart now")
+        restart.clicked.connect(self.restart_now)
+        banner.addWidget(restart)
+        self.restart_banner.setVisible(False)
+        layout.addWidget(self.restart_banner)
+
+        self.list_host = QWidget()
+        self.list_layout = QVBoxLayout(self.list_host)
+        self.list_layout.addStretch()
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(self.list_host)
+        layout.addWidget(scroll, 1)
+
+        footer = QHBoxLayout()
+        footer.addStretch()
+        self.install_button = QPushButton("Install now")
+        self.install_button.clicked.connect(self.install_now)
+        footer.addWidget(self.install_button)
+        layout.addLayout(footer)
+
+        # Replay the progress log only if an install is still running;
+        # otherwise start after whatever is already in it.
+        lines = self.progress_lines()
+        if lines and not lines[-1].startswith("@@ all finished"):
+            self.progress_offset = 0
+        else:
+            self.progress_offset = len(lines)
+
+        # The status file is replaced atomically and may not exist yet, so
+        # poll it instead of watching it.
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.refresh)
+        self.timer.start(1000)
+        self.refresh()
+
+    @staticmethod
+    def progress_lines():
+        try:
+            with open(PROGRESS_PATH) as f:
+                return f.read().splitlines()
+        except OSError:
+            return []
+
+    def refresh(self):
+        status = read_json(STATUS_PATH) or {"state": "unknown", "updates": []}
+        updates = status.get("updates", [])
+        key = json.dumps(updates, sort_keys=True)
+        if key != self.shown_updates and not self.installing:
+            self.shown_updates = key
+            self.show_updates(updates)
+        self.follow_progress()
+        self.show_state(status)
+        self.show_restart()
+
+    def show_updates(self, updates):
+        for row in self.rows.values():
+            row.deleteLater()
+        self.rows = {}
+        for update in updates:
+            row = UpdateRow(update)
+            self.rows[update.get("id", "")] = row
+            self.list_layout.insertWidget(self.list_layout.count() - 1, row)
+
+    def show_state(self, status):
+        state = status.get("state")
+        updates = status.get("updates", [])
+        checked = friendly_time(status.get("checked_at"))
+        checking = state == "checking"
+        note = f" {self.result_note}" if self.result_note else ""
+        self.busy.setVisible(checking and not self.installing)
+        self.check_button.setEnabled(not checking and not self.installing)
+        self.install_button.setVisible(bool(updates))
+        self.install_button.setEnabled(bool(updates) and not checking and not self.installing)
+        if self.installing:
+            self.title.setText("Installing updates...")
+            self.subtitle.setText("You can keep using the computer while this runs.")
+        elif checking:
+            self.title.setText("Checking for updates...")
+            self.subtitle.setText(
+                "Looking for new versions of HoltOS, The Den, system packages "
+                "(kernel, drivers and everything else), Flatpak apps and device firmware."
+            )
+        elif state == "available":
+            count = len(updates)
+            self.title.setText(f"{count} update{'s' if count != 1 else ''} available")
+            self.subtitle.setText(f"Last checked {checked}.{note}")
+        elif state == "up_to_date":
+            self.title.setText("You're up to date")
+            self.subtitle.setText(f"Last checked {checked}.{note}")
+        elif state == "error":
+            self.title.setText("Couldn't check for updates")
+            self.subtitle.setText(f"{status.get('error') or 'Unknown error'} (last attempt {checked}).")
+        else:
+            self.title.setText("No update check has run yet")
+            self.subtitle.setText("HoltOS checks for updates automatically; you can also check now.")
+
+    def follow_progress(self):
+        lines = self.progress_lines()
+        if len(lines) < self.progress_offset:
+            self.progress_offset = 0
+        new_lines = lines[self.progress_offset:]
+        self.progress_offset = len(lines)
+        for line in new_lines:
+            parts = line.split()
+            if len(parts) < 4 or parts[0] != "@@":
+                continue
+            item, stage = parts[1], parts[2]
+            if item == "all" and stage == "finished":
+                self.finish_install(parts[3])
+                continue
+            try:
+                pct = int(parts[3])
+            except ValueError:
+                pct = -1
+            received = int(parts[4]) if len(parts) > 4 and parts[4].isdigit() else 0
+            if stage in BUSY_STAGES:
+                # Also catches installs started elsewhere: the tray, the
+                # schedule, or Steam in Game Mode.
+                self.installing = True
+            row = self.rows.get(item)
+            if row:
+                row.set_progress(stage, pct, received)
+
+    def finish_install(self, code):
+        self.installing = False
+        self.shown_updates = None
+        if code == "0":
+            self.result_note = "The last install finished."
+        else:
+            self.result_note = f"The last install had errors (exit {code}); the History tab shows what was applied."
+
+    def check_now(self):
+        error = start_unit("holtos-update-check.service")
+        if error:
+            QMessageBox.warning(self, "HoltOS Updates", f"Could not start the update check:\n{error}")
+
+    def install_now(self):
+        error = start_unit("holtos-update-install.service")
+        if error:
+            QMessageBox.warning(self, "HoltOS Updates", f"Could not start the install:\n{error}")
+            return
+        self.installing = True
+        self.result_note = ""
+        for row in self.rows.values():
+            row.set_progress("queued", -1, 0)
+
+    def show_restart(self):
+        try:
+            with open(REBOOT_MARKER) as f:
+                reason = f.read().strip()
+        except OSError:
+            self.restart_banner.setVisible(False)
+            return
+        self.restart_text.setText(f"Restart to finish updating: {reason}.")
+        self.restart_banner.setVisible(True)
+
+    def restart_now(self):
+        answer = QMessageBox.question(
+            self, "HoltOS Updates",
+            "Restart now? Save your work in other apps first.",
+        )
+        if answer == QMessageBox.Yes:
+            subprocess.Popen(["systemctl", "reboot"])
+
+
+class HistoryTab(QWidget):
+    def __init__(self):
+        super().__init__()
+        layout = QVBoxLayout(self)
+        self.table = QTableWidget(0, 3)
+        self.table.setHorizontalHeaderLabels(["When", "What", "Version"])
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table.verticalHeader().setVisible(False)
+        self.table.setEditTriggers(QTableWidget.NoEditTriggers)
+        layout.addWidget(self.table)
+        self.mtime = None
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.refresh)
+        self.timer.start(3000)
+        self.refresh()
+
+    def refresh(self):
+        try:
+            mtime = os.path.getmtime(HISTORY_PATH)
+        except OSError:
+            mtime = None
+        if mtime == self.mtime:
+            return
+        self.mtime = mtime
+        entries = []
+        try:
+            with open(HISTORY_PATH) as f:
+                for line in f:
+                    parts = line.rstrip("\n").split("\t")
+                    if len(parts) >= 3:
+                        entries.append(parts)
+        except OSError:
+            pass
+        entries.reverse()
+        self.table.setRowCount(len(entries))
+        for row, parts in enumerate(entries):
+            version = "updated" if parts[1] in ("system", "flatpak", "firmware") else parts[2]
+            cells = (friendly_time(parts[0]), NAMES.get(parts[1], parts[1]), version)
+            for column, text in enumerate(cells):
+                self.table.setItem(row, column, QTableWidgetItem(text))
+
+
+class SettingsTab(QWidget):
+    def __init__(self):
+        super().__init__()
+        layout = QVBoxLayout(self)
+        form = QFormLayout()
+        form.setLabelAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        form.setFormAlignment(Qt.AlignLeft | Qt.AlignTop)
+        form.setFieldGrowthPolicy(QFormLayout.AllNonFixedFieldsGrow)
+
+        self.interval = QComboBox()
+        for value, text in INTERVALS:
+            self.interval.addItem(text, value)
+        form.addRow("Check for updates:", self.interval)
+
+        self.auto_download = QCheckBox("Download updates automatically")
+        form.addRow("", self.auto_download)
+
+        self.auto_install = QComboBox()
+        for value, text in AUTO_INSTALL_CHOICES:
+            self.auto_install.addItem(text, value)
+        form.addRow("Install automatically:", self.auto_install)
+
+        window_row = QHBoxLayout()
+        self.use_window = QCheckBox("Only install system updates at")
+        self.window_time = QTimeEdit()
+        self.window_time.setDisplayFormat("HH:00")
+        self.use_window.toggled.connect(self.window_time.setEnabled)
+        window_row.addWidget(self.use_window)
+        window_row.addWidget(self.window_time)
+        window_row.addStretch()
+        form.addRow("Install window:", window_row)
+
+        self.after_gamemode = QCheckBox("Check for updates when leaving Game Mode")
+        form.addRow("", self.after_gamemode)
+        layout.addLayout(form)
+
+        buttons = QHBoxLayout()
+        buttons.addStretch()
+        save = QPushButton("Save")
+        save.clicked.connect(self.save)
+        buttons.addWidget(save)
+        layout.addLayout(buttons)
+        layout.addStretch()
+        self.load()
+
+    def load(self):
+        settings = read_settings()
+        index = self.interval.findData(settings["CHECK_INTERVAL"])
+        self.interval.setCurrentIndex(index if index >= 0 else 1)
+        self.auto_download.setChecked(settings["AUTO_DOWNLOAD"] == "yes")
+        index = self.auto_install.findData(settings["AUTO_INSTALL"])
+        self.auto_install.setCurrentIndex(index if index >= 0 else 1)
+        hour = settings["INSTALL_WINDOW"].split(":")[0]
+        has_window = hour.isdigit()
+        self.use_window.setChecked(has_window)
+        self.window_time.setTime(QTime(int(hour), 0) if has_window else QTime(4, 0))
+        self.window_time.setEnabled(has_window)
+        self.after_gamemode.setChecked(settings["CHECK_AFTER_GAMEMODE"] != "no")
+
+    def save(self):
+        window = f"{self.window_time.time().hour():02d}:00" if self.use_window.isChecked() else ""
+        args = [
+            f"CHECK_INTERVAL={self.interval.currentData()}",
+            f"AUTO_DOWNLOAD={'yes' if self.auto_download.isChecked() else 'no'}",
+            f"AUTO_INSTALL={self.auto_install.currentData()}",
+            f"INSTALL_WINDOW={window}",
+            f"CHECK_AFTER_GAMEMODE={'yes' if self.after_gamemode.isChecked() else 'no'}",
+        ]
+        proc = subprocess.run(
+            ["pkexec", "/usr/local/bin/holtos-update-settings", *args],
+            capture_output=True, text=True,
+        )
+        if proc.returncode == 0:
+            QMessageBox.information(self, "HoltOS Updates", "Settings saved.")
+        elif proc.returncode not in (126, 127):
+            QMessageBox.warning(self, "HoltOS Updates", f"Could not save the settings:\n{proc.stderr.strip()}")
+        self.load()
+
+
+class UpdatesWindow(QTabWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("HoltOS Updates")
+        self.setWindowIcon(QIcon(ICON_PATH))
+        self.resize(660, 580)
+        self.addTab(UpdatesTab(), "Updates")
+        self.addTab(HistoryTab(), "History")
+        self.addTab(SettingsTab(), "Settings")
+
+
+def main():
+    app = QApplication(sys.argv)
+    app.setApplicationName("holtos-updates")
+    app.setDesktopFileName("holtos-updater")
+    window = UpdatesWindow()
+    if "--settings" in sys.argv:
+        window.setCurrentIndex(2)
+    window.show()
+    sys.exit(app.exec())
+
+
+if __name__ == "__main__":
+    main()

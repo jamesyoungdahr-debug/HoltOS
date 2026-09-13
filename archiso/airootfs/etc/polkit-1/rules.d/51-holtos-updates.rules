@@ -1,0 +1,26 @@
+// HoltOS updates without a password prompt for the person at the machine:
+// Steam's Software Updates page in Game Mode (a controller user has no
+// keyboard for a polkit prompt), and the update window's "Check now" /
+// "Install now", which only start two fixed root services. Those services
+// run fixed commands that install only what holtos-update-status found in
+// HoltOS' own sources; nothing the caller passes reaches root. Only the
+// active local session's user, only wheel. Written by hand:
+// security-relevant.
+polkit.addRule(function(action, subject) {
+    if (!(subject.local && subject.active && subject.isInGroup("wheel"))) {
+        return polkit.Result.NOT_HANDLED;
+    }
+    if (action.id == "org.holtos.policykit.steamos-update") {
+        return polkit.Result.YES;
+    }
+    if (action.id == "org.freedesktop.systemd1.manage-units") {
+        var unit = action.lookup("unit");
+        var verb = action.lookup("verb");
+        if ((unit == "holtos-update-check.service" ||
+             unit == "holtos-update-install.service") &&
+            verb == "start") {
+            return polkit.Result.YES;
+        }
+    }
+    return polkit.Result.NOT_HANDLED;
+});

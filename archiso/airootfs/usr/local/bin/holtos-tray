@@ -1,31 +1,21 @@
 #!/usr/bin/env python3
-# System tray icon for the HoltOS updater.
+# System tray icon for HoltOS: update status at a glance, plus the HoltOS
+# tools menu.
 #
-# Previously implemented as a bash script wrapping `yad --notification`.
-# Confirmed live (via /tmp/holtos-tray.log from the version below) that
-# this NEVER worked on this system, no matter what else got fixed:
+# The tray does not run update checks itself any more: the root
+# holtos-update-check.timer checks on the schedule set in HoltOS Updates >
+# Settings and writes /var/lib/holtos/update-status.json. The tray only reads
+# that file, so nobody has to click anything to find out about updates. It
+# notifies once for each newly found set of updates, and when an install
+# needs a restart.
 #
-#   yad: /usr/bin/yad
-#   Launching yad --notification...
-#   WARNING: This mode not supported outside X11
-#
-# yad's tray-icon mode is built on GTK3's deprecated GtkStatusIcon, which
-# is X11-only and was never ported to the StatusNotifierItem (SNI) D-Bus
-# protocol Wayland compositors (including Plasma's) actually use. This
-# session runs XDG_SESSION_TYPE=wayland — the two earlier "fixes" for
-# this (a bad X-KDE-autostart-phase key, then a missing executable bit)
-# were both real bugs, just not *this* bug; the log confirms the script
-# was launching and reaching yad just fine both times, yad itself was
-# the dead end regardless of autostart mechanics.
-#
-# Rewritten using PySide6's QSystemTrayIcon instead — Qt implements SNI
-# properly and works under both X11 and Wayland in a Plasma session.
-# PySide6 is already a dependency (for The Den Client), so this adds no
-# new packages.
+# PySide6's QSystemTrayIcon rather than yad --notification: yad's tray mode
+# is built on GTK3's X11-only GtkStatusIcon and never worked in the Plasma
+# Wayland session (confirmed from the old version's log).
+import json
 import os
 import subprocess
 import sys
-import threading
 import time
 
 LOG_PATH = "/tmp/holtos-tray.log"
@@ -40,45 +30,41 @@ def log(msg):
 
 
 try:
-    from PySide6.QtGui import QIcon
+    from PySide6.QtCore import QTimer
+    from PySide6.QtGui import QAction, QIcon
     from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 except Exception as exc:  # pragma: no cover - diagnostic path only
     log(f"holtos-tray: failed to import PySide6: {exc}")
     sys.exit(1)
 
-# The updater is for the INSTALLED system only. This autostart entry is
-# copied onto the live medium too (same airootfs), and there it would sit
-# in the live session's tray offering to update a read-only squashfs. The
-# live medium is the one environment where /run/archiso exists.
+# The updater is for the INSTALLED system only. The live medium, the one
+# environment where /run/archiso exists, gets the same autostart entry.
 if os.path.exists("/run/archiso"):
     log("holtos-tray: live medium detected (/run/archiso), not starting")
     sys.exit(0)
 
 ICON_PATH = "/usr/share/icons/hicolor/scalable/apps/holtos-logo.svg"
-CHECK_INTERVAL_SECONDS = 21600  # 6h, same cadence as the old version
+STATUS_PATH = "/var/lib/holtos/update-status.json"
+REBOOT_MARKER = "/run/holtos-reboot-required"
+POLL_MS = 30000
 
 
 def run(cmd, *args):
     subprocess.Popen([cmd, *args])
 
 
-def check_for_updates(verbose=False):
-    args = ["--verbose"] if verbose else []
-    run("/usr/local/bin/holtos-check-notify", *args)
-
-
-def background_check_loop():
-    while True:
-        time.sleep(CHECK_INTERVAL_SECONDS)
-        check_for_updates(verbose=False)
+def read_status():
+    try:
+        with open(STATUS_PATH) as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return None
 
 
 def add_gamemode_toggle(menu):
     """
     Adds a toggleable "Start in Game Mode" action to the given menu.
     """
-    from PySide6.QtGui import QAction
-
     action = QAction("Start in Game Mode", menu)
     action.setCheckable(True)
 
@@ -108,19 +94,69 @@ def add_gamemode_toggle(menu):
     return action
 
 
+class UpdateWatcher:
+    """Polls the updater's status file and keeps the tray in step with it."""
+
+    def __init__(self, tray, updates_action):
+        self.tray = tray
+        self.updates_action = updates_action
+        self.notified_updates = None
+        self.notified_restart = False
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.poll)
+        self.timer.start(POLL_MS)
+        self.poll()
+
+    def poll(self):
+        status = read_status() or {}
+        state = status.get("state")
+        updates = status.get("updates", [])
+        names = ", ".join(u.get("name") or u.get("id", "?") for u in updates)
+
+        if state == "checking":
+            self.tray.setToolTip("HoltOS: checking for updates...")
+        elif updates:
+            self.tray.setToolTip(f"HoltOS: {len(updates)} update(s) available: {names}")
+        elif state == "error":
+            self.tray.setToolTip("HoltOS: the last update check failed")
+        else:
+            self.tray.setToolTip("HoltOS: up to date")
+
+        if updates:
+            self.updates_action.setText(f"HoltOS Updates ({len(updates)} available)...")
+        else:
+            self.updates_action.setText("HoltOS Updates...")
+
+        found = sorted(f"{u.get('id')}:{u.get('new')}" for u in updates)
+        if updates and state != "checking" and found != self.notified_updates:
+            self.notified_updates = found
+            self.tray.showMessage(
+                "HoltOS updates available", f"{names}. Click to see them.",
+                QIcon(ICON_PATH), 10000,
+            )
+        elif not updates:
+            self.notified_updates = None
+
+        restart = os.path.exists(REBOOT_MARKER)
+        if restart and not self.notified_restart:
+            try:
+                with open(REBOOT_MARKER) as f:
+                    reason = f.read().strip()
+            except OSError:
+                reason = "updates were installed"
+            self.tray.showMessage(
+                "Restart to finish updating", f"HoltOS needs a restart: {reason}.",
+                QIcon(ICON_PATH), 15000,
+            )
+        self.notified_restart = restart
+
+
 def main():
     log(f"=== holtos-tray started {time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())} ===")
 
-    # Real bug found live-testing the Btrfs install: this used to call
-    # QSystemTrayIcon.isSystemTrayAvailable() HERE, before QApplication()
-    # existed below — confirmed via coredumpctl (SIGSEGV/SEGV_MAPERR
-    # inside that exact call, both on autostart and a manual foreground
-    # run, reproducible every time). Qt's platform integration — display
-    # connection, tray protocol plugin, all of it — is only initialized
-    # by constructing QApplication/QGuiApplication; touching practically
-    # any QtWidgets API before that, even ones that look like plain
-    # static queries, is a well-known way to crash into uninitialized
-    # platform state. QApplication now goes first.
+    # QApplication must exist before any other QtWidgets call: calling
+    # QSystemTrayIcon.isSystemTrayAvailable() first segfaulted on the Btrfs
+    # install (coredumpctl, SIGSEGV inside that call, every time).
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
 
@@ -128,13 +164,11 @@ def main():
         log("holtos-tray: QSystemTrayIcon.isSystemTrayAvailable() is False")
 
     tray = QSystemTrayIcon(QIcon(ICON_PATH))
-    tray.setToolTip("HoltOS Updater")
+    tray.setToolTip("HoltOS")
 
     menu = QMenu()
-    menu.addAction("Check for Updates", lambda: check_for_updates(verbose=True))
-    menu.addAction("Update...", lambda: run("/usr/local/bin/holtos-update-picker"))
+    updates_action = menu.addAction("HoltOS Updates...", lambda: run("/usr/local/bin/holtos-updates"))
     menu.addAction("Rollback Config", lambda: run("/usr/local/bin/holtos-rollback-config"))
-    menu.addAction("Update History", lambda: run("/usr/local/bin/holtos-update-history"))
     menu.addSeparator()
     menu.addAction("Create Snapshot Now", lambda: run("/usr/local/bin/holtos-snapshot-now"))
     menu.addAction("Restore Snapshot...", lambda: run("/usr/local/bin/holtos-restore-snapshot"))
@@ -151,15 +185,17 @@ def main():
 
     def on_activated(reason):
         if reason == QSystemTrayIcon.ActivationReason.Trigger:
-            run("/usr/local/bin/holtos-update-picker")
+            run("/usr/local/bin/holtos-updates")
 
     tray.activated.connect(on_activated)
+    tray.messageClicked.connect(lambda: run("/usr/local/bin/holtos-updates"))
     tray.show()
     log("holtos-tray: tray icon shown")
 
-    threading.Thread(target=background_check_loop, daemon=True).start()
-
-    sys.exit(app.exec())
+    watcher = UpdateWatcher(tray, updates_action)
+    exit_code = app.exec()
+    del watcher
+    sys.exit(exit_code)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,11 @@
+#!/bin/bash
+# The path the Steam client runs to ask about Steam Deck BIOS updates.
+# Re-runs itself through pkexec (policy org.holtos.policykit.jupiter-biosupdate)
+# and hands over to /usr/bin/jupiter-biosupdate, which does nothing.
+set -eu
+
+if [[ $EUID -ne 0 ]]; then
+    exec pkexec --disable-internal-agent "$0" "$@"
+fi
+
+exec /usr/bin/jupiter-biosupdate "$@"

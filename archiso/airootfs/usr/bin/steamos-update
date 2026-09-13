@@ -1,0 +1,88 @@
+#!/bin/bash
+# HoltOS behind Steam's System > Software Updates page in Game Mode. The
+# Steam client runs /usr/bin/steamos-polkit-helpers/steamos-update, which
+# re-runs this as root through pkexec, with these arguments (as documented
+# by gamescope-session-steam):
+#   --supports-duplicate-detection            do nothing
+#   [--enable-duplicate-detection] check      is there an update?
+#   [--enable-duplicate-detection]            install it
+# "check" must exit 0 when there is an update and 7 when there is none.
+# While installing, Steam draws its progress bar from "NN%" lines on stdout.
+set -uo pipefail
+
+STATUS=/var/lib/holtos/update-status.json
+LOG_DIR=/run/holtos-update
+LOG="$LOG_DIR/progress.log"
+
+check=0
+noop=0
+for arg in "$@"; do
+    case "$arg" in
+        check) check=1 ;;
+        --supports-duplicate-detection) noop=1 ;;
+    esac
+done
+
+if [ "$noop" -eq 1 ] && [ "$check" -eq 0 ]; then
+    exit 0
+fi
+
+if [ "$(id -u)" -ne 0 ]; then
+    echo "steamos-update must run as root (Steam calls steamos-polkit-helpers/steamos-update)" >&2
+    exit 1
+fi
+
+count_updates() {
+    jq '.updates | length' "$STATUS" 2>/dev/null || echo 0
+}
+
+if [ "$check" -eq 1 ]; then
+    /usr/local/bin/holtos-update-status --quiet || exit 1
+    if [ "$(count_updates)" -gt 0 ]; then
+        exit 0
+    fi
+    exit 7
+fi
+
+if [ ! -s "$STATUS" ]; then
+    /usr/local/bin/holtos-update-status --quiet || exit 1
+fi
+total="$(count_updates)"
+[ "$total" -gt 0 ] || exit 7
+
+# Same lock and progress log as holtos-update-install, so the desktop's
+# update window and a Steam install never run at the same time.
+exec 8> /run/holtos-update-install.lock
+flock 8
+mkdir -p "$LOG_DIR"
+chmod 755 "$LOG_DIR"
+: > "$LOG"
+chmod 644 "$LOG"
+
+# One overall percentage across every item: each item is an equal share,
+# its download filling the first half of that share and installing the
+# rest.
+done_items=0
+/usr/local/bin/holtos-update-apply available 2>&1 | tee -a "$LOG" | while read -r marker item stage pct _; do
+    [ "$marker" = "@@" ] || continue
+    [ "$pct" -lt 0 ] 2>/dev/null && pct=0
+    case "$stage" in
+        download) progress_now=$(( done_items * 100 + pct / 2 )) ;;
+        install) progress_now=$(( done_items * 100 + 50 )) ;;
+        done|skip|fail)
+            done_items=$(( done_items + 1 ))
+            progress_now=$(( done_items * 100 ))
+            ;;
+        *) continue ;;
+    esac
+    percent=$(( progress_now / total ))
+    [ "$percent" -gt 99 ] && percent=99
+    echo "${percent}%"
+done
+rc=${PIPESTATUS[0]}
+echo "@@ all finished $rc" >> "$LOG"
+
+/usr/local/bin/holtos-update-status --quiet >/dev/null 2>&1 || true
+[ "$rc" -eq 0 ] || exit 1
+echo "100%"
+exit 0
