@@ -148,6 +148,8 @@ libcec
 # AppImages: most still link the FUSE 2 library (libfuse.so.2), so without
 # fuse2 they fail to start (many game launchers and tools ship this way).
 fuse2
+# On-screen keyboard for touch input (KWin's InputMethod in etc/xdg/kwinrc).
+plasma-keyboard
 # Controllers (AUR, in local-repo/): Xbox pads over Bluetooth, and udev
 # rules so non-Steam controllers work without root.
 xpadneo-dkms

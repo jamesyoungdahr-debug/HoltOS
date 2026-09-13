@@ -9,3 +9,6 @@ fwupd
 flatpak
 flatpak-kcm
 libcec
+# 0.0.6-alpha: the on-screen keyboard (plasma-keyboard) and AppImages (fuse2).
+plasma-keyboard
+fuse2

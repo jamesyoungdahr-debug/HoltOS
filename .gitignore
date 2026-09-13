@@ -3,6 +3,7 @@ out/
 vm/
 local-repo/
 .pacman-cache/
+.publish-stage/
 __pycache__/
 
 # Local copy of upstream Arch releng's archiso profile, kept only for diffing

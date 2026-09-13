@@ -35,3 +35,10 @@ CornerRadius=10
 [org.kde.kdecoration2]
 library=org.holtos.glass
 theme=HoltOS Glass
+
+# On-screen keyboard (package plasma-keyboard). KWin shows it for touch
+# input on tablets and 2-in-1s like the ROG Flow Z13; with a physical
+# keyboard it stays out of the way. Toggle in System Settings > Keyboard >
+# Virtual Keyboard.
+[Wayland]
+InputMethod=/usr/share/applications/org.kde.plasma.keyboard.desktop

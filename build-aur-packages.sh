@@ -25,7 +25,7 @@ chown builder:builder /tmp/pkgout
 # rules so non-Steam controllers work without root. xone (the Xbox wireless
 # dongle) is left out on purpose: its firmware package downloads
 # Microsoft's driver, which the image cannot redistribute.
-AUR_DEFAULT="calamares zfs-dkms zfs-utils limine-mkinitcpio-hook limine-entry-tool gamescope-session-git gamescope-session-steam-git decky-loader xpadneo-dkms game-devices-udev"
+AUR_DEFAULT="calamares zfs-dkms zfs-utils limine-mkinitcpio-hook limine-entry-tool gamescope-session-git gamescope-session-steam-git decky-loader xpadneo-dkms game-devices-udev z13ctl-bin z13gui-bin"
 AUR_PKGS="${AUR_PKGS:-$AUR_DEFAULT}"
 
 if [ "$AUR_PKGS" != "none" ]; then

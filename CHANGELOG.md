@@ -5,6 +5,26 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.0.6-alpha] - 2026-09-13
+
+- **On-screen keyboard.** KDE's `plasma-keyboard` is in the image and KWin
+  uses it as its input method, so it appears for touch input on tablets and
+  2-in-1s; toggle it in System Settings > Keyboard > Virtual Keyboard.
+  Installed systems get the package through HoltOS Updates ("HoltOS
+  components") and the setting through the config update.
+- **ASUS ROG Flow Z13 (2025) controls.** On a GZ302 machine, HoltOS Updates
+  installs z13ctl and z13gui (RGB lighting, performance profiles, fan
+  curves, TDP, battery limit; z13gui opens from the Armoury Crate button),
+  runs `z13ctl setup`, enables their user services and adds users to the
+  `users` group. Other machines never get them. Both are in the HoltOS
+  package repository now.
+- **AppImages start**: `fuse2` is in the image and on the required-packages
+  list.
+- **The HoltOS package repository never publishes the KWin and
+  plasma-workspace forks** (`tools/publish-packages.sh` EXCLUDE): they
+  replace the stock packages and have only run in the VM, so installed
+  systems keep stock KWin; the forks stay in ISO builds.
+
 ## [0.0.5b-alpha] - 2026-09-13
 
 - **The updater installs the packages a HoltOS release needs.** A config
