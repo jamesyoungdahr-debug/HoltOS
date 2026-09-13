@@ -5,6 +5,26 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.0.5-alpha] - 2026-09-13
+
+- **Network Shares no longer freezes, and connects to servers on any SMB
+  version.** Saving, testing, mounting and unmounting now run in the
+  background with a status line, so a slow or unreachable server cannot
+  lock the window. SMB shares get a version setting (Automatic, 3.1.1, 3.0,
+  2.1, 2.0, 1.0): Automatic tries each version newest first, 10 seconds
+  each, and saves the one the server accepts into the share's mount
+  options. Without it the kernel only offered SMB 2.1 to 3.1.1, so older
+  NAS boxes failed or hung. Test connection shows which version connected
+  and why the others did not.
+- **Updating The Den no longer reports a false failure when its port
+  changes.** The updater checked only `127.0.0.1:8686` after restarting The
+  Den, so a server moved to its configured port (The Den M34 uses
+  `WEB_HOST`/`WEB_PORT`, default 40204) was reported as "did not come back"
+  and logged as failed. It now reads `WEB_HOST` and `WEB_PORT` from
+  `/etc/the-den/the-den.env` (port 8686 when unset, as in releases up to
+  v0.7.0), checks `/health` over http and then https (ready for M35's TLS),
+  and rewrites The Den's menu entry with that address on every update
+  instead of only on first install.
 - **HoltOS Apps, an app store over Flathub** (plan 2.1). A curated front
   page of 27 apps picked for a media and gaming machine (Jellyfin, Plex,
   Kodi, Stremio, VLC, Spotify, Heroic, Lutris, ProtonUp-Qt, Moonlight,

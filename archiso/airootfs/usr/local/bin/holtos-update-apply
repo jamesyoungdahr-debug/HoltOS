@@ -458,15 +458,6 @@ install_the_den() {
         echo "==> Setting up The Den for the first time..."
         cp /usr/share/icons/hicolor/scalable/apps/holtos-logo.svg \
            /usr/share/icons/hicolor/scalable/apps/the-den.svg 2>/dev/null || true
-        cat > /usr/share/applications/the-den.desktop <<DESKTOP
-[Desktop Entry]
-Type=Application
-Name=The Den
-Comment=Movie/TV library manager
-Exec=xdg-open http://127.0.0.1:8686
-Icon=the-den
-Categories=AudioVideo;Video;
-DESKTOP
         # The same airootfs is the live medium too — keep the service
         # off there (same /run/archiso gate as the tray and the
         # first-boot units; the live session is a read-only squashfs).
@@ -499,6 +490,7 @@ DROPIN
     ( cd "$app_dir" && DATABASE_URL="sqlite:////var/lib/the-den/den.db" \
         runuser -u the-den -- "$app_dir/.venv/bin/python" -m alembic upgrade head )
 
+    local url=""
     if booted; then
         systemctl daemon-reload
         if [ "$first_install" -eq 1 ]; then
@@ -512,29 +504,47 @@ DROPIN
         # Real case 2026-09-11: v0.1.0 → v0.2.0 restarted into a Python
         # import error and the tray still said "Done"; the user found out
         # from the browser's "connection refused". Wait for the service AND
-        # its port, and on failure surface the journal in the dialog.
-        echo "==> Waiting for The Den to come up..."
-        local i up=0
-        for i in $(seq 1 30); do
-            if systemctl is-active --quiet the-den && curl -fs -o /dev/null --max-time 2 http://127.0.0.1:8686/ 2>/dev/null; then
-                up=1; break
+        # an answer on the address it is configured for (WEB_HOST/WEB_PORT,
+        # http or https), and on failure surface the journal in the dialog.
+        # A fixed 127.0.0.1:8686 probe reported a false failure as soon as
+        # The Den moved to its configured port.
+        echo "==> Waiting for The Den to come up on $(the_den_address)..."
+        local deadline=$((SECONDS + 30))
+        while [ "$SECONDS" -lt "$deadline" ]; do
+            if systemctl is-active --quiet the-den; then
+                url="$(the_den_url)"
+                if [ -n "$url" ]; then break; fi
             fi
             if systemctl is-failed --quiet the-den; then break; fi
             sleep 1
         done
-        if [ "$up" -ne 1 ]; then
-            echo "==> The Den did not come back after the update ($(systemctl is-active the-den)). Last log lines:" >&2
+        if [ -z "$url" ]; then
+            echo "==> The Den did not come back after the update ($(systemctl is-active the-den); expected on $(the_den_address)). Last log lines:" >&2
             journalctl -u the-den -n 15 --no-pager -o cat 2>/dev/null | grep -v '^\s*[~^]' | tail -12 >&2
             log_history the-den "$latest_tag (FAILED to start)" "$new_commit"
             return 1
         fi
-        echo "==> The Den is up on http://127.0.0.1:8686"
+        echo "==> The Den is up on $url"
     else
         # Image build: enable only (symlink); it starts on the installed
         # system's first boot.
         echo "==> Enabling The Den (image build — starts on first boot)..."
         systemctl enable the-den
     fi
+
+    # The menu entry follows WEB_HOST/WEB_PORT, so it is rewritten on every
+    # update. It used to be written on first install only, which left
+    # upgraded systems opening the old 127.0.0.1:8686 after the port moved.
+    cat > /usr/share/applications/the-den.desktop <<DESKTOP
+[Desktop Entry]
+Type=Application
+Name=The Den
+Comment=Movie/TV library manager
+Exec=xdg-open ${url:-http://$(the_den_address)}
+Icon=the-den
+Categories=AudioVideo;Video;
+DESKTOP
+
     if [ "$first_install" -eq 1 ]; then
         echo "==> Running with placeholder settings from the-den.env.example"
         echo "    (empty TMDB_API_KEY, default qBittorrent credentials) —"
@@ -544,6 +554,52 @@ DROPIN
 
     log_history the-den "$latest_tag" "$new_commit"
     echo "==> The Den updated to $latest_tag"
+}
+
+# the_den_env KEY — a value from /etc/the-den/the-den.env, read as text
+# (never sourced) with surrounding quotes removed. Empty when unset.
+the_den_env() {
+    local value
+    value="$(grep -E "^$1=" /etc/the-den/the-den.env 2>/dev/null | tail -1 | cut -d= -f2- || true)"
+    value="${value%\"}"; value="${value#\"}"
+    value="${value%\'}"; value="${value#\'}"
+    printf '%s' "$value"
+}
+
+# the_den_address — host:port The Den listens on, from WEB_HOST and
+# WEB_PORT in its env file. The port defaults to 8686, which every release
+# up to v0.7.0 hardcoded. A loopback or bind-all host is reached on
+# 127.0.0.1; any other host (a LAN address the user set) is used as is.
+# Both are validated, since the result also lands in the menu entry.
+the_den_address() {
+    local host port re='^([A-Za-z0-9._:-]+|\[[0-9A-Fa-f:.]+\])$'
+    host="$(the_den_env WEB_HOST)"
+    port="$(the_den_env WEB_PORT)"
+    [[ "$port" =~ ^[0-9]{1,5}$ ]] || port=8686
+    case "$host" in
+        ""|127.0.0.1|0.0.0.0|localhost|::|"[::]"|::1|"[::1]") host=127.0.0.1 ;;
+    esac
+    [[ "$host" =~ $re ]] || host=127.0.0.1
+    if [[ "$host" == *:* && "$host" != \[* ]]; then
+        host="[$host]"
+    fi
+    printf '%s:%s' "$host" "$port"
+}
+
+# the_den_url — the base URL The Den answers on: /health over http, then
+# over https (M35 serves TLS on the same port, possibly with its own
+# certificate, hence -k), then / over http for releases without /health.
+# Prints nothing while it does not answer.
+the_den_url() {
+    local address
+    address="$(the_den_address)"
+    if curl -fs -o /dev/null --max-time 2 "http://$address/health" 2>/dev/null; then
+        printf 'http://%s' "$address"
+    elif curl -fsk -o /dev/null --max-time 2 "https://$address/health" 2>/dev/null; then
+        printf 'https://%s' "$address"
+    elif curl -fs -o /dev/null --max-time 2 "http://$address/" 2>/dev/null; then
+        printf 'http://%s' "$address"
+    fi
 }
 
 # update_the_den_client [target_tag] — installs/updates The Den Client

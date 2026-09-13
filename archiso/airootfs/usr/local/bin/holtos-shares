@@ -4,14 +4,14 @@
 Lists the configured SMB/NFS shares with their mounted state and lets you
 add, edit, remove, mount, unmount and open them. Everything that needs root
 goes through `pkexec holtos-share ...` (one authentication prompt per
-change), same pattern as the updater. PySide6, like holtos-tray, so it
-wears the HoltOS Glass theme like every other Qt window.
+change), same pattern as the updater. Those calls run in the background, so
+a slow or unreachable server never freezes the window. PySide6, like
+holtos-tray, so it wears the HoltOS Glass theme like every other Qt window.
 """
-import os
 import subprocess
 import sys
 
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import QObject, QProcess, Qt, QTimer
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QApplication, QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFormLayout,
@@ -22,27 +22,64 @@ from PySide6.QtWidgets import (
 ICON_PATH = "/usr/share/icons/hicolor/scalable/apps/holtos-logo.svg"
 BACKEND = "/usr/local/bin/holtos-share"
 MOUNT_ROOT = "/mnt/shares"
-
-
-def run_backend(args, stdin_text=None, root=True):
-    cmd = (["pkexec", BACKEND] if root else [BACKEND]) + list(args)
-    proc = subprocess.run(cmd, input=stdin_text, capture_output=True, text=True)
-    return proc.returncode, (proc.stdout + proc.stderr).strip()
+FIELDS = ["name", "type", "server", "path", "user", "ro", "auto", "mounted", "vers"]
+SMB_VERSIONS = [
+    ("auto", "Automatic (newest that works)"),
+    ("3.1.1", "SMB 3.1.1"),
+    ("3.0", "SMB 3.0"),
+    ("2.1", "SMB 2.1"),
+    ("2.0", "SMB 2.0"),
+    ("1.0", "SMB 1.0 (old devices only)"),
+]
 
 
 def list_shares():
     # Listing is the backend's one unprivileged command (share metadata is
     # world-readable, credentials are not), so opening the window never
     # asks for a password.
-    rc, out = run_backend(["list"], root=False)
-    if rc != 0:
-        return None, out
+    proc = subprocess.run([BACKEND, "list"], capture_output=True, text=True)
+    if proc.returncode != 0:
+        return None, (proc.stdout + proc.stderr).strip()
     rows = []
-    for line in out.splitlines():
+    for line in proc.stdout.splitlines():
         parts = line.split("\t")
-        if len(parts) == 8:
-            rows.append(dict(zip(["name", "type", "server", "path", "user", "ro", "auto", "mounted"], parts)))
+        if len(parts) in (8, 9):
+            row = dict(zip(FIELDS, parts))
+            row.setdefault("vers", "")
+            rows.append(row)
     return rows, ""
+
+
+class BackendCall(QObject):
+    """Runs `pkexec holtos-share ...` without blocking the window: a mount
+    can take up to 30 seconds, and finding an SMB version longer."""
+
+    def __init__(self, parent, args, stdin_text, on_done):
+        super().__init__(parent)
+        self.on_done = on_done
+        self.done = False
+        self.process = QProcess(self)
+        self.process.setProcessChannelMode(QProcess.MergedChannels)
+        self.process.finished.connect(self.finished)
+        self.process.errorOccurred.connect(self.failed)
+        self.process.start("pkexec", [BACKEND, *args])
+        if stdin_text is not None:
+            self.process.write(stdin_text.encode())
+        self.process.closeWriteChannel()
+
+    def finished(self, code, _status):
+        if self.done:
+            return
+        self.done = True
+        out = bytes(self.process.readAll()).decode(errors="replace").strip()
+        self.on_done(code, out)
+        self.deleteLater()
+
+    def failed(self, error):
+        if error == QProcess.FailedToStart and not self.done:
+            self.done = True
+            self.on_done(127, "Could not start pkexec.")
+            self.deleteLater()
 
 
 class ShareDialog(QDialog):
@@ -67,6 +104,13 @@ class ShareDialog(QDialog):
         self.user = QLineEdit(share["user"] if share else "")
         self.password = QLineEdit()
         self.password.setEchoMode(QLineEdit.Password)
+        self.vers = QComboBox()
+        for value, text in SMB_VERSIONS:
+            self.vers.addItem(text, value)
+        if share and share.get("vers"):
+            index = self.vers.findData(share["vers"])
+            if index >= 0:
+                self.vers.setCurrentIndex(index)
         self.ro = QCheckBox("Read-only")
         self.ro.setChecked(bool(share and share["ro"] == "1"))
         self.auto = QCheckBox("Mount automatically (on first access, every boot)")
@@ -81,9 +125,12 @@ class ShareDialog(QDialog):
         form.addRow(self.user_label, self.user)
         self.pass_label = QLabel("Password")
         form.addRow(self.pass_label, self.password)
+        self.vers_label = QLabel("SMB version")
+        form.addRow(self.vers_label, self.vers)
         form.addRow("", self.ro)
         form.addRow("", self.auto)
-        hint = QLabel(f"Mounted at {MOUNT_ROOT}/<name>. Leave the username empty for guest access.")
+        hint = QLabel(f"Mounted at {MOUNT_ROOT}/<name>. Leave the username empty for guest access. "
+                      "If a server will not connect, try Automatic or an older SMB version.")
         hint.setWordWrap(True)
         hint.setStyleSheet("color: palette(mid);")
         form.addRow(hint)
@@ -103,17 +150,19 @@ class ShareDialog(QDialog):
         smb = self.type.currentData() == "smb"
         self.path_label.setText("Share name" if smb else "Export path")
         self.path.setPlaceholderText("Media" if smb else "/export/media")
-        for w in (self.user, self.password, self.user_label, self.pass_label):
+        for w in (self.user, self.password, self.user_label, self.pass_label, self.vers, self.vers_label):
             w.setVisible(smb)
 
     def values(self):
+        smb = self.type.currentData() == "smb"
         return {
             "name": self.name.text().strip(),
             "type": self.type.currentData(),
             "server": self.server.text().strip(),
             "path": self.path.text().strip(),
-            "user": self.user.text().strip() if self.type.currentData() == "smb" else "",
+            "user": self.user.text().strip() if smb else "",
             "password": self.password.text(),
+            "vers": self.vers.currentData() if smb else "",
             "ro": self.ro.isChecked(),
             "auto": self.auto.isChecked(),
         }
@@ -130,10 +179,18 @@ class ShareDialog(QDialog):
         if not v:
             return
         args = ["test", v["type"], v["server"], v["path"]] + ([v["user"]] if v["user"] else [])
-        rc, out = run_backend(args, stdin_text=v["password"] if v["user"] else None)
+        if v["type"] == "smb":
+            args += ["--vers", v["vers"]]
+        self.test_btn.setEnabled(False)
+        self.test_btn.setText("Testing...")
+        BackendCall(self, args, v["password"] if v["user"] else None, self.test_done)
+
+    def test_done(self, rc, out):
+        self.test_btn.setEnabled(True)
+        self.test_btn.setText("Test connection")
         if rc == 0:
             QMessageBox.information(self, "Network Shares", f"Connected.\n\n{out}")
-        else:
+        elif rc != 126:
             QMessageBox.critical(self, "Network Shares", f"Could not connect:\n\n{out}")
 
     def accept(self):
@@ -146,7 +203,7 @@ class SharesWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Network Shares")
         self.setWindowIcon(QIcon(ICON_PATH))
-        self.resize(760, 380)
+        self.resize(760, 400)
         central = QWidget()
         self.setCentralWidget(central)
         layout = QVBoxLayout(central)
@@ -179,6 +236,10 @@ class SharesWindow(QMainWindow):
         row.addWidget(self.refresh_btn)
         layout.addLayout(row)
 
+        self.status = QLabel()
+        self.status.setWordWrap(True)
+        layout.addWidget(self.status)
+
         self.add_btn.clicked.connect(self.add)
         self.edit_btn.clicked.connect(self.edit)
         self.remove_btn.clicked.connect(self.remove)
@@ -188,6 +249,7 @@ class SharesWindow(QMainWindow):
         self.refresh_btn.clicked.connect(self.refresh)
         self.table.itemSelectionChanged.connect(self.update_buttons)
         self.shares = []
+        self.busy = False
         QTimer.singleShot(0, self.refresh)
 
     def selected(self):
@@ -196,10 +258,13 @@ class SharesWindow(QMainWindow):
 
     def update_buttons(self):
         s = self.selected()
-        for b in (self.edit_btn, self.remove_btn, self.open_btn):
-            b.setEnabled(s is not None)
-        self.mount_btn.setEnabled(s is not None and s["mounted"] != "1")
-        self.unmount_btn.setEnabled(s is not None and s["mounted"] == "1")
+        idle = not self.busy
+        self.add_btn.setEnabled(idle)
+        for b in (self.edit_btn, self.remove_btn):
+            b.setEnabled(idle and s is not None)
+        self.open_btn.setEnabled(s is not None)
+        self.mount_btn.setEnabled(idle and s is not None and s["mounted"] != "1")
+        self.unmount_btn.setEnabled(idle and s is not None and s["mounted"] == "1")
 
     def refresh(self):
         rows, err = list_shares()
@@ -213,7 +278,11 @@ class SharesWindow(QMainWindow):
         self.shares = rows
         self.table.setRowCount(len(rows))
         for i, s in enumerate(rows):
-            vals = [s["name"], "SMB" if s["type"] == "smb" else "NFS", s["server"], s["path"],
+            if s["type"] == "smb":
+                kind = f"SMB {s['vers']}" if s.get("vers") else "SMB"
+            else:
+                kind = "NFS"
+            vals = [s["name"], kind, s["server"], s["path"],
                     "yes" if s["auto"] == "1" else "no",
                     ("mounted" if s["mounted"] == "1" else "not mounted") + (" (read-only)" if s["ro"] == "1" else "")]
             for j, v in enumerate(vals):
@@ -221,6 +290,19 @@ class SharesWindow(QMainWindow):
                 item.setFlags(item.flags() & ~Qt.ItemIsEditable)
                 self.table.setItem(i, j, item)
         self.update_buttons()
+
+    def run(self, args, stdin_text, busy_text, done):
+        self.busy = True
+        self.status.setText(busy_text)
+        self.update_buttons()
+
+        def finished(rc, out):
+            self.busy = False
+            self.status.setText("")
+            done(rc, out)
+            self.refresh()
+
+        BackendCall(self, args, stdin_text, finished)
 
     def apply(self, v):
         args = ["add", v["name"], v["type"], v["server"], v["path"]]
@@ -230,10 +312,19 @@ class SharesWindow(QMainWindow):
             args.append("--ro")
         if not v["auto"]:
             args.append("--no-auto")
-        rc, out = run_backend(args, stdin_text=v["password"] if v["user"] else None)
-        if rc != 0:
-            QMessageBox.critical(self, "Network Shares", f"Saving the share failed:\n\n{out}")
-        self.refresh()
+        if v["type"] == "smb":
+            args += ["--vers", v["vers"]]
+        busy_text = f"Saving {v['name']}..."
+        if v["type"] == "smb" and v["vers"] == "auto":
+            busy_text += " Finding an SMB version the server accepts (this can take a little while)."
+
+        def done(rc, out):
+            if rc not in (0, 126):
+                QMessageBox.critical(self, "Network Shares", f"Saving the share failed:\n\n{out}")
+            elif rc == 0 and "WARNING" in out:
+                QMessageBox.warning(self, "Network Shares", out)
+
+        self.run(args, v["password"] if v["user"] else None, busy_text, done)
 
     def add(self):
         d = ShareDialog(self)
@@ -258,19 +349,24 @@ class SharesWindow(QMainWindow):
             return
         if QMessageBox.question(self, "Network Shares", f"Remove the share \"{s['name']}\"?\n\nNothing on the server is touched.") != QMessageBox.Yes:
             return
-        rc, out = run_backend(["remove", s["name"]])
-        if rc != 0:
-            QMessageBox.critical(self, "Network Shares", out)
-        self.refresh()
+
+        def done(rc, out):
+            if rc not in (0, 126):
+                QMessageBox.critical(self, "Network Shares", out)
+
+        self.run(["remove", s["name"]], None, f"Removing {s['name']}...", done)
 
     def simple(self, action):
         s = self.selected()
         if not s:
             return
-        rc, out = run_backend([action, s["name"]])
-        if rc != 0:
-            QMessageBox.critical(self, "Network Shares", f"{action.capitalize()} failed:\n\n{out}")
-        self.refresh()
+        verb = "Mounting" if action == "mount" else "Unmounting"
+
+        def done(rc, out):
+            if rc not in (0, 126):
+                QMessageBox.critical(self, "Network Shares", f"{action.capitalize()} failed:\n\n{out}")
+
+        self.run([action, s["name"]], None, f"{verb} {s['name']}...", done)
 
     def open(self):
         s = self.selected()
