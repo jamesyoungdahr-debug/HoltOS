@@ -183,6 +183,11 @@ logged "No NVIDIA GPU — nothing to install".
   "Game Mode" from the app menu, Steam Big Picture on gamescope, "Switch
   to Desktop" from Steam's power menu, and "Start in Game Mode" from the
   tray. (No ISO copy to D:\ any more: Liam updates via the updater.)
+- **Restart prompt after system updates** — implemented on disk,
+  uncommitted, not built, not pushed (Liam's instruction). See CONTEXT.txt
+  for the state and the remaining on-screen check.
+- **the-den-client icon**: remaining cause is the client's own logo.svg
+  (invalid XML comment); HoltOS side is done.
 - **Snapshot semantics** (rescue boot vs rollback) — undecided.
 - **Two orphan public GitHub repos** from before the monorepo decision
   (`jamesyoungdahr-debug/holtos-glass-effect`, `/holtos-window-decoration`)

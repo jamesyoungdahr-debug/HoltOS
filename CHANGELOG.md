@@ -5,6 +5,17 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+- **Restart prompt after system-package updates** (Liam, 2026-09-12).
+  `holtos-update-apply system` now writes `/run/holtos-reboot-required`
+  (with a reason) when the running kernel's module directory is gone or
+  pacman upgraded a core package (kernel, firmware, systemd, mesa,
+  microcode, NVIDIA, PipeWire, KWin, SDDM, Plasma), and prints a
+  restart-required line; `holtos-update-picker` then ends with "Restart
+  now / Later". "Later" leaves the marker; it clears itself on reboot.
+  Picker drafted by the 4090's model; updater edit by hand after three
+  handoffs timed out (the model rewrites the whole 600-line file).
+  Verified on screen in the VM.
+
 ## [0.0.4-alpha] - 2026-09-12
 
 Game Mode release. Built and verified in the Hyper-V VM (builds 18-20);

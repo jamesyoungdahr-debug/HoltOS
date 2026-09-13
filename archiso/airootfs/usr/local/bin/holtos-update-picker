@@ -51,6 +51,18 @@ if [ "$status" -ne 0 ]; then
         --width=520 --wrap \
         --text="Update failed (exit $status):\n\n${detail}" \
         --button="Close:0"
+elif [ -f /run/holtos-reboot-required ]; then
+    # holtos-update-apply writes this marker when a system-package update
+    # needs a restart to take effect (kernel, firmware, core components).
+    # Ask, never force: "Later" leaves the marker for the tray to remind.
+    reason="$(cat /run/holtos-reboot-required)"
+    yad --image="$ICON" --title="HoltOS Updater" --window-icon="$ICON" \
+        --width=460 --wrap --center \
+        --text="Done. A restart is required to finish this update:\n${reason}.\n\nRestart now?" \
+        --button="Restart now:0" --button="Later:1"
+    if [ $? -eq 0 ]; then
+        systemctl reboot
+    fi
 else
     yad --image="$ICON" --title="HoltOS Updater" --window-icon="$ICON" \
         --text="Done. Everything's up to date." --button="Close:0"

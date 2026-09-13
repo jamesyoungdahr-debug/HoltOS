@@ -544,8 +544,27 @@ update_system() {
     /usr/local/bin/holtos-btrfs-snapshot system || echo "==> WARNING: pre-update snapshot failed, continuing without one" >&2
 
     echo "==> Updating system packages (pacman -Syu)..."
+    local before
+    before="$(date -u +%FT%TZ)"
     pacman -Syu --noconfirm
     log_history system pacman "$(date -u +%FT%TZ)"
+
+    # Tell the user when a reboot is needed to finish the update (Liam,
+    # 2026-09-12): the running kernel's module directory is gone (kernel
+    # replaced), or pacman upgraded a component that only takes effect
+    # after a reboot. The marker in /run vanishes on reboot by itself;
+    # holtos-update-picker reads it and offers "Restart now".
+    local reboot_reason=""
+    if [ ! -d "/usr/lib/modules/$(uname -r)" ]; then
+        reboot_reason="the kernel was updated"
+    elif awk -v since="[$before" '$1 >= since' /var/log/pacman.log 2>/dev/null \
+            | grep -qE '\] upgraded (linux|linux-lts|linux-firmware|systemd|mesa|lib32-mesa|amd-ucode|intel-ucode|nvidia[a-z0-9-]*|pipewire|plasma-desktop|kwin|sddm) '; then
+        reboot_reason="core system components were updated"
+    fi
+    if [ -n "$reboot_reason" ]; then
+        printf '%s\n' "$reboot_reason" > /run/holtos-reboot-required
+        echo "==> A restart is required to finish this update: $reboot_reason."
+    fi
 }
 
 if [ "$(id -u)" -ne 0 ]; then

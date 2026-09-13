@@ -12,6 +12,34 @@ Owner: Liam (GitHub jamesyoungdahr-debug, git user Vectorly)
 
 CURRENT STATE (2026-09-12, evening)
 -----------------------------------
+- UNCOMMITTED, DO NOT BUILD OR PUSH (Liam, 2026-09-12 ~21:00): restart
+  prompt after system-package updates. holtos-update-apply update_system()
+  writes /run/holtos-reboot-required (reason text) when the running
+  kernel's module dir is gone or pacman upgraded a core package (kernel,
+  firmware, systemd, mesa, microcode, nvidia, pipewire, kwin, sddm,
+  plasma-desktop) and prints "==> A restart is required...";
+  holtos-update-picker shows "Restart now / Later" when the marker exists
+  (Restart = systemctl reboot). Both pass bash -n. Picker edit by the
+  4090's model (run_coding_task); updater edit by hand (three handoffs
+  timed out: the model rewrites the whole 600-line file). Not yet seen on
+  screen: the SSH-launched picker failed at pkexec (no polkit agent
+  outside the session -- harness artifact); the VM (192.168.233.17) has
+  both scripts installed. SEEN ON SCREEN 2026-09-12 23:48 (VM clock):
+  picker from KRunner -> The Den Client -> Apply -> polkit prompt -> the
+  "Done. A restart is required to finish this update: <reason>. Restart
+  now?" dialog with Restart now / Later. Ready to commit when Liam says
+  so. VM address is now 172.25.64.50 (it rebooted at 21:14, which also
+  proved the /run marker clears on reboot).
+- the-den-client icon (v0.4.6): app_id is right now (KWin: class
+  the-den-client, desktopFile the-den-client) but src/assets/logo.svg is
+  invalid XML ("--" inside the comment on line 2), so Qt renders it
+  empty -> no window/task icon. Client-side fix + new tag needed.
+- Local workers: 4090 = qwen3-coder-30b-a3b-instruct, tool calls verified.
+  4080 = tool calls worked with qwen2.5-14b-instruct but it hallucinated a
+  value it should have read; at 21:00 the 4080 answered 400 (no model
+  loaded) -- Liam says a new model is coming; retest with the list/read/
+  write check. Another agent may be working alongside; check git status
+  and the LM Studio queue before handing off.
 - RELEASED v0.0.4-alpha (2026-09-12 ~19:45, commit de7f1fc): GitHub
   pre-release with notes; build 21 = release ISO (out/). Upgrade path
   verified on the build 20 VM install: `holtos-update-apply config the-den
