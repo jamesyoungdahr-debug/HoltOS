@@ -145,6 +145,9 @@ flatpak-kcm
 # TV remotes over HDMI-CEC: libcec (cec-client, and what Kodi and the
 # Jellyfin and Plex players use to talk to the TV).
 libcec
+# AppImages: most still link the FUSE 2 library (libfuse.so.2), so without
+# fuse2 they fail to start (many game launchers and tools ship this way).
+fuse2
 # Controllers (AUR, in local-repo/): Xbox pads over Bluetooth, and udev
 # rules so non-Steam controllers work without root.
 xpadneo-dkms
