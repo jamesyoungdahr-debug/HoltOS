@@ -305,6 +305,12 @@ update_config() {
     echo "$new_commit" > "$state"
     log_history config "$latest_tag" "$new_commit"
     echo "==> Config updated to $latest_tag"
+    # A new release can need packages or hardware extras that a file sync
+    # alone never installs (0.0.6-alpha's Z13 controls sat waiting for a
+    # separate "HoltOS components" install), so install them now.
+    if [ -x /usr/local/bin/holtos-system-extras ]; then
+        /usr/local/bin/holtos-system-extras apply || echo "==> WARNING: some HoltOS components could not be installed" >&2
+    fi
     progress config done 100
 }
 

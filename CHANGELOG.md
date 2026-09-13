@@ -5,6 +5,16 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.0.6a-alpha] - 2026-09-13
+
+- **Updating to a release installs what it needs straight away.** A config
+  update now finishes with `holtos-system-extras apply`, so a release's
+  required packages and hardware extras install in the same run. With
+  0.0.6-alpha, a ROG Flow Z13 had the Z13 switch on but no z13ctl or z13gui
+  until "HoltOS components" was installed separately or a system update
+  ran. Installs on 0.0.6-alpha get the fix on this update: the updater hands
+  over to the new copy of itself, which installs them.
+
 ## [0.0.6-alpha] - 2026-09-13
 
 - **On-screen keyboard.** KDE's `plasma-keyboard` is in the image and KWin
