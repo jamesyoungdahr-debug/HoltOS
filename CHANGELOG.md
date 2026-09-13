@@ -5,6 +5,33 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+- **Updates work like Windows Update** (Liam, 2026-09-13). HoltOS checks on
+  its own (a root timer, every 6 hours by default, and each time Game Mode
+  exits) and the new **HoltOS Updates** window shows what it is doing:
+  "Checking for updates..." with what it looks at, "You're up to date, last
+  checked today at 15:58", or each available update with its installed and
+  new version, release notes, and live progress (Downloading 42% ->
+  Installing -> Installed / Failed), plus a restart banner, the update
+  history, and settings: how often to check, automatic download, automatic
+  install (off / HoltOS and apps / everything), an install window for system
+  updates, and whether to check after Game Mode. The tray only reads the
+  result and notifies. Covers HoltOS itself, The Den and The Den Client,
+  every Arch package (kernel, firmware, drivers; the Arch keyring is
+  refreshed first), Flatpak apps and runtimes, and device firmware through
+  fwupd.
+- **Updates no longer reinstall what is already installed**: the updater
+  compares the installed commit or release tag and skips current items
+  (`--reinstall` forces it). Before, picking an item always re-downloaded
+  and reinstalled the latest release.
+- **Game Mode's Steam > System > Software Updates page installs HoltOS
+  updates**: HoltOS ships the `steamos-update` hook Steam calls (check exits
+  0/7, install reports a percentage), behind a polkit action that lets only
+  the active local admin run it without a prompt.
+- **Fixed**: the restart prompt could miss kernel and core upgrades on
+  machines not set to UTC (it compared a UTC time with pacman.log's local
+  time), and `holtos-*.timer` units never reached installed systems through
+  the updater (only `.service` units were synced).
+
 - **HoltOS's own KWin and plasma-workspace reach a working desktop**
   (fork plan Milestone 2). The first builds crashed at login: their
   `replaces=` drops the stock packages, and with them a dozen runtime

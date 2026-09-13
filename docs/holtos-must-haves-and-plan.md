@@ -143,8 +143,12 @@ Samba export of the pool; Tailscale for remote access.
 - Snapshots with one-click restore — done. Add: scheduled snapshots of
   the media pool (deleted-file insurance), retention setting in the tray.
 - Updates from HoltOS' own sources — done (component whitelist + package
-  repo). Add: update window (e.g. 04:00) and auto-rollback if the desktop
-  fails to come up twice.
+  repo). **Windows-style updater (2026-09-13, branch `updater`):** automatic
+  checks on a timer and after Game Mode, version-aware installs, the HoltOS
+  Updates window with live progress and settings (interval, auto-download,
+  auto-install, install window), system packages including the kernel,
+  Flatpak, fwupd firmware, and Steam's own Software Updates page in Game
+  Mode. Still to add: auto-rollback if the desktop fails to come up twice.
 - Disk health — done (plasma-disks). **SMART notification + monthly scrub
   added (2026-09-13):** `etc/smartd.conf` (DEVICESCAN, no spin-up of
   sleeping disks, `-M exec`) has smartd call `holtos-disk-alert`, which

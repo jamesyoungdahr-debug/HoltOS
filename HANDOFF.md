@@ -275,6 +275,53 @@ in this commit; nothing is pushed, tagged or released.
   release + updater, never a reflash. **Never reboot LiamPC yourself**
   (Liam). Both LM Studio bridges (4090 + 4080) are co-primary workers.
 
+## Updater redesign (2026-09-13, branch `updater`)
+
+Liam: make the updater work like Windows Update. No clicking to check, a
+real version check, visible progress, user control over automatic
+installs, everything a normal update covers (kernel and the rest), and OS
+and app updates inside Game Mode's own Steam update page. Every unit was
+drafted by the local models except the polkit action, the polkit rule and
+the settings helper (security-sensitive, written by hand).
+
+- **Pieces**: `holtos-update-status` (root; checks HoltOS, The Den and
+  Client, `checkupdates`, Flatpak and fwupd, writes
+  `/var/lib/holtos/update-status.json`; `--auto` installs what
+  `/etc/holtos/updates.conf` allows); `holtos-update-check.{service,timer}`;
+  `holtos-update-install` and its `.service` (progress to
+  `/run/holtos-update/progress.log`); `holtos-update-apply` (skips what is
+  installed, `available`, `--reinstall`, `@@ item stage pct [bytes]`
+  progress lines, flatpak and firmware items, pacman with the keyring first
+  in a download step and an install step); `holtos-update-settings`
+  (validating root writer plus the timer drop-in); `holtos-updates` (the
+  PySide6 window); `holtos-tray` (reads the status, notifies);
+  `/usr/bin/steamos-update`, `steamos-polkit-helpers/` and the
+  `jupiter-biosupdate` stub; `org.holtos.updates.policy`;
+  `51-holtos-updates.rules`. Removed: `holtos-update-check`,
+  `holtos-check-notify`, `holtos-update-picker`, `holtos-update-history`.
+  New packages: `pacman-contrib`, `fakeroot` (checkupdates needs it),
+  `fwupd`.
+- **Verified on the build 23 live VM** (files copied in; the services'
+  live-medium condition lifted with a `/run` drop-in for the test): a status
+  check in about 2 seconds; Steam's `check` exits 0 with an update and 7
+  without, and the duplicate-detection probe exits 0; the settings helper
+  rejects bad values and keys (including `04:00;rm`) and writes the timer
+  drop-in; HoltOS, The Den and The Den Client skip as already installed; the
+  window refreshes by itself, and "Check for updates" and "Install now"
+  start the root services with no password prompt when it is opened from
+  the desktop session; the install log ends `@@ all finished 0` and the
+  status refreshes. Two bugs found live and fixed: an image built from an
+  untagged commit offered its own release again (the same tag now counts as
+  installed), and `checkupdates` failed without `fakeroot`.
+- **Testing gotcha**: polkit judges the caller's login session. A window
+  started from an SSH shell belongs to a remote, inactive session and is
+  correctly refused; open it from the desktop (KRunner or the menu).
+- **Not yet verified**: the tray (it exits on the live medium), the timer
+  and automatic installs on an installed system, Steam's update page and the
+  Game Mode exit check (need a real GPU), fwupd with real devices, and a real
+  system or Flatpak update with its progress. Next: an ISO from this branch
+  and a fresh install in the VM.
+
 ## Still open
 
 - **Milestone 2 crash: root-caused, fixed and verified on a fresh ISO (build 23).**
