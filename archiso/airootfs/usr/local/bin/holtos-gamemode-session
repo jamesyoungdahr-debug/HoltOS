@@ -45,14 +45,21 @@ if [ -f /etc/holtos/gamemode-resolution ]; then
 fi
 
 START_TS=$(date +%s)
-# Run gamescope with steam big picture flags
-gamescope "${args[@]}" -- \
-    steam -gamepadui -steamos3 -steampal -steamdeck
+# Run gamescope with steam big picture flags. holtos-gamemode-client starts
+# Steam inside gamescope after handing gamescope's display to the user
+# services that draw over Game Mode (z13gui).
+gamescope "${args[@]}" -- /usr/local/bin/holtos-gamemode-client
 
 GAMESCOPE_EXIT=$?
 
 # Log exit status and end session
 log "Gamescope exited with code $GAMESCOPE_EXIT."
+
+# z13gui picks its display backend once, at start: stop the Game Mode copy
+# and drop gamescope's environment file so the next desktop login starts it
+# fresh on the desktop.
+systemctl --user stop z13gui.service 2>/dev/null || true
+rm -f "${XDG_RUNTIME_DIR:-/nonexistent}/gamescope-environment"
 
 # Check for updates on the way out of Game Mode (Liam, 2026-09-13) unless
 # turned off in HoltOS Updates > Settings. The check is a root service;

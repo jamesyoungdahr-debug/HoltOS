@@ -5,6 +5,17 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.0.6d-alpha] - 2026-09-13
+
+- **ROG Flow Z13 controls work in Game Mode.** z13ctl and z13gui are started
+  by the desktop's graphical-session.target, which the gamescope session
+  never reaches, so they only ran in Plasma. gamescope now starts
+  `holtos-gamemode-client`, which passes gamescope's `DISPLAY` and
+  `GAMESCOPE_WAYLAND_DISPLAY` to z13gui (`$XDG_RUNTIME_DIR/gamescope-environment`,
+  where it looks for them), starts z13ctl and z13gui, then runs Steam as
+  before. Leaving Game Mode stops the Game Mode copy of z13gui, so the
+  desktop starts it again in its desktop mode.
+
 ## [0.0.6c-alpha] - 2026-09-13
 
 - **HoltOS updates deliver new files, not just changes to existing ones.**

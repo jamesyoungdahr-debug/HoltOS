@@ -1,0 +1,19 @@
+#!/bin/bash
+# The command gamescope starts in HoltOS Game Mode (holtos-gamemode-session).
+# gamescope exports DISPLAY and GAMESCOPE_WAYLAND_DISPLAY before it starts
+# this, so this is the one place those are known. Hand them to systemd --user
+# services that draw over Game Mode, then become Steam.
+#
+# z13gui (ROG Flow Z13 controls) reads %t/gamescope-environment and picks
+# its gamescope overlay backend when GAMESCOPE_WAYLAND_DISPLAY is set and its
+# socket exists. Its unit is started by graphical-session.target, which the
+# gamescope session never reaches, so it is started here instead.
+if [ -n "${GAMESCOPE_WAYLAND_DISPLAY:-}" ] && [ -n "${XDG_RUNTIME_DIR:-}" ]; then
+    printf 'DISPLAY=%s\nGAMESCOPE_WAYLAND_DISPLAY=%s\n' "${DISPLAY:-}" "$GAMESCOPE_WAYLAND_DISPLAY" \
+        > "$XDG_RUNTIME_DIR/gamescope-environment"
+    if systemctl --user cat z13gui.service >/dev/null 2>&1; then
+        systemctl --user start --no-block z13ctl.socket z13gui.service 2>/dev/null || true
+    fi
+fi
+
+exec steam -gamepadui -steamos3 -steampal -steamdeck

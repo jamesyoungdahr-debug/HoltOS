@@ -5,7 +5,7 @@ iso_name="holtos"
 iso_label="HOLTOS_$(date --date="@${SOURCE_DATE_EPOCH:-$(date +%s)}" +%Y%m)"
 iso_publisher="HoltOS <https://github.com/jamesyoungdahr-debug/HoltOS>"
 iso_application="HoltOS Live/Install Medium"
-iso_version="0.0.6c-alpha"
+iso_version="0.0.6d-alpha"
 install_dir="arch"
 buildmodes=('iso')
 bootmodes=('bios.syslinux'
@@ -46,6 +46,7 @@ file_permissions=(
   ["/usr/local/bin/holtos-update-install"]="0:0:755"
   ["/usr/local/bin/holtos-update-settings"]="0:0:755"
   ["/usr/local/bin/holtos-system-extras"]="0:0:755"
+  ["/usr/local/bin/holtos-gamemode-client"]="0:0:755"
   ["/usr/bin/steamos-update"]="0:0:755"
   ["/usr/bin/steamos-polkit-helpers/steamos-update"]="0:0:755"
   ["/usr/bin/jupiter-biosupdate"]="0:0:755"
