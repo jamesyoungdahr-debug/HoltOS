@@ -141,6 +141,7 @@ def main():
     menu.addAction("Rescan Boot Menu", lambda: run("/usr/local/bin/holtos-rescan-bootmenu"))
     menu.addSeparator()
     menu.addAction("Network Shares...", lambda: run("/usr/local/bin/holtos-shares"))
+    menu.addAction("Gaming...", lambda: run("/usr/local/bin/holtos-gaming"))
     menu.addAction("Update Proton GE", lambda: run("/usr/local/bin/holtos-update-proton-ge"))
     menu.addAction("Game Mode now", lambda: run("/usr/local/bin/steamos-session-select", "gamescope"))
     add_gamemode_toggle(menu)

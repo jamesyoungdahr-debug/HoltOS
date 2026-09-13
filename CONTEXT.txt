@@ -13,6 +13,36 @@ Owner: Liam (GitHub jamesyoungdahr-debug, git user Vectorly)
 
 CURRENT STATE (2026-09-13, night)
 ----------------------------------
+- LATEST (2026-09-13, late) — READ THIS FIRST. Full detail in HANDOFF.md
+  ("Fork Milestones 1-4 ...") and docs/holtos-plasma-fork-plan.md.
+  * Milestones 1+2 of the fork plan: both PKGBUILDs build; pacman takes
+    holtos-kwin/holtos-plasma-workspace over extra's (provides/conflicts/
+    replaces — NOT IgnorePkg); ISO holtos-0.0.4-alpha-x86_64.iso built.
+    BUT the first live boot crashes: kwin_wayland SIGSEGV in
+    KWin::Application's ctor inside Qt platform-theme init, everything else
+    cascades. Not version skew (.BUILDINFO matches live). Suspect
+    -DKWIN_BUILD_GLOBALSHORTCUTS=ON; reverted to OFF, rebuild was ~69% done
+    in out/milestone3-globalshortcuts-fix.log when work paused. VM
+    holtos-test is OFF with the crashing ISO attached. If the rebuild still
+    crashes: debug-symbol build next (PKGBUILD strips them: options=(!debug)).
+  * Milestone 3: HoltOS blur port merged into holtos-kwin's in-tree
+    src/plugins/blur (fork commit 75d843a, pushed) — compiled clean in the
+    same rebuild. holtos-glass-effect stays until this is verified live.
+  * Milestone 4: holtos-systemsettings forked (v6.7.5, holtos branch) +
+    PKGBUILD written; NOT built/wired yet on purpose.
+  * Backlog done, none live-tested yet: holtos-gaming page (tray "Gaming..."),
+    xdg-desktop-portal-kde, NVIDIA modprobe.d fbdev=1, /usr/lib/os-session-select
+    shim, gamescope-session-*/decky-loader in the AUR list only,
+    smartd.conf + holtos-scrub.timer + holtos-disk-alert-notice.
+  * Pipeline: .pacman-cache/ persists downloads; build-aur-packages.sh
+    installs each AUR pkg as it goes (same-run deps). RULES: never edit a
+    script while a container has it bind-mounted (bash re-reads mid-run);
+    TaskStop leaves the podman container running — `podman ps -a`, stop it.
+    Local-model edits of long prose files: use the bridge's edit_file
+    (exact replace), NOT run_coding_task — it gutted this file once.
+  * VM driving: vmconnect needs `key` per character (type doesn't reach
+    the guest), shift+minus = underscore, Ctrl+Alt+F3 = tty. Password
+    liveuser/liveuser. Never reboot LiamPC itself (dual-boots real HoltOS).
 - HOLTOS GLASS v2 (uncommitted, live-tuned in the VM only — see below for
   exactly what's baked in vs. not): Liam's reference photo showed a much
   softer, brighter "milk glass" look than HoltOS ships. Root-caused in the

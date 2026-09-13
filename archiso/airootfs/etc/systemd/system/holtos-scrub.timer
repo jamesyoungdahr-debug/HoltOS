@@ -1,0 +1,13 @@
+[Unit]
+Description=HoltOS: monthly Btrfs/ZFS scrub
+# Persistent=true runs a missed scrub at the next boot -- a living-room box
+# is often off on the 1st of the month.
+ConditionPathExists=!/run/archiso
+
+[Timer]
+OnCalendar=monthly
+Persistent=true
+RandomizedDelaySec=1h
+
+[Install]
+WantedBy=timers.target

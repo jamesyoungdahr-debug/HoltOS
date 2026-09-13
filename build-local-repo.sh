@@ -22,6 +22,7 @@ cd "$(dirname "$0")"
 WSL_ROOT="/mnt$(pwd)"
 HOLTOS_REV="$(git rev-list --count HEAD 2>/dev/null || echo 0)"
 mkdir -p local-repo
+mkdir -p .pacman-cache
 
 # Must be set BEFORE the first wsl call, not just before `podman run`: Git
 # Bash rewrites any argument that looks like a POSIX path (/mnt/c/...)
@@ -33,6 +34,7 @@ export MSYS_NO_PATHCONV=1
 wsl -d Ubuntu -- sudo podman build -t aur-builder \
     -f "${WSL_ROOT}/containers/aur-builder.Containerfile" "${WSL_ROOT}"
 
+# persists pacman's downloaded packages across container runs (which are --rm and otherwise start from an empty cache each time), since rebuilding holtos-kwin/holtos-plasma-workspace during iteration re-downloads the same ~266MB of shared dependencies every single retry otherwise
 wsl -d Ubuntu -- sudo podman run --rm \
     -e "AUR_PKGS=${AUR_PKGS:-}" \
     -e "HOLTOS_PKGS=${HOLTOS_PKGS:-}" \
@@ -41,6 +43,7 @@ wsl -d Ubuntu -- sudo podman run --rm \
     -v "${WSL_ROOT}/packaging:/pkgbuilds:Z" \
     -v "${WSL_ROOT}/forks:/forks:Z" \
     -v "${WSL_ROOT}/local-repo:/tmp/pkgout:Z" \
+    -v "${WSL_ROOT}/.pacman-cache:/var/cache/pacman/pkg:Z" \
     aur-builder \
     bash /build-aur-packages.sh
 

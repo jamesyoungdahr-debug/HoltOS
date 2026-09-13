@@ -13,6 +13,7 @@ url="https://github.com/jamesyoungdahr-debug/holtos-kwin"
 license=(GPL-2.0-or-later GPL-3.0-or-later)
 provides=(kwin=6.7.5)
 conflicts=(kwin)
+replaces=(kwin)
 depends=(qt6-base qt6-declarative qt6-multimedia qt6-sensors qt6-svg qt6-wayland
          kcmutils kcompletion kconfig kconfigwidgets kcoreaddons kcrash kdbusaddons
          kdeclarative kglobalaccel ki18n kiconthemes kidletime kirigami
@@ -25,12 +26,12 @@ depends=(qt6-base qt6-declarative qt6-multimedia qt6-sensors qt6-svg qt6-wayland
          mesa polkit-qt6 qcoro-qt6 kdecoration kauth kcolorscheme kguiaddons ksvg
          knighttime kwayland)
 makedepends=(cmake extra-cmake-modules git qt6-tools vulkan-headers pkgconf
-             wayland-protocols kdoctools)
+             wayland-protocols kdoctools kglobalacceld)
 options=(!debug)
 source=("git+${url}.git#branch=holtos")
 sha256sums=('SKIP')
 
-# global shortcuts disabled for now because Arch's kglobalaccel package doesn't appear to export the KGlobalAccelD CMake config KWin's build looks for; revisit once confirmed whether that's a real packaging gap or a wrong dependency
+# global shortcuts reverted to OFF (2026-09-13): the first real live-session boot test of this build (with GLOBALSHORTCUTS=ON, kglobalacceld only as a makedepend) crashed kwin_wayland with a segfault deep in Qt's platform theme init (QGuiApplicationPrivate::handleThemeChangedEvent, via KdeTheme::createKdeTheme), cascading into every other Plasma component failing since no Wayland compositor was ever running. qt6-base/frameworkintegration versions were confirmed identical between build time (.BUILDINFO) and the live system, ruling out a version-skew explanation. Reverting this flag isolates whether the change (and kglobalacceld only being a build-time dep, not a runtime one) is the cause -- revisit only after this is confirmed safe and, if re-enabling, add kglobalacceld to depends=() too, not just makedepends=().
 build() {
     cmake -B build -S "${pkgname}" \
         -DCMAKE_INSTALL_PREFIX=/usr \

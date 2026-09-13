@@ -1,0 +1,157 @@
+#!/usr/bin/env python3
+"""HoltOS Gaming — the "Gaming" page from docs/holtos-must-haves-and-plan.md 1.1.
+
+One window showing what the gaming stack on this machine actually is:
+the Steam, gamescope, gamemode and MangoHud package versions, the Proton GE
+builds installed for this user, whether a newer Proton GE exists, and the
+Game Mode session settings. Buttons hand off to the existing tools
+(holtos-update-proton-ge, steamos-session-select, holtos-session-apply) so
+nothing here duplicates logic that already works. PySide6, like holtos-tray
+and holtos-shares, so it wears the HoltOS Glass theme like every other Qt
+window.
+"""
+import os
+import subprocess
+import sys
+
+from PySide6.QtCore import QObject, QThread, Signal
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import (
+    QApplication, QCheckBox, QDialog, QFormLayout, QGroupBox, QHBoxLayout,
+    QLabel, QPushButton, QVBoxLayout,
+)
+
+ICON_PATH = "/usr/share/icons/hicolor/scalable/apps/holtos-logo.svg"
+PROTON_GE = "/usr/local/bin/holtos-proton-ge"
+SESSION_CONF = "/etc/holtos/session.conf"
+
+
+def package_version(name):
+    proc = subprocess.run(["pacman", "-Q", name], capture_output=True, text=True)
+    if proc.returncode != 0:
+        return "not installed"
+    parts = proc.stdout.split()
+    return parts[1] if len(parts) == 2 else proc.stdout.strip()
+
+
+def proton_ge_installed():
+    proc = subprocess.run([PROTON_GE, "--list"], capture_output=True, text=True)
+    versions = [line.strip() for line in proc.stdout.splitlines() if line.strip()]
+    return versions or ["none"]
+
+
+def game_mode_default():
+    try:
+        with open(SESSION_CONF) as f:
+            return any(line.strip() == "DEFAULT=gamemode" for line in f)
+    except OSError:
+        return False
+
+
+class ProtonCheck(QObject):
+    done = Signal(str, bool)
+
+    def run(self):
+        # --check exits 0 when an update exists, 1 when up to date, other on error.
+        proc = subprocess.run([PROTON_GE, "--check"], capture_output=True, text=True)
+        text = (proc.stdout + proc.stderr).strip() or "check failed"
+        if proc.returncode == 0:
+            self.done.emit(f"Update available: {text}", True)
+        elif proc.returncode == 1:
+            self.done.emit(f"Up to date ({text.split('->')[0].strip()})", False)
+        else:
+            self.done.emit(f"Could not check: {text}", False)
+
+
+class GamingWindow(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("HoltOS Gaming")
+        self.setWindowIcon(QIcon(ICON_PATH))
+        self.setMinimumWidth(480)
+        layout = QVBoxLayout(self)
+
+        stack = QGroupBox("Installed")
+        form = QFormLayout(stack)
+        for label, pkg in (("Steam", "steam"), ("gamescope", "gamescope"),
+                           ("gamemode", "gamemode"), ("MangoHud", "mangohud")):
+            form.addRow(label, QLabel(package_version(pkg)))
+        layout.addWidget(stack)
+
+        proton = QGroupBox("Proton GE")
+        pform = QFormLayout(proton)
+        pform.addRow("Installed", QLabel("\n".join(proton_ge_installed())))
+        self.proton_status = QLabel("Checking for updates...")
+        pform.addRow("Latest", self.proton_status)
+        buttons = QHBoxLayout()
+        self.update_button = QPushButton("Update Proton GE")
+        self.update_button.setEnabled(False)
+        self.update_button.clicked.connect(self.update_proton)
+        buttons.addWidget(self.update_button)
+        buttons.addStretch()
+        pform.addRow(buttons)
+        layout.addWidget(proton)
+
+        session = QGroupBox("Game Mode")
+        sform = QVBoxLayout(session)
+        self.default_toggle = QCheckBox("Start in Game Mode at boot")
+        self.default_toggle.setChecked(game_mode_default())
+        self.default_toggle.toggled.connect(self.set_default)
+        sform.addWidget(self.default_toggle)
+        switch = QPushButton("Switch to Game Mode now")
+        switch.clicked.connect(lambda: subprocess.Popen(["/usr/local/bin/steamos-session-select", "gamescope"]))
+        sform.addWidget(switch)
+        layout.addWidget(session)
+
+        close = QHBoxLayout()
+        close.addStretch()
+        close_button = QPushButton("Close")
+        close_button.clicked.connect(self.accept)
+        close.addWidget(close_button)
+        layout.addLayout(close)
+
+        # The GitHub check is a network call; keep the window responsive.
+        self.thread = QThread()
+        self.checker = ProtonCheck()
+        self.checker.moveToThread(self.thread)
+        self.thread.started.connect(self.checker.run)
+        self.checker.done.connect(self.on_check_done)
+        self.thread.start()
+
+    def on_check_done(self, text, update_available):
+        self.proton_status.setText(text)
+        self.update_button.setEnabled(True)
+        if update_available:
+            self.update_button.setText("Update Proton GE (new version available)")
+        self.thread.quit()
+
+    def update_proton(self):
+        subprocess.Popen(["/usr/local/bin/holtos-update-proton-ge"])
+        self.accept()
+
+    def set_default(self, checked):
+        proc = subprocess.run(
+            ["pkexec", "/usr/local/bin/holtos-session-apply", "--default", "gamemode" if checked else "plasma"],
+            capture_output=True, text=True,
+        )
+        if proc.returncode != 0:
+            self.default_toggle.blockSignals(True)
+            self.default_toggle.setChecked(not checked)
+            self.default_toggle.blockSignals(False)
+
+    def closeEvent(self, event):
+        if self.thread.isRunning():
+            self.thread.quit()
+            self.thread.wait(2000)
+        super().closeEvent(event)
+
+
+def main():
+    app = QApplication(sys.argv)
+    window = GamingWindow()
+    window.show()
+    sys.exit(app.exec())
+
+
+if __name__ == "__main__":
+    main()

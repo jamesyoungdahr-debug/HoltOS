@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+# Monthly data scrub (docs/holtos-must-haves-and-plan.md, section 4 and
+# media-server-must-haves.md #3): checks every mounted Btrfs filesystem
+# and every imported ZFS pool against their checksums and repairs what it
+# can from redundancy. Run by holtos-scrub.timer as root. A media pool's
+# silent bit rot is exactly what this catches before the only copy of a
+# file is already gone.
+#
+# Results go to /var/lib/holtos/scrub.log. Any filesystem that reports
+# errors also appends a line to /var/lib/holtos/disk-alert, which the
+# per-login holtos-disk-alert-notice shows to the user -- a root service
+# has no way to reach the desktop directly.
+set -uo pipefail
+
+LOG=/var/lib/holtos/scrub.log
+ALERT=/var/lib/holtos/disk-alert
+mkdir -p /var/lib/holtos
+touch "$LOG"
+chmod 644 "$LOG"
+
+log() { echo "$(date -u +%FT%TZ) $*" | tee -a "$LOG"; }
+alert() {
+    echo "$(date -u +%FT%TZ) $*" >> "$ALERT"
+    chmod 644 "$ALERT"
+    logger -t holtos-scrub -p user.err "$*"
+}
+
+status=0
+log "scrub started"
+
+# Btrfs: one scrub per filesystem, not per mount (@ and @home are the
+# same filesystem mounted twice). -B waits for completion so the exit
+# status is the real result; -d gives per-device stats in the log.
+declare -A seen
+while read -r uuid target; do
+    [ -n "$uuid" ] || continue
+    [ -n "${seen[$uuid]:-}" ] && continue
+    seen[$uuid]=1
+    log "btrfs scrub: $target ($uuid)"
+    if out="$(btrfs scrub start -B -d "$target" 2>&1)"; then
+        printf '%s\n' "$out" >> "$LOG"
+        if printf '%s\n' "$out" | grep -qiE 'error summary:.*[^0]|uncorrectable'; then
+            alert "Btrfs scrub found errors on $target -- see /var/lib/holtos/scrub.log"
+            status=1
+        fi
+    else
+        printf '%s\n' "$out" >> "$LOG"
+        alert "Btrfs scrub FAILED on $target -- see /var/lib/holtos/scrub.log"
+        status=1
+    fi
+done < <(findmnt -rn -t btrfs -o UUID,TARGET)
+
+# ZFS: only if the tools and a pool are actually there (the media pool is
+# optional; the root is Btrfs).
+if command -v zpool >/dev/null 2>&1; then
+    for pool in $(zpool list -H -o name 2>/dev/null); do
+        log "zpool scrub: $pool"
+        if zpool scrub "$pool" 2>>"$LOG" && zpool wait -t scrub "$pool" 2>>"$LOG"; then
+            zpool status "$pool" >> "$LOG" 2>&1
+            if zpool status -x "$pool" 2>/dev/null | grep -qv 'is healthy'; then
+                alert "ZFS pool $pool is not healthy after scrub -- see /var/lib/holtos/scrub.log"
+                status=1
+            fi
+        else
+            alert "ZFS scrub FAILED on pool $pool -- see /var/lib/holtos/scrub.log"
+            status=1
+        fi
+    done
+fi
+
+log "scrub finished (status $status)"
+exit "$status"

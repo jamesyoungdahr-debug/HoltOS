@@ -38,6 +38,10 @@ systemctl enable holtos-pacman-keyring-init.service
 # Finishes a snapshot restore on the next boot (deletes the replaced root
 # subvolume, which cannot be removed while it is the running root).
 systemctl enable holtos-btrfs-restore-cleanup.service
+# Disk health: smartd polls SMART and records failures for the per-login
+# notice (etc/smartd.conf -> holtos-disk-alert); the timer scrubs every
+# Btrfs filesystem and ZFS pool monthly (holtos-scrub).
+systemctl enable smartd.service holtos-scrub.timer
 
 # [multilib] for the live AND installed system (Steam + lib32 drivers are
 # in the image; without this the installed system could not update them).

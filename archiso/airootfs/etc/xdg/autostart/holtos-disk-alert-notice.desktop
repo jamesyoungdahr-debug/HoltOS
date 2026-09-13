@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=HoltOS disk health notice
+Comment=Shows SMART and scrub alerts recorded by the system's disk monitoring
+Exec=/usr/local/bin/holtos-disk-alert-notice
+OnlyShowIn=KDE;
+NoDisplay=true
+X-KDE-autostart-phase=2

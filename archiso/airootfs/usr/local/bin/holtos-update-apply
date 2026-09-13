@@ -178,7 +178,7 @@ update_config() {
     echo "==> Reloading systemd and enabling new HoltOS units..."
     systemctl daemon-reload
     local unit
-    for unit in /etc/systemd/system/holtos-*.service; do
+    for unit in /etc/systemd/system/holtos-*.service /etc/systemd/system/holtos-*.timer; do
         [ -f "$unit" ] || continue
         grep -q '^\[Install\]' "$unit" || continue
         systemctl enable "$(basename "$unit")" >/dev/null 2>&1 || true

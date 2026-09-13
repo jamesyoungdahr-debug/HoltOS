@@ -11,6 +11,7 @@ url="https://github.com/jamesyoungdahr-debug/holtos-plasma-workspace"
 license=(GPL-2.0-or-later GPL-3.0-or-later LGPL-2.1-or-later)
 provides=(plasma-workspace=6.7.5)
 conflicts=(plasma-workspace)
+replaces=(plasma-workspace)
 depends=(qt6-base qt6-declarative qt6-quick3d qt6-svg qt6-wayland qt6-multimedia
          qt6-networkauth qt6-location qcoro-qt6
          plasma-activities plasma-activities-stats kauth kbookmarks kcmutils kcompletion

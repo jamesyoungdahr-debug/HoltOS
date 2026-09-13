@@ -1,0 +1,29 @@
+#!/bin/bash
+# Autostarted on every login (etc/xdg/autostart). Shows the disk-health
+# alerts that smartd (holtos-disk-alert) and the monthly scrub
+# (holtos-scrub) recorded in /var/lib/holtos/disk-alert, since those run
+# as root and cannot reach the desktop themselves. Same pattern as
+# holtos-snapshot-boot-notice. Never on the live medium.
+#
+# Dismissing is per user and needs no root: the alert file's modification
+# time is remembered in ~/.config/holtos, and the dialog only reappears
+# when the file changes again.
+ICON=/usr/share/icons/hicolor/scalable/apps/holtos-logo.svg
+ALERT=/var/lib/holtos/disk-alert
+SEEN="${XDG_CONFIG_HOME:-$HOME/.config}/holtos/disk-alert-seen"
+
+[ -e /run/archiso ] && exit 0
+[ -s "$ALERT" ] || exit 0
+
+stamp="$(stat -c %Y "$ALERT" 2>/dev/null)" || exit 0
+[ "$(cat "$SEEN" 2>/dev/null)" = "$stamp" ] && exit 0
+
+body="$(tail -n 8 "$ALERT" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')"
+yad --title="HoltOS" --image=dialog-warning --window-icon="$ICON" --width=560 --wrap \
+    --text="<b>A disk needs attention.</b>\n\n${body}\n\nBack up anything important on it now. Details: System Settings &gt; Disks &amp; Devices, or /var/lib/holtos/scrub.log." \
+    --button="Open Disk Health:2" --button="Remind me next login:1" --button="Dismiss:0"
+case $? in
+    0) mkdir -p "$(dirname "$SEEN")"; echo "$stamp" > "$SEEN" ;;
+    2) systemsettings kcm_disks >/dev/null 2>&1 & ;;
+esac
+exit 0

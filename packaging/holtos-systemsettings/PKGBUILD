@@ -1,0 +1,36 @@
+# HoltOS System Settings — the systemsettings fork HoltOS owns (fork of KDE's
+# systemsettings at github.com/jamesyoungdahr-debug/holtos-systemsettings,
+# branch "holtos", pinned off tag v6.7.5). This builds a vanilla System
+# Settings so HoltOS can eventually customize its Kirigami sidebar chrome
+# directly (Milestone 4 of docs/holtos-plasma-fork-plan.md).
+pkgname=holtos-systemsettings
+pkgver=6.7.5.r${HOLTOS_REV:-0}
+pkgrel=1
+pkgdesc="HoltOS's fork of System Settings (Milestone 4: vanilla build, no HoltOS customization yet)"
+arch=(x86_64)
+url="https://github.com/jamesyoungdahr-debug/holtos-systemsettings"
+license=(GPL-2.0-or-later GPL-3.0-or-later LGPL-2.1-or-later)
+provides=(systemsettings=6.7.5)
+conflicts=(systemsettings)
+replaces=(systemsettings)
+depends=(qt6-base qt6-declarative
+         kauth kcrash kitemviews kitemmodels kcmutils ki18n kio kservice
+         kiconthemes kwidgetsaddons kwindowsystem kxmlgui kdbusaddons
+         kconfig kguiaddons kirigami kjobwidgets krunner kcolorscheme
+         plasma-activities)
+makedepends=(cmake extra-cmake-modules git kdoctools)
+options=(!debug)
+source=("git+${url}.git#branch=holtos")
+sha256sums=('SKIP')
+
+build() {
+    cmake -B build -S "${pkgname}" \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_TESTING=OFF
+    cmake --build build
+}
+
+package() {
+    DESTDIR="${pkgdir}" cmake --install build
+}

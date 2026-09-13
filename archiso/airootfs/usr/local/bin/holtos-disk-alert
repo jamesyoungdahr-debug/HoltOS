@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# smartd's "-M exec" target (see /etc/smartd.conf): smartd runs this as
+# root when a disk's SMART health, attributes or self-test reports a
+# problem. A root daemon cannot put a window on the user's desktop, so
+# this records the alert in /var/lib/holtos/disk-alert and the per-login
+# holtos-disk-alert-notice shows it. smartd sets SMARTD_DEVICE,
+# SMARTD_FAILTYPE and SMARTD_MESSAGE in the environment.
+set -uo pipefail
+
+ALERT=/var/lib/holtos/disk-alert
+mkdir -p /var/lib/holtos
+{
+    echo "$(date -u +%FT%TZ) SMART ${SMARTD_FAILTYPE:-alert} on ${SMARTD_DEVICE:-unknown device}: ${SMARTD_MESSAGE:-no details}"
+} >> "$ALERT"
+chmod 644 "$ALERT"
+logger -t holtos-disk-alert -p user.err "SMART ${SMARTD_FAILTYPE:-alert} on ${SMARTD_DEVICE:-?}: ${SMARTD_MESSAGE:-}"
+exit 0

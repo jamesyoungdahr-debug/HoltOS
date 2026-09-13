@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Hook for gamescope-session-steam-git's own steamos-session-select (see
+# github.com/ChimeraOS/gamescope-session-steam): it execs exactly this path
+# with all arguments unchanged, falling back to `steam -shutdown` if this
+# file is absent. Not wired into packages.x86_64 yet -- this exists so that
+# when it is, the hook delegates to HoltOS's own already-working switch
+# logic instead of silently falling back.
+exec /usr/local/bin/steamos-session-select "$@"

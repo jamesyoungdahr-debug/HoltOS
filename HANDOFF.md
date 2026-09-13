@@ -200,8 +200,93 @@ logged "No NVIDIA GPU — nothing to install".
   NOT pass through the 4090 too — that would take it away from LM Studio
   entirely while assigned, and the 4090 was still needed for coding.
 
+## Fork Milestones 1-4, gaming/NVIDIA backlog, disk health (2026-09-13, autonomous run)
+
+Liam authorised working through every milestone of `docs/holtos-plasma-fork-plan.md`
+unattended, plus backlog items while builds ran. Everything below is committed
+in this commit; nothing is pushed, tagged or released.
+
+- **Milestone 1 done**: both from-scratch PKGBUILDs compile (17 rounds of
+  real dependency-name fixes, each verified against archlinux.org rather
+  than guessed). Artifacts in `local-repo/`.
+- **Milestone 2 built, but boots to a crash**: `provides=/conflicts=/replaces=`
+  on both PKGBUILDs + explicit `packages.x86_64` lines make pacman take our
+  packages instead of `extra`'s — confirmed by the full ISO resolving 874
+  packages with no stock `kwin`/`plasma-workspace` and no errors.
+  (`IgnorePkg` was tried first and is the WRONG tool: it blocks the name
+  outright instead of deferring to a `provides=`.) ISO
+  `holtos-0.0.4-alpha-x86_64.iso` built. The first-ever live boot of this
+  build: **`kwin_wayland` segfaults in `KWin::Application`'s constructor**,
+  inside Qt's platform-theme init (`createPlatformIntegration` ->
+  `KdeTheme::createKdeTheme` -> `QGuiApplicationPrivate::handleThemeChangedEvent`);
+  every other Plasma process then crash-loops for lack of a compositor.
+  Diagnosed on the VM via tty3 + `journalctl` + `coredumpctl info
+  kwin_wayland`. Version skew ruled out (`.BUILDINFO` in the package matches
+  the live `qt6-base-6.11.2-3`/`frameworkintegration-6.30.0-1` exactly).
+  Suspect: `-DKWIN_BUILD_GLOBALSHORTCUTS=ON` (re-enabled this session with
+  `kglobalacceld` only as a makedepend, not a runtime dep). Reverted to OFF
+  and a rebuild was in flight when this handoff was written (see "Still
+  open"). Research weakly contradicts the suspect (missing kglobalacceld is
+  documented to degrade silently, not crash) — if the rebuild still crashes,
+  next step is a debug-symbol build (`options=(!debug)` currently strips
+  them) and checking KWin's internal QPA plugin vs the KDE theme plugin.
+- **Milestone 3 applied**: the HoltOS blur additions (tint, brightness,
+  force-blur, corner radius — ~149 lines, shaders byte-identical) merged
+  into `holtos-kwin`'s in-tree `src/plugins/blur/` keeping stock naming;
+  committed+pushed to the fork as 75d843a. Compiling in the same in-flight
+  rebuild. `holtos-glass-effect` NOT removed yet — only after this is
+  verified working.
+- **Milestone 4 scaffolded**: `jamesyoungdahr-debug/holtos-systemsettings`
+  forked, `holtos` branch off v6.7.5, `packaging/holtos-systemsettings/PKGBUILD`
+  written from CMakeLists.txt ground truth (every KF6 name verified).
+  Deliberately not built or wired in until Milestone 2 is stable.
+- **Build pipeline fixes**: `build-local-repo.sh` persists pacman's cache
+  in `.pacman-cache/` (saves ~266MB of downloads per retry);
+  `build-aur-packages.sh` now `pacman -U`s each AUR package right after
+  building it (repo-add only ran at the very end, so an AUR package
+  depending on an earlier one in the same run — gamescope-session-steam-git
+  on gamescope-session-git — would have failed); `/forks/<pkg>` is optional
+  for git-sourced PKGBUILDs. Two hard-won operational rules, saved to
+  memory: never edit a script while it's bind-mounted into a running
+  container (bash re-reads it from disk mid-run — cost one full rebuild),
+  and `TaskStop` does not stop the podman container underneath.
+- **Gaming backlog (1.1/1.2)**: `holtos-gaming` (PySide6 "Gaming" page:
+  versions, Proton GE check/update, Game Mode toggle) + tray entry + .desktop;
+  `xdg-desktop-portal-kde` added (was referenced in the doc, missing from the
+  image); `gamescope-session-git`, `gamescope-session-steam-git`,
+  `decky-loader` added to the AUR build list but NOT to `packages.x86_64`;
+  `/usr/lib/os-session-select` shim written (the exact hook the real
+  gamescope-session-steam `steamos-session-select` execs — source-verified,
+  it is the only path). Decky Loader's polkit rule is researched and drafted
+  in the doc but not written: security-relevant, wait until decky-loader
+  itself builds.
+- **NVIDIA**: `homelab-detect-hardware.sh` also writes
+  `/etc/modprobe.d/nvidia-drm.conf` (`modeset=1 fbdev=1`). `gamescope-wsi`
+  is not a real package (bundled in gamescope). HDR/VRR under gamescope on
+  NVIDIA is still immature upstream — documented, not "fixed".
+- **Disk health (section 4)**: `etc/smartd.conf` -> `holtos-disk-alert`
+  records SMART failures; `holtos-scrub.timer` (monthly) scrubs every Btrfs
+  fs and ZFS pool; `holtos-disk-alert-notice` autostart shows alerts at
+  login (root services can't reach the desktop). `smartmontools` explicit
+  in the package list; updater's enable loop now covers `holtos-*.timer`.
+  Syntax/shellcheck clean, not run on a live install yet.
+- **Machines**: LiamPC dual-boots a real HoltOS install (RTX 4090) — the
+  right target for the NVIDIA work once VM-verified, via the `packages`
+  release + updater, never a reflash. **Never reboot LiamPC yourself**
+  (Liam). Both LM Studio bridges (4090 + 4080) are co-primary workers.
+
 ## Still open
 
+- **Milestone 2 crash** (section above): the rebuild with GLOBALSHORTCUTS=OFF
+  + the blur merge was at ~64% (`out/milestone3-globalshortcuts-fix.log`)
+  when work paused; VM `holtos-test` is stopped with the crashing ISO still
+  attached. On resume: confirm the build finished and the new
+  `holtos-kwin-*.pkg.tar.zst` landed in `local-repo/` (run `repo-add` in a
+  throwaway archlinux container if the script died after building),
+  rebuild the ISO (`build.sh`), start the VM, log in as liveuser/liveuser on
+  Plasma (Wayland). VM driving notes: vmconnect needs the `key` action per
+  character (`type` never reaches the guest), `shift+minus` for underscore,
+  Ctrl+Alt+F3 for a tty.
 - ~~Updater cannot reach GitHub~~ — **resolved 2026-09-12: Liam made the
   repo public.** Verified on the build 10 install: `holtos-update-check`
   reported v0.0.2-alpha (exit 0), `holtos-update-apply config` took a

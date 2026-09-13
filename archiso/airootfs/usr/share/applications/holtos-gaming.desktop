@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Gaming
+GenericName=Steam, Proton GE and Game Mode status
+Comment=See the installed Steam, gamescope and Proton GE versions, update Proton GE, and set Game Mode
+Exec=/usr/local/bin/holtos-gaming
+Icon=holtos-logo
+Terminal=false
+Categories=Game;Settings;
+Keywords=steam;proton;gamescope;game mode;gaming;

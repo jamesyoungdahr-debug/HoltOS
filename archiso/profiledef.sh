@@ -58,6 +58,11 @@ file_permissions=(
   ["/usr/local/bin/holtos-gamemode-session"]="0:0:755"
   ["/usr/local/bin/holtos-session-apply"]="0:0:755"
   ["/usr/local/bin/steamos-session-select"]="0:0:755"
+  ["/usr/lib/os-session-select"]="0:0:755"
   ["/usr/local/bin/holtos-shares"]="0:0:755"
+  ["/usr/local/bin/holtos-gaming"]="0:0:755"
+  ["/usr/local/bin/holtos-scrub"]="0:0:755"
+  ["/usr/local/bin/holtos-disk-alert"]="0:0:755"
+  ["/usr/local/bin/holtos-disk-alert-notice"]="0:0:755"
   ["/usr/local/bin/holtos-rescan-bootmenu"]="0:0:755"
 )

@@ -21,7 +21,7 @@ pacman -Syu --noconfirm
 mkdir -p /tmp/pkgout
 chown builder:builder /tmp/pkgout
 
-AUR_DEFAULT="calamares zfs-dkms zfs-utils limine-mkinitcpio-hook limine-entry-tool"
+AUR_DEFAULT="calamares zfs-dkms zfs-utils limine-mkinitcpio-hook limine-entry-tool gamescope-session-git gamescope-session-steam-git decky-loader"
 AUR_PKGS="${AUR_PKGS:-$AUR_DEFAULT}"
 
 if [ "$AUR_PKGS" != "none" ]; then
@@ -36,6 +36,15 @@ if [ "$AUR_PKGS" != "none" ]; then
         su - builder -c "git clone https://aur.archlinux.org/${pkg}.git /tmp/build-${pkg}"
         su - builder -c "cd /tmp/build-${pkg} && makepkg -s --noconfirm --needed"
         cp /tmp/build-"${pkg}"/*.pkg.tar.zst /tmp/pkgout/
+        # Install it immediately (not just copy to pkgout): repo-add only
+        # runs once at the very end of this script, so without this, a
+        # later AUR package that depends on an earlier one in this same
+        # list (e.g. gamescope-session-steam-git needs gamescope-session-git)
+        # would fail its own makepkg -s -- pacman has no repo yet to resolve
+        # that dependency from. Installing as we go makes it already-present
+        # on the system, which satisfies makepkg -s's dependency check
+        # without needing a repo at all.
+        pacman -U --noconfirm --needed /tmp/build-"${pkg}"/*.pkg.tar.zst
     done
 fi
 

@@ -50,6 +50,15 @@ if lspci -n -d 10de: 2>/dev/null | grep -qE ' 03(00|02): '; then
         # bootloader script appends this to the kernel command line.
         echo "nvidia_drm.modeset=1" >> "$CMDLINE_EXTRA"
         echo "cmdline: nvidia_drm.modeset=1" >> "$LOG"
+        # modeset=1 alone leaves simpledrm contending for the console
+        # framebuffer on NVIDIA; fbdev=1 hands it over cleanly. Needed for
+        # gamescope/Game Mode to behave well on NVIDIA (CachyOS ships the
+        # same file for the same reason).
+        cat > /etc/modprobe.d/nvidia-drm.conf <<'EOF'
+options nvidia_drm modeset=1
+options nvidia_drm fbdev=1
+EOF
+        echo "wrote: /etc/modprobe.d/nvidia-drm.conf (modeset=1 fbdev=1)" >> "$LOG"
     else
         echo "WARNING: NVIDIA GPU detected but no staged packages under $DRIVERS/nvidia — image built without them?" | tee -a "$LOG" >&2
     fi

@@ -56,8 +56,14 @@ The Den). Ordered by what breaks the experience if it is missing.
     (HDMI bitstream) configured for the living-room TV/AVR.
 13. **HDR and refresh-rate matching on the local display.** Plasma 6
     Wayland exposes HDR/VRR/refresh only when the DRM driver supports it
-    — NVIDIA needs `nvidia_drm.modeset=1` (done) and, for the HDR toggle
-    on Plasma 6.2+, `KWIN_DRM_ALLOW_NVIDIA_COLORSPACE=1`. The player
+    — NVIDIA needs `nvidia_drm.modeset=1` (done) and `nvidia_drm.fbdev=1`
+    (added 2026-09-13 to `/etc/modprobe.d/nvidia-drm.conf` by
+    `homelab-detect-hardware.sh`'s NVIDIA install path -- hands the console
+    framebuffer over cleanly instead of leaving it contended with
+    simpledrm), and, for the HDR toggle on Plasma 6.2+,
+    `KWIN_DRM_ALLOW_NVIDIA_COLORSPACE=1`. Gamescope's own HDR/VRR support
+    on NVIDIA specifically (not just Plasma) is still less mature than
+    AMD's as of current upstream state -- usable, not solid. The player
     should switch refresh rate to match content (23.976/24/50/60).
 14. **Download/acquisition hygiene**: VPN-bound torrent client (kill
     switch), bandwidth schedule, seeding limits, and a clear "what is

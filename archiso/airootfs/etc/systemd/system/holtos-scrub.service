@@ -1,0 +1,12 @@
+[Unit]
+Description=HoltOS: scrub every Btrfs filesystem and ZFS pool
+# Started by holtos-scrub.timer (monthly). Never on the live medium.
+ConditionPathExists=!/run/archiso
+After=local-fs.target zfs-import.target
+Wants=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/holtos-scrub
+Nice=19
+IOSchedulingClass=idle
