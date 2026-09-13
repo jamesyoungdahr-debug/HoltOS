@@ -109,8 +109,15 @@ Not written to disk yet -- waiting on decky-loader's own build verification firs
 
 ## 2. Apps
 
-### 2.1 A HoltOS app store — planned
+### 2.1 A HoltOS app store — built (2026-09-13, branch `apps`)
 
+- **Status**: HoltOS Apps (`holtos-apps`): 27 curated Flathub apps in five
+  categories (`usr/share/holtos/apps.json`), search, and an Installed tab,
+  each with Install / Open / Remove; system-wide installs with no password
+  through Flatpak's own polkit rule; Flathub from `etc/flatpak/remotes.d`.
+  Verified on the build 24 live VM (installing and removing Flatseal from
+  the desktop). Updates go through HoltOS Updates. The name stays "HoltOS
+  Apps" until Liam picks one.
 - **Source**: Flathub. It is what every other distro uses and where the
   media/gaming apps live (Jellyfin, Plex, Kodi, Heroic, Lutris, OBS,
   Discord, VLC, Firefox). Own repo only for HoltOS-built apps later.

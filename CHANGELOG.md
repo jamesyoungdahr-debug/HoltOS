@@ -5,6 +5,18 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+- **HoltOS Apps, an app store over Flathub** (plan 2.1). A curated front
+  page of 27 apps picked for a media and gaming machine (Jellyfin, Plex,
+  Kodi, Stremio, VLC, Spotify, Heroic, Lutris, ProtonUp-Qt, Moonlight,
+  RetroArch, OBS, Discord, browsers and more), search across all of
+  Flathub, and an Installed tab, each app with Install, Open and Remove.
+  Installs are system-wide with no password for the active admin (Flatpak's
+  own polkit rule), Flathub is set up out of the box, and app updates arrive
+  through HoltOS Updates. Tray entry "HoltOS Apps...".
+- **Performance and controller defaults** (plan 1.3/1.4): an I/O scheduler
+  per disk type (BFQ for hard disks, mq-deadline for SATA SSDs, kyber for
+  NVMe, from CachyOS) and `libcec` for TV remotes over HDMI-CEC. zram,
+  gamemode and Arch's own `vm.max_map_count` already covered the rest.
 - **Updates work like Windows Update** (Liam, 2026-09-13). HoltOS checks on
   its own (a root timer, every 6 hours by default, and each time Game Mode
   exits) and the new **HoltOS Updates** window shows what it is doing:

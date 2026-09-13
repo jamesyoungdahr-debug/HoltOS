@@ -322,6 +322,38 @@ the settings helper (security-sensitive, written by hand).
   system or Flatpak update with its progress. Next: an ISO from this branch
   and a fresh install in the VM.
 
+## HoltOS Apps and performance defaults (2026-09-13, branches `apps`, `defaults`)
+
+- **HoltOS Apps** (`holtos-apps`, `usr/share/holtos/apps.json`,
+  `etc/flatpak/remotes.d/flathub.flatpakrepo`, `holtos-apps.desktop`, tray
+  entry; packages `flatpak`, `flatpak-kcm`). 27 curated apps, every Flathub
+  ID checked against Flathub's API (Ryujinx is gone from Flathub and was
+  dropped). Verified on the build 24 live VM: the Featured page with
+  Flathub icons, search ("flatseal": 11 results), installing Flatseal from
+  the desktop session with no password prompt (about 40 seconds), Open and
+  Remove on its card, and the Installed tab before and after removal. Found
+  live: Flatpak only applies `remotes.d` the first time root uses the
+  system installation, so search found nothing on a fresh system. Fixed two
+  ways: the image creates the system repository at build time (verified to
+  work with networking cut off) and the store refreshes the Flathub
+  catalogue when it opens (polkit lets the active user do that without a
+  password). Not yet verified: both fixes in a built image.
+- **Defaults**: `60-holtos-ioschedulers.rules` (verified live: rotational
+  disks switch to `bfq`) and `libcec`. Already covered, verified on the VM:
+  zram (3.9G, zstd), `vm.max_map_count` 1048576 from Arch's own
+  `10-arch.conf`, and gamemode's default performance governor and profile.
+- **Controller drivers, not in the image yet**: `xpadneo-dkms` and
+  `game-devices-udev` are in the AUR build list. The first build exposed two
+  problems: installing each built package inside the container ran DKMS
+  against a kernel the container does not have (now `pacman -U --dbonly
+  --nodeps`, which also protects `zfs-dkms`), and game-devices-udev's signed
+  tag needs its maintainer's key (Fabian Bornschein,
+  6E58E886A8E07538A2485FAED6A4F386B4881229, imported by full fingerprint).
+  Rebuild with `AUR_PKGS="xpadneo-dkms game-devices-udev" HOLTOS_PKGS=none
+  ./build-local-repo.sh`, then add both to `packages.x86_64`.
+- **xone left out**: its firmware package downloads Microsoft's driver,
+  which the image cannot redistribute.
+
 ## Still open
 
 - **Milestone 2 crash: root-caused, fixed and verified on a fresh ISO (build 23).**

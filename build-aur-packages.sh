@@ -33,6 +33,12 @@ if [ "$AUR_PKGS" != "none" ]; then
     # the default keyring — import it before makepkg tries to verify sources.
     su - builder -c "gpg --keyserver keyserver.ubuntu.com --recv-keys 6AD860EED4598027" || \
     su - builder -c "gpg --keyserver hkps://keys.openpgp.org --recv-keys 6AD860EED4598027"
+    # game-devices-udev's git tag is signed by its maintainer, Fabian
+    # Bornschein (an Arch package maintainer). Imported by the full
+    # fingerprint listed in the PKGBUILD's validpgpkeys, so a key server
+    # cannot hand back a different key.
+    su - builder -c "gpg --keyserver keyserver.ubuntu.com --recv-keys 6E58E886A8E07538A2485FAED6A4F386B4881229" || \
+    su - builder -c "gpg --keyserver hkps://keys.openpgp.org --recv-keys 6E58E886A8E07538A2485FAED6A4F386B4881229"
 
     for pkg in $AUR_PKGS; do
         echo "=== Building ${pkg} (AUR) ==="
@@ -40,15 +46,17 @@ if [ "$AUR_PKGS" != "none" ]; then
         su - builder -c "git clone https://aur.archlinux.org/${pkg}.git /tmp/build-${pkg}"
         su - builder -c "cd /tmp/build-${pkg} && makepkg -s --noconfirm --needed"
         cp /tmp/build-"${pkg}"/*.pkg.tar.zst /tmp/pkgout/
-        # Install it immediately (not just copy to pkgout): repo-add only
-        # runs once at the very end of this script, so without this, a
-        # later AUR package that depends on an earlier one in this same
-        # list (e.g. gamescope-session-steam-git needs gamescope-session-git)
-        # would fail its own makepkg -s -- pacman has no repo yet to resolve
-        # that dependency from. Installing as we go makes it already-present
-        # on the system, which satisfies makepkg -s's dependency check
-        # without needing a repo at all.
-        pacman -U --noconfirm --needed /tmp/build-"${pkg}"/*.pkg.tar.zst
+        # Record it as installed immediately (not just copy to pkgout):
+        # repo-add only runs once at the very end of this script, so without
+        # this, a later AUR package that depends on an earlier one in this
+        # same list (e.g. gamescope-session-steam-git needs
+        # gamescope-session-git) would fail its own makepkg -s -- pacman has
+        # no repo yet to resolve that dependency from. --dbonly --nodeps only
+        # adds the package to pacman's database, which is all that check
+        # needs: a real install of a -dkms package pulled in linux-headers and
+        # ran DKMS against a kernel the container does not have, which failed
+        # (xpadneo-dkms, 2026-09-13).
+        pacman -U --noconfirm --needed --nodeps --dbonly /tmp/build-"${pkg}"/*.pkg.tar.zst
     done
 fi
 
