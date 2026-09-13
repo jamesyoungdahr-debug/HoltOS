@@ -168,6 +168,7 @@ def main():
 
     menu = QMenu()
     updates_action = menu.addAction("HoltOS Updates...", lambda: run("/usr/local/bin/holtos-updates"))
+    menu.addAction("HoltOS Apps...", lambda: run("/usr/local/bin/holtos-apps"))
     menu.addAction("Rollback Config", lambda: run("/usr/local/bin/holtos-rollback-config"))
     menu.addSeparator()
     menu.addAction("Create Snapshot Now", lambda: run("/usr/local/bin/holtos-snapshot-now"))

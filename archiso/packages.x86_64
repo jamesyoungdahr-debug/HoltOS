@@ -137,6 +137,11 @@ libnotify
 pacman-contrib
 fakeroot
 fwupd
+# HoltOS Apps: Flatpak for Flathub apps (the remote comes from
+# /etc/flatpak/remotes.d), flatpak-kcm for per-app permissions in System
+# Settings.
+flatpak
+flatpak-kcm
 breeze-gtk
 
 # The Den (jamesyoungdahr-debug/the-den) — the movie/TV library manager

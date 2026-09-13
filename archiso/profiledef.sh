@@ -40,6 +40,7 @@ file_permissions=(
   # updater), not a build/packaging issue with the scripts themselves.
   ["/usr/local/bin/holtos-tray"]="0:0:755"
   ["/usr/local/bin/holtos-updates"]="0:0:755"
+  ["/usr/local/bin/holtos-apps"]="0:0:755"
   ["/usr/local/bin/holtos-update-status"]="0:0:755"
   ["/usr/local/bin/holtos-update-apply"]="0:0:755"
   ["/usr/local/bin/holtos-update-install"]="0:0:755"

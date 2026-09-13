@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "categories": [
+    {
+      "id": "watch",
+      "title": "Watch and listen",
+      "apps": [
+        {"id": "org.jellyfin.JellyfinDesktop", "name": "Jellyfin Desktop", "summary": "Jellyfin desktop client"},
+        {"id": "com.github.iwalton3.jellyfin-media-player", "name": "Jellyfin Media Player", "summary": "Desktop client for Jellyfin media server"},
+        {"id": "tv.plex.PlexHTPC", "name": "Plex HTPC", "summary": "Plex HTPC client for the big screen"},
+        {"id": "tv.plex.PlexDesktop", "name": "Plex", "summary": "Plex client for desktop computers"},
+        {"id": "tv.kodi.Kodi", "name": "Kodi", "summary": "Ultimate entertainment center"},
+        {"id": "com.stremio.Stremio", "name": "Stremio", "summary": "Freedom to Stream"},
+        {"id": "org.videolan.VLC", "name": "VLC", "summary": "VLC media player, the open-source multimedia player"},
+        {"id": "io.mpv.Mpv", "name": "mpv", "summary": "A free, open source, and cross-platform media player"},
+        {"id": "com.spotify.Client", "name": "Spotify", "summary": "Online music streaming service"}
+      ]
+    },
+    {
+      "id": "play",
+      "title": "Games and launchers",
+      "apps": [
+        {"id": "com.heroicgameslauncher.hgl", "name": "Heroic", "summary": "Play Epic, GOG and Amazon Games"},
+        {"id": "net.lutris.Lutris", "name": "Lutris", "summary": "Video game preservation platform"},
+        {"id": "com.usebottles.bottles", "name": "Bottles", "summary": "Run Windows software"},
+        {"id": "net.davidotek.pupgui2", "name": "ProtonUp-Qt", "summary": "Install Wine- and Proton-based compatibility tools"},
+        {"id": "org.prismlauncher.PrismLauncher", "name": "Prism Launcher", "summary": "Custom Minecraft Launcher to easily manage multiple Minecraft installations at once"},
+        {"id": "com.moonlight_stream.Moonlight", "name": "Moonlight", "summary": "Stream games and other applications from another PC running Sunshine or GeForce Experience"},
+        {"id": "dev.lizardbyte.app.Sunshine", "name": "Sunshine", "summary": "GameStream host for Moonlight"},
+        {"id": "org.DolphinEmu.dolphin-emu", "name": "Dolphin Emulator", "summary": "GameCube / Wii / Triforce Emulator"},
+        {"id": "org.libretro.RetroArch", "name": "RetroArch", "summary": "Frontend for emulators, game engines and media players"}
+      ]
+    },
+    {
+      "id": "social",
+      "title": "Stream and chat",
+      "apps": [
+        {"id": "com.obsproject.Studio", "name": "OBS Studio", "summary": "Live stream and record videos"},
+        {"id": "com.discordapp.Discord", "name": "Discord", "summary": "Talk, play, hang out"},
+        {"id": "dev.vencord.Vesktop", "name": "Vesktop", "summary": "Customizable Discord client"}
+      ]
+    },
+    {
+      "id": "web",
+      "title": "Browsers",
+      "apps": [
+        {"id": "org.mozilla.firefox", "name": "Firefox", "summary": "Fast, Private & Safe Web Browser"},
+        {"id": "com.brave.Browser", "name": "Brave", "summary": "Fast Internet, AI, Adblock"},
+        {"id": "com.google.Chrome", "name": "Google Chrome", "summary": "The browser built to be yours"}
+      ]
+    },
+    {
+      "id": "tools",
+      "title": "Tools",
+      "apps": [
+        {"id": "com.github.tchx84.Flatseal", "name": "Flatseal", "summary": "Manage Flatpak permissions"},
+        {"id": "org.freedesktop.Piper", "name": "Piper", "summary": "Gaming mouse configuration utility"},
+        {"id": "io.github.ilya_zlobintsev.LACT", "name": "LACT", "summary": "Control your graphics cards"}
+      ]
+    }
+  ]
+}
