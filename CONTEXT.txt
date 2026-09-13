@@ -21,10 +21,15 @@ CURRENT STATE (2026-09-13, night)
     BUT the first live boot crashes: kwin_wayland SIGSEGV in
     KWin::Application's ctor inside Qt platform-theme init, everything else
     cascades. Not version skew (.BUILDINFO matches live). Suspect
-    -DKWIN_BUILD_GLOBALSHORTCUTS=ON; reverted to OFF, rebuild was ~69% done
-    in out/milestone3-globalshortcuts-fix.log when work paused. VM
-    holtos-test is OFF with the crashing ISO attached. If the rebuild still
-    crashes: debug-symbol build next (PKGBUILD strips them: options=(!debug)).
+    -DKWIN_BUILD_GLOBALSHORTCUTS=ON; reverted to OFF. **Rebuild finished
+    clean (2026-09-13, exit 0)**: `local-repo/holtos-kwin-6.7.5.r87-1-x86_64.pkg.tar.zst`
+    (12.7MB, GLOBALSHORTCUTS=OFF + the Milestone 3 blur merge both in it)
+    is on disk. **NOT YET tested** — next session must: run `build.sh` to
+    get a fresh ISO with this package, attach it to `holtos-test`, boot,
+    and see whether kwin_wayland still crashes. VM `holtos-test` is OFF
+    with the OLD crashing ISO (`holtos-0.0.4-alpha-x86_64.iso`) still
+    attached — swap the DVD path before starting it. If it still crashes:
+    debug-symbol build next (PKGBUILD strips them: options=(!debug)).
   * Milestone 3: HoltOS blur port merged into holtos-kwin's in-tree
     src/plugins/blur (fork commit 75d843a, pushed) — compiled clean in the
     same rebuild. holtos-glass-effect stays until this is verified live.

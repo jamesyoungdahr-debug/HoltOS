@@ -277,16 +277,22 @@ in this commit; nothing is pushed, tagged or released.
 
 ## Still open
 
-- **Milestone 2 crash** (section above): the rebuild with GLOBALSHORTCUTS=OFF
-  + the blur merge was at ~64% (`out/milestone3-globalshortcuts-fix.log`)
-  when work paused; VM `holtos-test` is stopped with the crashing ISO still
-  attached. On resume: confirm the build finished and the new
-  `holtos-kwin-*.pkg.tar.zst` landed in `local-repo/` (run `repo-add` in a
-  throwaway archlinux container if the script died after building),
-  rebuild the ISO (`build.sh`), start the VM, log in as liveuser/liveuser on
-  Plasma (Wayland). VM driving notes: vmconnect needs the `key` action per
-  character (`type` never reaches the guest), `shift+minus` for underscore,
-  Ctrl+Alt+F3 for a tty.
+- **Milestone 2 crash, rebuild done but UNTESTED**: the rebuild with
+  GLOBALSHORTCUTS=OFF + the blur merge finished clean (exit 0,
+  `out/milestone3-globalshortcuts-fix.log`) —
+  `local-repo/holtos-kwin-6.7.5.r87-1-x86_64.pkg.tar.zst` (12.7MB) is on
+  disk. Liam paused the session before it was tested. On resume: run
+  `build.sh` for a fresh ISO with this package, swap it into `holtos-test`'s
+  DVD drive (currently still holds the OLD crashing `holtos-0.0.4-alpha-x86_64.iso`),
+  start the VM, log in as liveuser/liveuser on Plasma (Wayland), and see
+  whether kwin_wayland still segfaults. If it does, GLOBALSHORTCUTS wasn't
+  the cause — next step is a debug-symbol build (`options=(!debug)`
+  currently strips them) plus checking KWin's internal QPA plugin
+  (`wayland-org.kde.kwin.qpa`) against the KDE platform theme plugin
+  (`createKdeTheme`), per the research note in the fork-plan doc. VM
+  driving notes: vmconnect needs the `key` action per character (`type`
+  never reaches the guest), `shift+minus` for underscore, Ctrl+Alt+F3 for
+  a tty.
 - ~~Updater cannot reach GitHub~~ — **resolved 2026-09-12: Liam made the
   repo public.** Verified on the build 10 install: `holtos-update-check`
   reported v0.0.2-alpha (exit 0), `holtos-update-apply config` took a
