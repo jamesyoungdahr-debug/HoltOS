@@ -5,7 +5,9 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
-## [0.0.5-alpha] - 2026-09-13
+## [0.0.5a-alpha] - 2026-09-13
+
+The "a" marks a release made mainly of big fixes.
 
 - **Network Shares no longer freezes, and connects to servers on any SMB
   version.** Saving, testing, mounting and unmounting now run in the
