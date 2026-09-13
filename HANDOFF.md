@@ -355,6 +355,44 @@ the settings helper (security-sensitive, written by hand).
 - **xone left out**: its firmware package downloads Microsoft's driver,
   which the image cannot redistribute.
 
+## Releases 0.0.5-alpha to 0.0.6d-alpha (2026-09-13)
+
+Numbering (Liam): the number goes up for big features; a letter (a, b, c, d)
+marks a big-fix release. All tagged and pushed; packages published to the
+`packages` release (holtos-kwin and holtos-plasma-workspace excluded).
+
+- **0.0.5-alpha, retagged 0.0.5a-alpha**: Network Shares no longer freezes
+  (pkexec runs through an async QProcess) and falls back through SMB 3.1.1,
+  3.0, 2.1, 2.0, 1.0 (`vers=` saved per share); the updater reads The Den's
+  WEB_HOST/WEB_PORT, probes /health over http then https, and rewrites the
+  desktop file on every update.
+- **0.0.5b-alpha**: `holtos-system-extras` installs `required-packages`
+  (pacman-contrib fakeroot fwupd flatpak flatpak-kcm libcec plasma-keyboard
+  fuse2) and model extras on update.
+- **0.0.6-alpha**: plasma-keyboard as KWin's input method, fuse2, z13ctl-bin
+  1.3.2 and z13gui-bin 1.4.1 only on the ROG Flow Z13 2025 (DMI GZ302, USB
+  0b05:18c6/0b05:1a30 fallback).
+- **0.0.6a-alpha**: a config update runs `holtos-system-extras apply`.
+- **0.0.6b-alpha**: the handed-over `config <tag>` is no longer parsed as an
+  unknown item (false "Failed").
+- **0.0.6c-alpha**: component rsync globs quoted, so files new in a release
+  are copied. Verified on Liamtab (GZ302EA): extras, z13 packages,
+  plasma-keyboard and fuse2 arrived; z13 services run in Plasma.
+- **0.0.6d-alpha**: `holtos-gamemode-client` writes
+  `$XDG_RUNTIME_DIR/gamescope-environment` and starts z13ctl.socket and
+  z13gui.service inside gamescope; the session stops z13gui on exit. Not yet
+  tested; steps in `LIAM-HANDOFF.md`.
+
+Open after 0.0.6d:
+- **Network Shares still will not mount or connect** (Liam, `plex` share).
+  Waiting on `holtos-share test smb SERVER plex [USER]` output; commands in
+  `LIAM-HANDOFF.md`.
+- **The Den on Liamtab**: history shows `the-den v0.8.0a (FAILED to start)`;
+  status unchecked.
+- **Virtual keyboard**: researched. Recommendation is to keep plasma-keyboard
+  and add Vboard (AUR, uinput, modifier keys) as a tray keyboard in the next
+  feature release, pending Liam's go-ahead.
+
 ## Still open
 
 - **Milestone 2 crash: root-caused, fixed and verified on a fresh ISO (build 23).**

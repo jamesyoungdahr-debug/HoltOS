@@ -55,7 +55,47 @@ In Game Mode or on the desktop, check:
 
 Expect `active` and `enabled`. If it is not active, send the journal lines.
 
-## 4. Already verified on Liamtab
+## 4. Network Shares still will not mount (open)
+
+Reported after 0.0.6d: the `plex` share will not connect or mount. The image
+already ships `cifs-utils` and `nfs-utils`, so the next step is the test
+output. Replace `YOUR-SERVER` with the server's IP address or name.
+
+Check the mount tools are installed:
+
+    pacman -Q cifs-utils nfs-utils smbclient; ls /usr/bin/mount.cifs
+
+Share with no login:
+
+    sudo /usr/local/bin/holtos-share test smb YOUR-SERVER plex 2>&1 | tail -15
+
+Share with a username and password (the test reads the password from input):
+
+    sudo -v
+    read -rsp 'Share password: ' P; echo
+    printf '%s' "$P" | sudo /usr/local/bin/holtos-share test smb YOUR-SERVER plex YOUR-USERNAME 2>&1 | tail -15; unset P
+
+The test tries SMB 3.1.1, 3.0, 2.1, 2.0 and 1.0 in turn and prints
+`==> OK over SMB ...` or the error for each. Send the whole output.
+
+## 5. Virtual keyboard research (decision needed)
+
+- plasma-keyboard (shipped now): KDE's own, pops up on text fields, Plasma
+  6.7 adds press-and-hold for special characters. No Ctrl, Alt or Super keys.
+- Vboard (AUR, GPLv3, Python and GTK): works on Plasma Wayland, has
+  Ctrl/Alt/Super and arrow keys, opened from the tray (no pop-up). US QWERTY
+  only (layouts are editable JSON), no F-keys or Home/End/Page keys, large at
+  low resolutions. Types through /dev/uinput, so the permission must go only
+  to the logged-in user.
+- Maliit: AUR only, clashes with fcitx, replaced in KDE by plasma-keyboard.
+- Squeekboard (Phosh only), wvkbd (Sway/Hyprland style desktops), Onboard
+  (X11 only): not suitable.
+
+Recommendation: keep plasma-keyboard for pop-up typing and add Vboard as a
+tray "full keyboard", built into our package repo, in the next feature
+release. Waiting on Liam's go-ahead.
+
+## 6. Already verified on Liamtab
 
 - 0.0.6c-alpha: the updater copies files that are new in a release
   (holtos-system-extras and holtos-apps arrived).
