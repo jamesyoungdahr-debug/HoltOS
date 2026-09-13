@@ -21,7 +21,11 @@ pacman -Syu --noconfirm
 mkdir -p /tmp/pkgout
 chown builder:builder /tmp/pkgout
 
-AUR_DEFAULT="calamares zfs-dkms zfs-utils limine-mkinitcpio-hook limine-entry-tool gamescope-session-git gamescope-session-steam-git decky-loader"
+# xpadneo-dkms: Xbox controllers over Bluetooth. game-devices-udev: udev
+# rules so non-Steam controllers work without root. xone (the Xbox wireless
+# dongle) is left out on purpose: its firmware package downloads
+# Microsoft's driver, which the image cannot redistribute.
+AUR_DEFAULT="calamares zfs-dkms zfs-utils limine-mkinitcpio-hook limine-entry-tool gamescope-session-git gamescope-session-steam-git decky-loader xpadneo-dkms game-devices-udev"
 AUR_PKGS="${AUR_PKGS:-$AUR_DEFAULT}"
 
 if [ "$AUR_PKGS" != "none" ]; then

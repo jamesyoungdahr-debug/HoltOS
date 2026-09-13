@@ -226,6 +226,7 @@ update_config() {
         usr/bin/steamos-polkit-helpers/
         usr/share/polkit-1/actions/org.holtos.*.policy
         etc/flatpak/remotes.d/flathub.flatpakrepo
+        etc/udev/rules.d/60-holtos-*.rules
         etc/xdg/autostart/holtos-*.desktop
         usr/share/applications/holtos-*.desktop
         etc/xdg/kwinrc
