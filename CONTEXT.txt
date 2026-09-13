@@ -12,8 +12,9 @@ Owner: Liam (GitHub jamesyoungdahr-debug, git user Vectorly)
 
 CURRENT STATE (2026-09-12, evening)
 -----------------------------------
-- UNCOMMITTED, DO NOT BUILD OR PUSH (Liam, 2026-09-12 ~21:00): restart
-  prompt after system-package updates. holtos-update-apply update_system()
+- PUSHED, NOT TAGGED (commit 2c431c5; Liam: "commit no release", then
+  "push but dont tag"): restart prompt after system-package updates. Ships
+  with the next tagged release; no ISO built for it. holtos-update-apply update_system()
   writes /run/holtos-reboot-required (reason text) when the running
   kernel's module dir is gone or pacman upgraded a core package (kernel,
   firmware, systemd, mesa, microcode, nvidia, pipewire, kwin, sddm,
@@ -27,8 +28,7 @@ CURRENT STATE (2026-09-12, evening)
   both scripts installed. SEEN ON SCREEN 2026-09-12 23:48 (VM clock):
   picker from KRunner -> The Den Client -> Apply -> polkit prompt -> the
   "Done. A restart is required to finish this update: <reason>. Restart
-  now?" dialog with Restart now / Later. Ready to commit when Liam says
-  so. VM address is now 172.25.64.50 (it rebooted at 21:14, which also
+  now?" dialog with Restart now / Later. VM address is now 172.25.64.50 (it rebooted at 21:14, which also
   proved the /run marker clears on reboot).
 - the-den-client icon (v0.4.6): app_id is right now (KWin: class
   the-den-client, desktopFile the-den-client) but src/assets/logo.svg is

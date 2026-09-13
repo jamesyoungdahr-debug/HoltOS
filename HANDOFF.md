@@ -183,9 +183,9 @@ logged "No NVIDIA GPU — nothing to install".
   "Game Mode" from the app menu, Steam Big Picture on gamescope, "Switch
   to Desktop" from Steam's power menu, and "Start in Game Mode" from the
   tray. (No ISO copy to D:\ any more: Liam updates via the updater.)
-- **Restart prompt after system updates** — implemented on disk,
-  uncommitted, not built, not pushed (Liam's instruction). See CONTEXT.txt
-  for the state and the remaining on-screen check.
+- **Restart prompt after system updates** — done, verified on screen in
+  the VM, pushed as 2c431c5 but not tagged (Liam: no release yet). Goes out
+  with the next tagged release; installed systems only see tags.
 - **the-den-client icon**: remaining cause is the client's own logo.svg
   (invalid XML comment); HoltOS side is done.
 - **Snapshot semantics** (rescue boot vs rollback) — undecided.
