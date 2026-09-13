@@ -24,12 +24,29 @@ CURRENT STATE (2026-09-13, night)
     -DKWIN_BUILD_GLOBALSHORTCUTS=ON; reverted to OFF. **Rebuild finished
     clean (2026-09-13, exit 0)**: `local-repo/holtos-kwin-6.7.5.r87-1-x86_64.pkg.tar.zst`
     (12.7MB, GLOBALSHORTCUTS=OFF + the Milestone 3 blur merge both in it)
-    is on disk. **NOT YET tested** — next session must: run `build.sh` to
-    get a fresh ISO with this package, attach it to `holtos-test`, boot,
-    and see whether kwin_wayland still crashes. VM `holtos-test` is OFF
-    with the OLD crashing ISO (`holtos-0.0.4-alpha-x86_64.iso`) still
-    attached — swap the DVD path before starting it. If it still crashes:
-    debug-symbol build next (PKGBUILD strips them: options=(!debug)).
+    is on disk. **TESTED 2026-09-13 afternoon (build 22): still crashed —
+    GLOBALSHORTCUTS was NOT the cause.** Real cause, verified live: missing
+    runtime deps. replaces=(kwin)/replaces=(plasma-workspace) means the
+    stock packages never install, so their transitive deps vanished —
+    plasma-integration (Qt's fallback QKdeTheme segfaults without it),
+    kactivitymanagerd (plasmashell aborts), kglobalacceld, kde-cli-tools,
+    milou, qt6-tools, aurorae, iio-sensor-proxy,
+    libqaccessibilityclient-qt6, ocean-sound-theme, qt6-virtualkeyboard,
+    xorg-xmessage, xorg-xrdb. Installing them on the live VM gave a full
+    working desktop on the forked packages. Both PKGBUILDs' depends=()
+    now copy `pacman -Si` "Depends On"; GLOBALSHORTCUTS back to default
+    (on). VERIFIED on fresh ISO build 23 (packages r89): desktop with
+    nothing installed by hand, no coredumps, no failed user units, no
+    kglobalaccel errors, in-tree blur + org.holtos.glass live. RULE for any
+    future replaces= package: copy the stock package's deps, never
+    hand-write them. Also fixed this pass: look-and-feel defaults named
+    org.kde.klassy (not installed) -> org.holtos.glass; etc/xdg/kwinrc
+    now uses the in-tree blur ([Effect-blur], Milestone 3) with Glass v2
+    values; Kvantum window/dialog alpha .40/.55 ported into the repo;
+    session-cleanup autostart no longer shows as a failed unit;
+    holtos-gaming form labels left-aligned. Open, cosmetic: Dolphin's
+    "9 folders" status label truncates under every Kvantum theme (stock
+    KvRoughGlass too), not ours. ComfyUI machine down: design work pinned.
   * Milestone 3: HoltOS blur port merged into holtos-kwin's in-tree
     src/plugins/blur (fork commit 75d843a, pushed) — compiled clean in the
     same rebuild. holtos-glass-effect stays until this is verified live.
@@ -314,3 +331,7 @@ window grows on Summary; Erase disk radio (20,254); Users fields: name
 guest-checks.sh (scratchpad) is the in-guest verification script; run it
 with `ssh ... 'bash -s' < guest-checks.sh`.
 The DVD stays attached: boot order decides (bootdisk / bootdvd).
+A screenshot that looks frozen (stale panel clock, a closed window still
+drawn) is usually KWin on llvmpipe sitting on its last frame until input
+arrives: send move=x,y and shoot again before calling it a hang (seen
+2026-09-13; KWin was answering D-Bus the whole time).

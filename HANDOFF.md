@@ -277,22 +277,58 @@ in this commit; nothing is pushed, tagged or released.
 
 ## Still open
 
-- **Milestone 2 crash, rebuild done but UNTESTED**: the rebuild with
-  GLOBALSHORTCUTS=OFF + the blur merge finished clean (exit 0,
-  `out/milestone3-globalshortcuts-fix.log`) —
-  `local-repo/holtos-kwin-6.7.5.r87-1-x86_64.pkg.tar.zst` (12.7MB) is on
-  disk. Liam paused the session before it was tested. On resume: run
-  `build.sh` for a fresh ISO with this package, swap it into `holtos-test`'s
-  DVD drive (currently still holds the OLD crashing `holtos-0.0.4-alpha-x86_64.iso`),
-  start the VM, log in as liveuser/liveuser on Plasma (Wayland), and see
-  whether kwin_wayland still segfaults. If it does, GLOBALSHORTCUTS wasn't
-  the cause — next step is a debug-symbol build (`options=(!debug)`
-  currently strips them) plus checking KWin's internal QPA plugin
-  (`wayland-org.kde.kwin.qpa`) against the KDE platform theme plugin
-  (`createKdeTheme`), per the research note in the fork-plan doc. VM
-  driving notes: vmconnect needs the `key` action per character (`type`
-  never reaches the guest), `shift+minus` for underscore, Ctrl+Alt+F3 for
-  a tty.
+- **Milestone 2 crash: root-caused, fixed and verified on a fresh ISO (build 23).**
+  Not GLOBALSHORTCUTS (build 22, with it OFF, crashed identically). Cause:
+  `replaces=(kwin)`/`replaces=(plasma-workspace)` means the stock
+  packages never install, so their transitive runtime deps were missing:
+  `plasma-integration` (no `KDEPlasmaPlatformTheme6.so`, so Qt's built-in
+  fallback `QKdeTheme` segfaults), `kactivitymanagerd` (plasmashell aborts
+  its shell load), `kglobalacceld`, `kde-cli-tools`, `milou`, `qt6-tools`,
+  `aurorae`, `iio-sensor-proxy`, `libqaccessibilityclient-qt6`,
+  `ocean-sound-theme`, `qt6-virtualkeyboard`, `xorg-xmessage`, `xorg-xrdb`.
+  Installing them on the live VM brought up the full desktop on the forked
+  packages. Both PKGBUILDs' `depends=()` now copy Arch's lists;
+  GLOBALSHORTCUTS is back to the default (on): an OFF build ships no
+  global-shortcut plugin in `/usr/lib/qt6/plugins/kwin/plugins/`, so
+  `plasma-kglobalaccel.service` exits at once and every Plasma process logs
+  "Couldn't start kglobalaccel" (confirmed on the VM). Detail in
+  `docs/holtos-plasma-fork-plan.md`. Next: rebuild both packages + ISO,
+  boot, confirm login works with no manual installs. VM driving notes:
+  vmconnect needs the `key` action per character (`type` never reaches the
+  guest), `shift+minus` for underscore, Ctrl+Alt+F3 for a tty; the SSH key
+  and vm.ps1 live in the session scratchpad. On llvmpipe KWin can sit on
+  its last frame until input arrives, so a screenshot that looks frozen
+  (stale clock, a closed window still drawn) needs a mouse nudge
+  (`move=x,y`) before you call it a hang.
+- **Look-and-feel pointed at a decoration that isn't installed**: the
+  HoltOS look-and-feel `defaults` said `org.kde.klassy` (KWin logged
+  "Could not locate decoration plugin" and fell back to Breeze); now
+  `org.holtos.glass`, matching `etc/xdg/kwinrc`. Verified live after
+  clearing `~/.config/kdedefaults`.
+- **Milestone 3 switched on**: `etc/xdg/kwinrc` enables KWin's in-tree
+  blur (`[Effect-blur]`, HoltOS additions merged) and disables
+  `holtosglass`; the Glass v2 values (BlurStrength 15, NoiseStrength 4,
+  Kvantum window/dialog alpha .40/.55) are ported from the live VM into
+  the repo. The in-tree effect loads and reads its config live;
+  `holtos-glass-effect` stays in the image, disabled, until a fresh
+  install confirms the look.
+- **Session-cleanup autostart showed as a failed unit** on every normal
+  login (its `grep` exited 1 when no switch was pending); now an `if`.
+- **Dolphin's "9 folders" status label is truncated ("9 f...ers")** under
+  Kvantum. Not our theme: stock KvRoughGlass does the same, Breeze is
+  fine. Kvantum-wide with Dolphin 26.08's floating status bar; needs a
+  Kvantum fix or patch. Cosmetic, open.
+- **Gaming page (`holtos-gaming`) live-checked**: opens, reads package
+  versions and the Proton GE check. Form rows were ragged (Kvantum
+  right-aligns form labels); labels are now left-aligned with colons.
+- **Backlog items live-checked on the ISO**: `holtos-scrub.timer` is
+  enabled and skips itself on the live medium by design; `smartd` is
+  enabled but its stock unit refuses to run in a VM
+  (`ConditionVirtualization=no`), so `holtos-disk-alert` needs real
+  hardware; the disk-alert notice autostart, `/usr/lib/os-session-select`,
+  `xdg-desktop-portal-kde` and `smartmontools` are all present.
+- **Design work pinned**: the ComfyUI machine is down (2026-09-13). No
+  design jobs are queued; route any that come up once it is back.
 - ~~Updater cannot reach GitHub~~ — **resolved 2026-09-12: Liam made the
   repo public.** Verified on the build 10 install: `holtos-update-check`
   reported v0.0.2-alpha (exit 0), `holtos-update-apply config` took a

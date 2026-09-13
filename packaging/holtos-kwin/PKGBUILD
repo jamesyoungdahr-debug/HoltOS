@@ -14,30 +14,36 @@ license=(GPL-2.0-or-later GPL-3.0-or-later)
 provides=(kwin=6.7.5)
 conflicts=(kwin)
 replaces=(kwin)
-depends=(qt6-base qt6-declarative qt6-multimedia qt6-sensors qt6-svg qt6-wayland
-         kcmutils kcompletion kconfig kconfigwidgets kcoreaddons kcrash kdbusaddons
-         kdeclarative kglobalaccel ki18n kiconthemes kidletime kirigami
-         knewstuff knotifications kpackage kpipewire krunner kscreenlocker
-         kservice kstatusnotifieritem ktextwidgets kwidgetsaddons kwindowsystem
-         kxmlgui breeze plasma-activities plasma-wayland-protocols
-         libcanberra libdisplay-info libepoxy libinput libxcvt libxkbcommon
-         pipewire wayland wayland-protocols xcb-util-cursor xorg-xwayland
-         libxcb xcb-util-wm libei lcms2 fontconfig freetype2 hwdata libdrm
-         mesa polkit-qt6 qcoro-qt6 kdecoration kauth kcolorscheme kguiaddons ksvg
-         knighttime kwayland)
+# Mirrors extra/kwin's runtime depends (pacman -Si kwin, 6.7.5) plus the
+# extras we already needed: replaces=(kwin) drops every transitive dep the
+# stock package would have pulled in, so anything missing here is simply
+# absent from the image (kwin_wayland segfaulted in Qt's fallback QKdeTheme
+# because plasma-integration/kglobalacceld/milou/qt6-tools were gone).
+depends=(aurorae breeze glibc iio-sensor-proxy plasma-activities kauth kcmutils
+         kcolorscheme kconfig kcoreaddons kcrash kdbusaddons kdeclarative
+         kdecoration kglobalaccel kglobalacceld kguiaddons ki18n kidletime
+         kirigami kitemmodels knewstuff knighttime knotifications kpackage
+         kquickcharts kscreenlocker kservice ksvg kwayland kwidgetsaddons
+         kwindowsystem kxmlgui lcms2 libcanberra libdisplay-info libdrm libei
+         libepoxy libevdev libgcc libinput libpipewire libqaccessibilityclient-qt6
+         libstdc++ libxcb libxcvt libxkbcommon mesa milou pipewire-session-manager
+         libplasma qt6-5compat qt6-base qt6-declarative qt6-svg qt6-tools
+         systemd-libs vulkan-icd-loader wayland xcb-util-keysyms xcb-util-wm
+         qt6-multimedia qt6-sensors qt6-wayland kcompletion kconfigwidgets
+         kiconthemes kpipewire krunner kstatusnotifieritem ktextwidgets
+         plasma-wayland-protocols pipewire wayland-protocols xcb-util-cursor
+         xorg-xwayland fontconfig freetype2 hwdata polkit-qt6 qcoro-qt6)
 makedepends=(cmake extra-cmake-modules git qt6-tools vulkan-headers pkgconf
-             wayland-protocols kdoctools kglobalacceld)
+             wayland-protocols kdoctools)
 options=(!debug)
 source=("git+${url}.git#branch=holtos")
 sha256sums=('SKIP')
 
-# global shortcuts reverted to OFF (2026-09-13): the first real live-session boot test of this build (with GLOBALSHORTCUTS=ON, kglobalacceld only as a makedepend) crashed kwin_wayland with a segfault deep in Qt's platform theme init (QGuiApplicationPrivate::handleThemeChangedEvent, via KdeTheme::createKdeTheme), cascading into every other Plasma component failing since no Wayland compositor was ever running. qt6-base/frameworkintegration versions were confirmed identical between build time (.BUILDINFO) and the live system, ruling out a version-skew explanation. Reverting this flag isolates whether the change (and kglobalacceld only being a build-time dep, not a runtime one) is the cause -- revisit only after this is confirmed safe and, if re-enabling, add kglobalacceld to depends=() too, not just makedepends=().
 build() {
     cmake -B build -S "${pkgname}" \
         -DCMAKE_INSTALL_PREFIX=/usr \
         -DCMAKE_BUILD_TYPE=Release \
-        -DBUILD_TESTING=OFF \
-        -DKWIN_BUILD_GLOBALSHORTCUTS=OFF
+        -DBUILD_TESTING=OFF
     cmake --build build
 }
 

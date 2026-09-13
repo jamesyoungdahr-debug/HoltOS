@@ -12,21 +12,33 @@ license=(GPL-2.0-or-later GPL-3.0-or-later LGPL-2.1-or-later)
 provides=(plasma-workspace=6.7.5)
 conflicts=(plasma-workspace)
 replaces=(plasma-workspace)
-depends=(qt6-base qt6-declarative qt6-quick3d qt6-svg qt6-wayland qt6-multimedia
-         qt6-networkauth qt6-location qcoro-qt6
-         plasma-activities plasma-activities-stats kauth kbookmarks kcmutils kcompletion
-         kconfig kconfigwidgets kcoreaddons kcrash kdbusaddons kdeclarative
-         kglobalaccel kguiaddons ki18n kiconthemes kidletime kio kirigami
-         kirigami-addons kitemmodels kjobwidgets kdnssd knewstuff
-         knotifications knotifyconfig kpackage kpeople kquickcharts
-         krunner kscreenlocker kservice ksvg ktexteditor ktextwidgets
-         kuserfeedback kwallet kwidgetsaddons kwindowsystem kxmlgui
-         breeze plasma-wayland-protocols plasma-workspace-wallpapers
-         layer-shell-qt libkscreen libksysguard libplasma
-         appstream-qt libcanberra libqalculate networkmanager-qt
-         pipewire polkit-qt6 prison qqc2-desktop-style
-         xcb-util-cursor xorg-xwayland dbus icu freetype2 fontconfig
-         zlib libxcrypt hwdata packagekit-qt6 flatpak kded kholidays kstatusnotifieritem kwayland)
+# Mirrors extra/plasma-workspace's runtime depends (pacman -Si, 6.7.5) plus
+# the extras we already needed: replaces=(plasma-workspace) drops every
+# transitive dep the stock package would have pulled in, so anything missing
+# here is simply absent from the image (plasmashell aborted its shell load
+# because kactivitymanagerd was gone; plasma-integration/kde-cli-tools/milou/
+# qt6-tools too). "kwin" resolves to holtos-kwin via its provides=.
+depends=(accountsservice appstream-qt dbus fontconfig freetype2 glibc icu
+         kactivitymanagerd karchive kauth kbookmarks kcmutils kcolorscheme
+         kcompletion kconfig kconfigwidgets kcoreaddons kcrash kde-cli-tools
+         kdeclarative kded kdbusaddons kglobalaccel kguiaddons kholidays ki18n
+         kiconthemes kidletime kio kio-extras kio-fuse kirigami kirigami-addons
+         kitemmodels kjobwidgets knewstuff knighttime knotifications kpackage
+         kparts kpipewire krunner kquickcharts kscreenlocker kservice
+         kstatusnotifieritem ksvg ksystemstats ktexteditor ktextwidgets
+         kuserfeedback kwallet kwayland kwidgetsaddons kwin kwindowsystem kxmlgui
+         layer-shell-qt libcanberra libice libgcc libkexiv2 libksysguard
+         libplasma libqalculate libsm libstdc++ libx11 libxau libxcb libxcrypt
+         libxcursor libxfixes libxft libxtst milou ocean-sound-theme
+         plasma-activities plasma-activities-stats plasma-integration prison
+         qt6-5compat qt6-base qt6-declarative qt6-location qt6-positioning
+         qt6-svg qt6-tools qt6-virtualkeyboard sh solid systemd-libs wayland
+         xcb-util xcb-util-cursor xcb-util-image xcb-util-wm xorg-xmessage
+         xorg-xrdb xorg-xwayland zlib
+         qt6-quick3d qt6-wayland qt6-multimedia qt6-networkauth qcoro-qt6
+         kdnssd knotifyconfig kpeople breeze plasma-wayland-protocols
+         plasma-workspace-wallpapers libkscreen networkmanager-qt pipewire
+         polkit-qt6 qqc2-desktop-style hwdata packagekit-qt6 flatpak)
 makedepends=(cmake extra-cmake-modules git qt6-tools pkgconf wayland-protocols
              kdoctools kwin)
 options=(!debug)

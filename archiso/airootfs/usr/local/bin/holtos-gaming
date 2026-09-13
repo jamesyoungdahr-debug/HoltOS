@@ -14,7 +14,7 @@ import os
 import subprocess
 import sys
 
-from PySide6.QtCore import QObject, QThread, Signal
+from PySide6.QtCore import QObject, Qt, QThread, Signal
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QApplication, QCheckBox, QDialog, QFormLayout, QGroupBox, QHBoxLayout,
@@ -48,6 +48,14 @@ def game_mode_default():
         return False
 
 
+def left_aligned(form):
+    # Kvantum right-aligns QFormLayout labels by default, which makes rows ragged.
+    form.setLabelAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+    form.setFormAlignment(Qt.AlignLeft | Qt.AlignTop)
+    form.setFieldGrowthPolicy(QFormLayout.AllNonFixedFieldsGrow)
+    return form
+
+
 class ProtonCheck(QObject):
     done = Signal(str, bool)
 
@@ -72,17 +80,17 @@ class GamingWindow(QDialog):
         layout = QVBoxLayout(self)
 
         stack = QGroupBox("Installed")
-        form = QFormLayout(stack)
+        form = left_aligned(QFormLayout(stack))
         for label, pkg in (("Steam", "steam"), ("gamescope", "gamescope"),
                            ("gamemode", "gamemode"), ("MangoHud", "mangohud")):
-            form.addRow(label, QLabel(package_version(pkg)))
+            form.addRow(f"{label}:", QLabel(package_version(pkg)))
         layout.addWidget(stack)
 
         proton = QGroupBox("Proton GE")
-        pform = QFormLayout(proton)
-        pform.addRow("Installed", QLabel("\n".join(proton_ge_installed())))
+        pform = left_aligned(QFormLayout(proton))
+        pform.addRow("Installed:", QLabel("\n".join(proton_ge_installed())))
         self.proton_status = QLabel("Checking for updates...")
-        pform.addRow("Latest", self.proton_status)
+        pform.addRow("Status:", self.proton_status)
         buttons = QHBoxLayout()
         self.update_button = QPushButton("Update Proton GE")
         self.update_button.setEnabled(False)

@@ -5,6 +5,26 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+- **HoltOS's own KWin and plasma-workspace reach a working desktop**
+  (fork plan Milestone 2). The first builds crashed at login: their
+  `replaces=` drops the stock packages, and with them a dozen runtime
+  dependencies the hand-written `depends=()` lists never named
+  (`plasma-integration`, without which Qt's fallback KDE theme segfaults
+  KWin, plus `kactivitymanagerd`, `kglobalacceld`, `milou`, `qt6-tools`
+  and more). Both packages now carry Arch's full dependency lists; KWin
+  is built with global shortcuts again.
+- **Glass blur now comes from HoltOS's KWin itself** (Milestone 3): the
+  image enables KWin's in-tree blur with the HoltOS additions and the
+  Glass v2 tuning (strength 15, noise 4, no tint); Kvantum's window and
+  dialog fills drop to 40% / 55% so the blurred wallpaper shows through.
+  The separate `holtosglass` effect ships disabled until this is
+  confirmed on a fresh install.
+- **Title bars use the HoltOS Glass decoration again**: the look-and-feel
+  still named Klassy, which the image does not ship, so KWin fell back
+  to Breeze.
+- **Gaming page** labels line up; the session-switch cleanup no longer
+  shows as a failed unit after every normal login.
+
 - **Restart prompt after system-package updates** (Liam, 2026-09-12).
   `holtos-update-apply system` now writes `/run/holtos-reboot-required`
   (with a reason) when the running kernel's module directory is gone or
