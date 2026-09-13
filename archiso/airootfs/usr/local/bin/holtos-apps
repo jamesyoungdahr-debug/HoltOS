@@ -369,6 +369,12 @@ class AppsWindow(QTabWidget):
             return
         self.store = Store()
         self.icons = IconCache()
+        # A fresh install has no Flathub catalogue yet, so search would find
+        # nothing. Refreshing it is allowed for the active user without a
+        # password (polkit: org.freedesktop.Flatpak.appstream-update), and it
+        # also sets up Flathub from /etc/flatpak/remotes.d.
+        self.appstream = QProcess(self)
+        self.appstream.start("flatpak", ["update", "--system", "--appstream", "-y", "--noninteractive"])
         self.addTab(FeaturedPage(self.store, self.icons), "Featured")
         self.addTab(SearchPage(self.store, self.icons), "Search")
         self.addTab(InstalledPage(self.store, self.icons), "Installed")

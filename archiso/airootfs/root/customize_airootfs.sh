@@ -44,6 +44,11 @@ systemctl enable holtos-btrfs-restore-cleanup.service
 systemctl enable smartd.service holtos-scrub.timer
 # Update checks on a schedule (holtos-update-status; HoltOS Updates > Settings).
 systemctl enable holtos-update-check.timer
+# Create Flatpak's system repository now, which also adds Flathub from
+# /etc/flatpak/remotes.d. Flatpak only does that on first use by root, so
+# without this HoltOS Apps' search finds nothing until something runs as
+# root. Needs no network (verified with networking cut off).
+flatpak remotes --system >/dev/null 2>&1 || true
 
 # [multilib] for the live AND installed system (Steam + lib32 drivers are
 # in the image; without this the installed system could not update them).
