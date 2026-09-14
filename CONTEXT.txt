@@ -17,6 +17,12 @@ Backups: verified git bundles in /home/liam/Projects/backups/holtos/ on the Stri
 
 CURRENT STATE (2026-09-14)
 --------------------------
+- HAND-OFF STATUS (2026-09-14 morning): all work committed and pushed, no tags,
+  no ISO. Glass work waits on Liam's live test and is on branches:
+  holtos-kwin edge-blur-fix (G1, package r90), HoltOS glass-buttons (G2/G3,
+  package r55), HoltOS glass-surfaces (G4 partial). Nothing installed on
+  Liamtab yet (kwin r89, decoration r54, no Kvantum override). Test steps in
+  LIAM-HANDOFF.md 5a; the full table is in HANDOFF.md "Status at hand-off".
 - LATEST RELEASE: v0.0.6d-alpha (master 043e406, pushed and tagged). Releases
   0.0.5a through 0.0.6d are summarised in HANDOFF.md ("Releases 0.0.5-alpha
   to 0.0.6d-alpha"); Liam's test steps are in LIAM-HANDOFF.md. Numbering: the

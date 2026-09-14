@@ -86,9 +86,11 @@ release. Waiting on Liam's go-ahead.
 
 ## 5a. Glass design: what needs you (from the 2026-09-14 night shift)
 
-The plan is `docs/holtos-glass-design-plan.md`. Tonight's work is committed
-and pushed (HoltOS master, holtos-kwin branch `edge-blur-fix`), with no tag,
-so the updater installs nothing from it.
+The plan is `docs/holtos-glass-design-plan.md`. All of it is committed and
+pushed with no tag, so the updater installs nothing from it: HoltOS master,
+holtos-kwin branch `edge-blur-fix`, and HoltOS branches `glass-buttons` and
+`glass-surfaces`. Nothing is installed on Liamtab yet. The easiest place to
+start is step 6 (no password), then steps 2-5.
 
 1. **Build tools: done** (installed 2026-09-14). Both test builds compiled on
    Liamtab.

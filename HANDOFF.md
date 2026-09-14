@@ -498,6 +498,29 @@ designs and milestones G1-G12, is `docs/holtos-glass-design-plan.md`.
   text stays readable (`preview/before-` and `after-over-wallpaper.png`).
   The script's printed alpha values are wrong (always 255); trust the
   images. Not seen live. Tabs still use the opaque button element.
+
+### Status at hand-off (2026-09-14, morning)
+
+Everything is committed and pushed, with no tags, so the HoltOS updater
+installs nothing from it. No ISO was built (Liam: commit and push only).
+
+| Repo / branch | Commit | What | Tested |
+|---|---|---|---|
+| HoltOS `master` | logs and plan | logs, glass plan, hardware detection fix | detection fix on Liamtab |
+| holtos-kwin `edge-blur-fix` | 0153fa7 | G1 edge-blur fix | compiled, package r90 built |
+| HoltOS `glass-buttons` | 6a3cdd1 | G2/G3 traffic-light buttons, hover glow, regrouped klassyrc | compiled, package r55 built |
+| HoltOS `glass-surfaces` | b449f76 | G4 glass Dolphin view, Places sidebar, toolbar | offscreen render |
+
+- **Nothing is installed on Liamtab yet**: holtos-kwin r89 and
+  holtos-window-decoration r54 are still running, and `~/.config/Kvantum`
+  has no theme override.
+- **Next for Liam**: LIAM-HANDOFF.md section 5a, steps 2-6. Try the
+  no-password Kvantum step first, then the two packages and the klassyrc,
+  then log out and back in.
+- **Next for Claude, after Liam's feedback**: merge the branches that pass
+  (`edge-blur-fix` into holtos-kwin `holtos`, `glass-buttons` and
+  `glass-surfaces` into master), then G4 tabs, G5 (needs Liam's Plasma theme
+  choice), G6 GTK3, and G8-G9 adaptive contrast.
 - **Virtual keyboard**: researched. Recommendation is to keep plasma-keyboard
   and add Vboard (AUR, uinput, modifier keys) as a tray keyboard in the next
   feature release, pending Liam's go-ahead.
