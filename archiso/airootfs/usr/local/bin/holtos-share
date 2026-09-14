@@ -59,7 +59,7 @@ mount_opts() {   # TYPE NAME RO EXTRA SMBVERS
     local opts
     case "$1" in
         smb)
-            opts="credentials=${CONF_DIR}/$2.cred,uid=${OWNER_UID},gid=${OWNER_GID},file_mode=0664,dir_mode=0775,iocharset=utf8,nofail,_netdev"
+            opts="credentials=${CONF_DIR}/$2.cred,uid=${OWNER_UID},gid=${OWNER_GID},file_mode=0664,dir_mode=0775,iocharset=utf8,nofail,_netdev,nohandlecache"
             if [ -n "${5:-}" ] && [ "$5" != "auto" ]; then
                 opts="${opts},vers=$5"
             fi
