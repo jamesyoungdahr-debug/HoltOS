@@ -118,6 +118,15 @@ so the updater installs nothing from it.
 
        sudo pacman -U /mnt/shares/projects/holtos/local-repo/holtos-kwin-6.7.5.r89-1-x86_64.pkg.tar.zst /mnt/shares/projects/holtos/local-repo/holtos-window-decoration-6.7.2.r54-1-x86_64.pkg.tar.zst
        cp ~/.config/klassy/klassyrc.bak ~/.config/klassy/klassyrc
+6. **Glass file list, sidebar and toolbar** (branch `glass-surfaces`, no
+   password needed). Your own Kvantum folder takes priority over the system
+   theme, so copying the new theme there tries it on just your account:
+
+       mkdir -p ~/.config/Kvantum && cp -r /mnt/shares/projects/holtos-glass-surfaces/archiso/airootfs/usr/share/Kvantum/HoltOSGlass ~/.config/Kvantum/
+
+   Close Dolphin fully and open it again. The file list, the Places sidebar
+   and the toolbar should show the blurred wallpaper. Tabs stay dark for now.
+   To undo: `rm -r ~/.config/Kvantum/HoltOSGlass`, then reopen Dolphin.
 4. **Plasma theme.** `etc/xdg/plasmarc` names `klassy-dark`, but your desktop
    uses `default`. Which should HoltOS ship until it has its own glass theme?
 

@@ -39,7 +39,10 @@ CURRENT STATE (2026-09-14)
   on HoltOS branch glass-buttons (worktree /mnt/shares/projects/holtos-glass-buttons),
   COMPILED, package r55 in ~/Projects/scratch/deco-pkg. Neither installed:
   Liam installs (LIAM-HANDOFF 5a). Old skel klassyrc had every key under
-  [Windeco], so non-Windeco keys were ignored; regrouped on glass-buttons. Liamtab runs
+  [Windeco], so non-Windeco keys were ignored; regrouped on glass-buttons.
+  G4 (partial): Kvantum glass Dolphin view, Places sidebar and toolbar on
+  branch glass-surfaces (worktree /mnt/shares/projects/holtos-glass-surfaces),
+  offscreen render checked, not live; tabs still opaque. Liamtab runs
   holtos-kwin r89 + Kvantum + org.holtos.glass, so most glass work can be
   checked there. Never install KWin/decoration builds into Liam's live
   session without him.

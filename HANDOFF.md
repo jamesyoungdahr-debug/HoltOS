@@ -484,6 +484,20 @@ designs and milestones G1-G12, is `docs/holtos-glass-design-plan.md`.
   `~/Projects/scratch/deco-pkg/`, with logs in
   `~/Projects/logs/holtos-window-decoration/`. Not installed. Install and
   rollback steps are in LIAM-HANDOFF.md section 5a.
+- **G4 partly done on HoltOS branch `glass-surfaces`** (pushed; worktree
+  `/mnt/shares/projects/holtos-glass-surfaces`). The Kvantum HoltOSGlass
+  theme now has `transparent_dolphin_view=true`, Base and AltBase at 40 %
+  alpha (`#RRGGBBAA`; other Kvantum themes use 8-digit colours too), and the
+  dock (Places sidebar) and menubar/toolbar SVG elements at 15 % with 35 %
+  frame edges. The three mirrored `<use>` edges inherit the opacity rather
+  than doubling it. The SVG edit was applied by
+  `~/Projects/scratch/kvantum/apply_glass_opacity.py`. Checked offscreen with
+  `~/Projects/scratch/kvantum/render_glass_preview.py`, a Dolphin-like window
+  under the Kvantum style using a temporary XDG_CONFIG_HOME, drawn over a
+  bright gradient: file list, sidebar and toolbar show the backdrop and the
+  text stays readable (`preview/before-` and `after-over-wallpaper.png`).
+  The script's printed alpha values are wrong (always 255); trust the
+  images. Not seen live. Tabs still use the opaque button element.
 - **Virtual keyboard**: researched. Recommendation is to keep plasma-keyboard
   and add Vboard (AUR, uinput, modifier keys) as a tray keyboard in the next
   feature release, pending Liam's go-ahead.

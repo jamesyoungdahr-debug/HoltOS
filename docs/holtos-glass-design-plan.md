@@ -146,7 +146,7 @@ Each one is a small unit, built and checked before the next.
 | G1 | Edge-blur fix (holtos-kwin branch `edge-blur-fix`). **Compiled 2026-09-14; test package holtos-kwin 6.7.5.r90 built; waiting for Liam to install** | compile, then Liamtab drag test |
 | G2 | macOS buttons: klassyrc traffic lights and circles. **Done 2026-09-14 on HoltOS branch `glass-buttons`; klassyrc regrouped (see Decisions)** | Liamtab, by eye |
 | G3 | Hover glow in the decoration fork. **Compiled 2026-09-14 on `glass-buttons`; test package holtos-window-decoration 6.7.2.r55 built; waiting for Liam to install** | compile, then Liamtab hover test |
-| G4 | Kvantum: Dolphin view, sidebar, toolbar, tabs, Base alpha | Liamtab, Dolphin next to the reference screenshot |
+| G4 | Kvantum: Dolphin view, sidebar, toolbar, tabs, Base alpha. **Partly done 2026-09-14 on HoltOS branch `glass-surfaces`: transparent Dolphin view, Base/AltBase at 40 %, Places dock and toolbar at 15 % (edges 35 %); checked with an offscreen render, not live yet. Tabs still opaque (they need their own SVG element)** | Liamtab, Dolphin next to the reference screenshot |
 | G5 | plasmarc mismatch, then a HoltOS desktoptheme | Liamtab, restart plasmashell |
 | G6 | GTK3 rgba css | Liamtab |
 | G7 | qqc2-desktop-style fork: Kirigami alpha backgrounds, Qt Quick alpha buffer (with fork plan Milestone 4) | compile, then Liamtab with System Settings and Discover |
