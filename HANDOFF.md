@@ -6,8 +6,8 @@ context. The 2026-09-11 handoff this replaces is in git history
 (`git show bc29ef6:HANDOFF.md`).
 
 Commit: see `git log` (this file is committed with the work it describes).
-Latest release: `v0.0.6d-alpha`. 0.0.7 (neon wallpapers) is on master, not
-pushed. Newest ISO: `out/holtos-0.0.6d-alpha-x86_64.iso` (built 2026-09-13
+Latest release: `v0.0.6d-alpha`. 0.0.7 (neon wallpapers) is on master, pushed
+2026-09-14 (Liam), not tagged or released; no ISO built for it. Newest ISO: `out/holtos-0.0.6d-alpha-x86_64.iso` (built 2026-09-13
 23:50). Releases reach Liam's machines through the HoltOS updater; the Ventoy
 stick is no longer used. Test VM: `holtos-test` on LiamPC (Hyper-V Gen 2,
 6 vCPU, 8 GB, Secure Boot off, 60 GB VHDX under `vm/`). The repo is
@@ -390,7 +390,7 @@ marks a big-fix release. All tagged and pushed; packages published to the
   z13gui.service inside gamescope; the session stops z13gui on exit. Not yet
   tested; steps in `LIAM-HANDOFF.md`.
 
-## Neon wallpapers for 0.0.7 (2026-09-13/14, on master, not pushed)
+## Neon wallpapers for 0.0.7 (2026-09-13/14, on master, pushed 2026-09-14, not tagged)
 
 - Commits 17d9a96 (brief), 6c13f7f (only HoltOS wallpapers), a685407 (ten
   wallpapers + packaging), 88fbf36 (pipeline tools), 2baad26 (default).
@@ -446,7 +446,7 @@ designs and milestones G1-G12, is `docs/holtos-glass-design-plan.md`.
   visible by HoltOS force-blur): the blur's offscreen textures are sized from
   the whole window, but only the on-screen part is ever copied in, so texels
   past the edge stay transparent or stale and the blur passes smear them into
-  the glass. Fix committed on holtos-kwin branch `edge-blur-fix`: textures
+  the glass. Fix committed and pushed on holtos-kwin branch `edge-blur-fix`: textures
   are sized from the window clipped to the output. **Not compiled or seen on
   screen yet**: Liamtab has no cmake or extra-cmake-modules, and installing
   them needs Liam's sudo. Build it, install it on Liamtab, then do the drag
@@ -459,6 +459,14 @@ designs and milestones G1-G12, is `docs/holtos-glass-design-plan.md`.
 - Found on the way: `etc/xdg/plasmarc` names the `klassy-dark` Plasma theme
   while the look-and-feel and Liamtab use `default` (milestone G5).
 - Nothing was installed into Liam's running session.
+- **Build tools on Liamtab** (Liam installed them 2026-09-14): cmake 4.4.3,
+  extra-cmake-modules 6.30, ninja 1.13.2, vulkan-headers and kdoctools (KWin's
+  configure fails without vulkan-headers). holtos-kwin `edge-blur-fix`
+  configures cleanly and is compiling from a `git archive` copy in
+  `~/Projects/scratch/kwin-src`, with 8 jobs because only about 7 GB of RAM is
+  free while LM Studio holds a model here. A local test package recipe
+  (`~/Projects/scratch/kwin-pkg/PKGBUILD`, pkgver 6.7.5.r90) reuses the real
+  PKGBUILD's metadata and packages that build.
 - **Virtual keyboard**: researched. Recommendation is to keep plasma-keyboard
   and add Vboard (AUR, uinput, modifier keys) as a tray keyboard in the next
   feature release, pending Liam's go-ahead.

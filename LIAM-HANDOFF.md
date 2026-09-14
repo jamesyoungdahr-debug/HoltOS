@@ -87,7 +87,8 @@ release. Waiting on Liam's go-ahead.
 ## 5a. Glass design: what needs you (from the 2026-09-14 night shift)
 
 The plan is `docs/holtos-glass-design-plan.md`. Tonight's work is committed
-locally and not pushed.
+and pushed (HoltOS master, holtos-kwin branch `edge-blur-fix`), with no tag,
+so the updater installs nothing from it.
 
 1. **Build tools, so fixes can be compiled on Liamtab.** Either install them
    yourself (`sudo pacman -S --needed cmake extra-cmake-modules ninja`), or

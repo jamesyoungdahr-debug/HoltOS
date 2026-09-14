@@ -21,7 +21,8 @@ CURRENT STATE (2026-09-14)
   0.0.5a through 0.0.6d are summarised in HANDOFF.md ("Releases 0.0.5-alpha
   to 0.0.6d-alpha"); Liam's test steps are in LIAM-HANDOFF.md. Numbering: the
   number goes up for big features, a letter marks a big-fix release.
-  NEXT RELEASE 0.0.7 (on master, not pushed): ten neon wallpapers, Neon
+  NEXT RELEASE 0.0.7 (on master, pushed 2026-09-14, not tagged; Liam: no ISO
+  build, just commit and push): ten neon wallpapers, Neon
   Otter Night as the default (desktop, lock, SDDM, Limine), only HoltOS
   wallpapers installed; see HANDOFF.md "Neon wallpapers for 0.0.7". Release
   only when Liam says. Otter Night default not yet tested on a fresh install.
