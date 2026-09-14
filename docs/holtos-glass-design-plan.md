@@ -28,6 +28,28 @@ Liam's requests, in his words:
   Kvantum HoltOSGlass and the org.holtos.glass decoration. Most milestones
   can be checked there, not only in the VM.
 
+## Reference look (2026-09-14)
+
+Liam's reference is saved as `docs/design-references/glass-dolphin-reference.jpg`.
+Compared with the glass branches:
+
+| Reference | Glass branches today | Change |
+|---|---|---|
+| One even tint over the whole window | title bar 70 %, window fill 40 %; views that paint Base add a 40 % layer on top (about 64 % together); sidebar and toolbar 15 % | one layer: title bar opacity equal to the window fill; Base/AltBase, dock, toolbar and status bar add nothing; tune the window tint lighter in the VM |
+| No line between title bar and toolbar | `DrawTitleBarSeparator=true` | false |
+| Regular-weight title | `BoldTitle=true` | false |
+| Flat glass tabs, the active one slightly lighter | opaque button element | its own translucent tab element |
+| Selected items soft and rounded | solid purple `#B14DFF` | translucent purple (Liam, 2026-09-14) |
+| Faint light 1 px outline, rounded corners | large shadow, no light outline | light window outline at low opacity |
+| Smooth blur with no grain | BlurStrength 15, NoiseStrength 4 | lower noise, check the strength |
+| Plain white buttons on the left | traffic-light circles on the right with the hover glow | **kept as built** (Liam, 2026-09-14) |
+
+Lighter glass lowers text contrast over bright wallpapers. G8 and G9 are the
+real fix; the text-shadow backstop (G10) can come earlier if the VM check
+needs it. These checks run in the `holtos-test` VM on LiamPC (Liam,
+2026-09-14), which shows the look but not performance. The Den client gets
+the same look: handoff in the-den repo, `docs/holtos-glass-desktop-handoff.md`.
+
 ## 1. Edge bug: glass breaks near the screen edge
 
 **Root cause (from reading the code, not yet seen on screen).** The bug is in
