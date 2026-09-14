@@ -426,6 +426,14 @@ Open after 0.0.6d:
   last ran at 04:44 UTC and wrote `up_to_date` (settings: every 6h,
   `AUTO_INSTALL=apps`); `holtos-scrub.timer` is next due 2026-10-01;
   `holtos-tray` is running; no failed system or user units.
+- **Hardware detection missed the Strix Halo GPU: fixed** (2026-09-14, on
+  master, not released). Liamtab's `hardware.log` had an empty display section
+  and no AMD vainfo/vulkaninfo block: the Radeon 8060S is PCI class 0380
+  ("Display controller"), and `homelab-detect-hardware.sh` only matched 0300
+  and 0302. It now lists and matches 0380 too (NVIDIA, AMD and Intel checks).
+  Verified on Liamtab: the old match finds no AMD GPU, the new one finds
+  `c4:00.0 ... [1002:1586]`. Detection only runs at install time, so existing
+  installs keep their old `hardware.log`.
 - **Virtual keyboard**: researched. Recommendation is to keep plasma-keyboard
   and add Vboard (AUR, uinput, modifier keys) as a tray keyboard in the next
   feature release, pending Liam's go-ahead.

@@ -15,6 +15,10 @@ All notable changes to HoltOS are logged here. Format loosely follows
   removed, and the updater copies every HoltOS wallpaper set.
 - Wallpaper pipeline tools in `tools/wallpapers/` (render, QA, glass preview,
   packaging) for making more.
+- **Fixed**: hardware detection recognises AMD APU graphics that report PCI
+  class 0380 (such as the Radeon 8060S in Strix Halo machines), so
+  `hardware.log` lists the GPU and its VA-API and Vulkan details. Applies to
+  new installs.
 
 ## [0.0.6d-alpha] - 2026-09-13
 

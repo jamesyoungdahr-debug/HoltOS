@@ -26,9 +26,12 @@ mkdir -p /var/lib/holtos
 {
     echo "# HoltOS hardware detection, $(date -u +%FT%TZ)"
     echo "## CPU"; grep -m1 'model name' /proc/cpuinfo || true
-    echo "## Display controllers (PCI class 0300/0302)"
+    # 0380 ("Display controller", other): AMD APUs such as Strix Halo's
+    # Radeon 8060S report this class instead of 0300 VGA.
+    echo "## Display controllers (PCI class 0300/0302/0380)"
     lspci -nn -d ::0300 || true
     lspci -nn -d ::0302 || true
+    lspci -nn -d ::0380 || true
     echo "## Network controllers"
     lspci -nn -d ::0200 || true
     lspci -nn -d ::0280 || true
@@ -37,7 +40,7 @@ mkdir -p /var/lib/holtos
 : > "$CMDLINE_EXTRA"
 
 # --- NVIDIA -------------------------------------------------------------
-if lspci -n -d 10de: 2>/dev/null | grep -qE ' 03(00|02): '; then
+if lspci -n -d 10de: 2>/dev/null | grep -qE ' 03(00|02|80): '; then
     echo "## NVIDIA GPU present" >> "$LOG"
     if compgen -G "$DRIVERS/nvidia/*.pkg.tar.zst" > /dev/null; then
         echo "==> NVIDIA GPU detected — installing the staged driver packages (DKMS build follows)..."
@@ -74,7 +77,7 @@ fi
 # RADV + VA-API through Mesa cover it, and Plasma gets HDR/VRR from
 # amdgpu's KMS. This runs in the chroot before first boot, so the DRM
 # node may not be usable yet; every probe is best-effort.
-if lspci -n -d 1002: 2>/dev/null | grep -qE ' 03(00|02): '; then
+if lspci -n -d 1002: 2>/dev/null | grep -qE ' 03(00|02|80): '; then
     {
         echo "## AMD GPU present (Mesa RADV + VA-API from the image)"
         lspci -nn -d 1002: | grep -E 'VGA|Display|3D' || true
@@ -82,7 +85,7 @@ if lspci -n -d 1002: 2>/dev/null | grep -qE ' 03(00|02): '; then
         command -v vulkaninfo >/dev/null && (vulkaninfo --summary 2>/dev/null | grep -E 'deviceName|driverName|apiVersion' | head -6 || echo "vulkaninfo: not usable in the install chroot (check after first boot)")
     } >> "$LOG" 2>&1 || true
 fi
-if lspci -n -d 8086: 2>/dev/null | grep -qE ' 03(00|02): '; then
+if lspci -n -d 8086: 2>/dev/null | grep -qE ' 03(00|02|80): '; then
     { echo "## Intel GPU present (Mesa ANV + VA-API from the image)"; lspci -nn -d 8086: | grep -E 'VGA|Display' || true; } >> "$LOG" 2>&1 || true
 fi
 
