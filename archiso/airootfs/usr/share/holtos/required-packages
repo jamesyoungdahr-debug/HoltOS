@@ -14,3 +14,6 @@ plasma-keyboard
 fuse2
 # Neon rebrand: GTK apps put their menus in the top menu bar.
 appmenu-gtk-module
+# Chinese, Japanese and Korean text: Steam's language list in Game Mode showed
+# empty boxes without it (Liam, 2026-09-14).
+noto-fonts-cjk

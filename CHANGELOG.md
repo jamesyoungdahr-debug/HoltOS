@@ -18,6 +18,9 @@ Neon rebrand (next major release):
   next login; their old panels are kept as `*.before-neon-layout`.
 - GTK apps show their menus in the top bar (`appmenu-gtk-module`).
 - **Smaller title bar buttons and dock icons** for a less cluttered look.
+- **Fixed: Chinese, Japanese and Korean text showed as empty boxes**, for
+  example in Steam's language list in Game Mode. HoltOS now installs the Noto
+  CJK fonts, and the updater adds them to existing systems.
 - **New HoltOS Glass Plasma style (`holtos-glass`), now the default:** the menu
   bar is plain glass with a faint bottom line; the dock is a smoked-glass
   capsule with a neon rim that runs magenta to purple to electric blue. In the

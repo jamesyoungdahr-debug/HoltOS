@@ -56,6 +56,9 @@ konsole
 dolphin
 # Neon rebrand: GTK apps show their menus in the top menu bar
 appmenu-gtk-module
+# Chinese, Japanese and Korean text (Steam's language list in Game Mode showed
+# empty boxes without it; Liam, 2026-09-14)
+noto-fonts-cjk
 plasma-nm
 # System Settings > About this System (kinfocenter, reads /etc/os-release and
 # etc/xdg/kcm-about-distrorc), Power Management profiles
