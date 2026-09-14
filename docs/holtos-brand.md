@@ -88,8 +88,15 @@ HoltOS is dark first; there is no light theme.
 | lilac | `#F4EBFF` | cheek pads, whiskers, focus text, light accents |
 | healthy | `#28E0C8` | online, healthy, available, and nothing else |
 | warning | `#FFB84D` | needs a human: both neutral and negative states |
+| pulse | `#4F7BFF` | electric blue: information and work in progress; cool neon light in art |
+| flare | `#FF4FD8` | magenta glow: the logo glow, highlights, gradients with purple; never a state or an action |
+| volt | `#C6FF3D` | lime spark: rare "new" markers and sparks in art; never success (teal owns healthy) |
 
 Rules:
+- **Five neon colours, five jobs** (Liam, 2026-09-14): purple acts, teal
+  means healthy, blue informs, magenta glows, lime sparks. Blue, magenta and
+  lime never replace purple for the primary action or teal and amber for a
+  state. In illustration and wallpapers all five can mix freely.
 - **Purple shouts once per screen.**
 - **Teal is a promise about the machine**, never decoration.
 - **Amber means "needs you".** There is no red: errors and warnings are both

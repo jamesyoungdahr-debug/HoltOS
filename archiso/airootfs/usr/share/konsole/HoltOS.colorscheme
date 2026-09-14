@@ -37,14 +37,14 @@ Color=255,184,77
 Color=255,204,120
 
 [Color4]
-Color=177,77,255
+Color=79,123,255
 [Color4Intense]
-Color=200,130,255
+Color=123,156,255
 
 [Color5]
-Color=143,47,224
+Color=255,79,216
 [Color5Intense]
-Color=190,120,255
+Color=255,133,228
 
 [Color6]
 Color=40,224,200
