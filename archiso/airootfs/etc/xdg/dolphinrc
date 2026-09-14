@@ -1,0 +1,7 @@
+# HoltOS defaults for Dolphin (a user's own ~/.config/dolphinrc wins).
+# Glass look (2026-09-14, Liam's reference screenshot): a full-width status
+# bar with the zoom slider instead of the small floating one, which Kvantum
+# paints as an opaque box and truncates ("0 fold... files").
+[General]
+ShowStatusBar=FullWidth
+ShowZoomSlider=true

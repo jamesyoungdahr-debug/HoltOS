@@ -1,0 +1,65 @@
+#!/bin/bash
+# Brings an existing account's own KDE config in line with the HoltOS glass
+# look (2026-09-14). Runs once per account at login, from
+# /etc/xdg/autostart/holtos-glass-user-update.desktop. New accounts already
+# get these values from /etc/skel and /etc/xdg; this is for accounts made by
+# an older HoltOS image, whose per-user files the updater never touches.
+#
+# - ~/.config/kdedefaults/kwinrc from older images names the removed
+#   org.kde.klassy decoration, so KWin fell back to Breeze and no glass title
+#   bar setting applied (seen in the test VM, 2026-09-14).
+# - ~/.config/klassy/klassyrc: the old HoltOS file kept every key under
+#   [Windeco], where KConfig ignores most of them. It is replaced by the
+#   current one (backup kept). A regrouped file only gets the glass keys.
+# - ~/.config/kwinrc: the old per-user blur NoiseStrength=4 hid the new
+#   system default.
+# - The HoltOS colour scheme is applied again so the new inactive title bar
+#   colour reaches kdeglobals.
+set -u
+
+STAMP="${XDG_STATE_HOME:-$HOME/.local/state}/holtos/glass-user-update-1"
+[ -e "$STAMP" ] && exit 0
+[ -e /run/archiso ] && exit 0
+
+CFG="${XDG_CONFIG_HOME:-$HOME/.config}"
+
+kdedefaults="$CFG/kdedefaults/kwinrc"
+if [ "$(kreadconfig6 --file "$kdedefaults" --group org.kde.kdecoration2 --key library)" = org.kde.klassy ]; then
+    kwriteconfig6 --file "$kdedefaults" --group org.kde.kdecoration2 --key library org.holtos.glass
+    kwriteconfig6 --file "$kdedefaults" --group org.kde.kdecoration2 --key theme "HoltOS Glass"
+fi
+
+klassy="$CFG/klassy/klassyrc"
+if [ -f "$klassy" ] && ! grep -q '^\[TitleBarOpacity\]' "$klassy"; then
+    cp "$klassy" "$klassy.before-glass-look"
+    cp /etc/skel/.config/klassy/klassyrc "$klassy"
+elif [ -f "$klassy" ]; then
+    set_klassy() { kwriteconfig6 --file "$klassy" --group "$1" --key "$2" "$3"; }
+    set_klassy Windeco BoldTitle false
+    set_klassy Windeco DrawTitleBarSeparator false
+    set_klassy TitleBarOpacity ActiveTitleBarOpacity 40
+    set_klassy TitleBarOpacity InactiveTitleBarOpacity 40
+    set_klassy WindowOutlineStyle WindowOutlineThickness 1
+    set_klassy WindowOutlineStyle WindowOutlineStyleActive WindowOutlineContrast
+    set_klassy WindowOutlineStyle WindowOutlineStyleInactive WindowOutlineContrast
+    set_klassy WindowOutlineStyle WindowOutlineContrastOpacityActive 12
+    set_klassy WindowOutlineStyle WindowOutlineContrastOpacityInactive 8
+fi
+
+if [ "$(kreadconfig6 --file "$CFG/kwinrc" --group Effect-blur --key NoiseStrength)" = 4 ]; then
+    kwriteconfig6 --file "$CFG/kwinrc" --group Effect-blur --key NoiseStrength --delete
+fi
+
+if [ "$(kreadconfig6 --file "$CFG/kdeglobals" --group WM --key activeFont)" = "Nunito,10,-1,5,700,0,0,0,0,0" ]; then
+    kwriteconfig6 --file "$CFG/kdeglobals" --group WM --key activeFont "Nunito,10,-1,5,400,0,0,0,0,0"
+fi
+
+if [ "$(kreadconfig6 --file "$CFG/kdeglobals" --group General --key ColorScheme)" = HoltOS ]; then
+    plasma-apply-colorscheme BreezeDark >/dev/null 2>&1
+    plasma-apply-colorscheme HoltOS >/dev/null 2>&1
+fi
+
+qdbus6 org.kde.KWin /KWin reconfigure >/dev/null 2>&1 || true
+
+mkdir -p "$(dirname "$STAMP")"
+date -u +%FT%TZ > "$STAMP"

@@ -15,7 +15,7 @@ left_tabs=false
 attach_active_tab=false
 embedded_tabs=true
 mirror_doc_tabs=false
-group_toolbar_buttons=true
+group_toolbar_buttons=false
 spread_progressbar=true
 composite=true
 menu_shadow_depth=7
@@ -133,6 +133,19 @@ frame.expansion=12
 [PanelButtonTool]
 inherits=PanelButtonCommand
 
+# Toolbar buttons (2026-09-14): flat glass like the reference screenshot,
+# translucent purple only on hover, press and toggle (tbutton-* elements
+# added by tools/glass/kvantum_glass.py).
+[ToolbarButton]
+inherits=PanelButtonCommand
+frame=false
+interior.element=tbutton
+indicator.element=arrow
+text.normal.color=white
+text.focus.color=#F4EBFF
+text.press.color=white
+text.toggle.color=white
+
 [Dock]
 inherits=PanelButtonCommand
 interior.element=dock
@@ -212,12 +225,14 @@ text.focus.color=#F4EBFF
 
 [Tab]
 inherits=PanelButtonCommand
-interior.element=button
+# Glass tabs (2026-09-14): translucent tab-* elements added by
+# tools/glass/kvantum_glass.py, no frame, like the reference screenshot.
+interior.element=tab
 text.margin.left=6
 text.margin.right=6
 text.margin.top=4
 text.margin.bottom=4
-frame.element=button
+frame=false
 focusFrame=true
 indicator.element=tab
 indicator.size=12

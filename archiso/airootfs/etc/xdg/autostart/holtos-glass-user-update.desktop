@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=HoltOS glass look for this account
+Comment=Brings an older account's KDE settings in line with the HoltOS glass look (runs once)
+Exec=/usr/local/bin/holtos-glass-user-update
+OnlyShowIn=KDE;
+NoDisplay=true
+X-KDE-autostart-phase=2
