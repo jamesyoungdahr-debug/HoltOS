@@ -10,6 +10,18 @@ LiamPC are for Liam to do in person.
 
 Do section 1 first; most of the rest depends on it.
 
+## 0.0.7c-alpha: Switch to Desktop and update notices (Z13 first, then 4090)
+
+- [ ] Update to `v0.0.7c-alpha` (it may install on its own), then restart.
+  Expect: `grep VERSION_ID /etc/os-release` shows `0.0.7c-alpha`, and after
+  logging in to the desktop the tray shows **HoltOS updated** naming
+  HoltOS v0.0.7c-alpha.
+- [ ] `ls -l /usr/bin/steamos-session-select` exists and is executable.
+- [ ] Game Mode > Power > **Switch to Desktop** returns to Plasma, still
+  logged in. If it does not, send Claude the output of
+  `journalctl -b -t holtos-session-select -t holtos-gamemode --no-pager`
+  and `cat /etc/holtos/session.conf; ls /etc/sddm.conf.d/`.
+
 ## 0.0.7b-alpha: Game Mode fixes (Z13 first, then 4090)
 
 - [ ] HoltOS Updates > Check for updates, install `v0.0.7b-alpha`. Expect:

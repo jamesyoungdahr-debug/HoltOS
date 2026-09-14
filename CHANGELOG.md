@@ -5,6 +5,18 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.0.7c-alpha] - 2026-09-14
+
+- **Fixed: "Switch to Desktop" in Game Mode still stayed on "Switching to
+  Desktop".** Steam runs `/usr/bin/steamos-session-select`, and HoltOS only
+  had the switch in `/usr/local/bin`, so Steam found nothing to run. The
+  0.0.7b fix never got a chance to work; it does now. Each switch is also
+  written to the journal (`journalctl -t holtos-session-select`).
+- **You are told when updates install on their own.** The tray shows
+  "HoltOS updated" with what was installed (or that an update did not
+  finish), including updates installed in Game Mode or while you were logged
+  out, which are announced at your next login.
+
 ## [0.0.7b-alpha] - 2026-09-14
 
 Game Mode fixes found on the Z13.

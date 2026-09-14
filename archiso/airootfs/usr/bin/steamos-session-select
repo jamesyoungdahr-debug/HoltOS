@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Steam's Power > "Switch to Desktop" in Game Mode runs exactly this path
+# (/usr/bin/steamos-session-select plasma), like on SteamOS. HoltOS's switch
+# logic lives in /usr/local/bin/steamos-session-select; without this file
+# Steam found nothing to run and stayed on "Switching to Desktop" (Liam,
+# 2026-09-14, on the Z13).
+exec /usr/local/bin/steamos-session-select "$@"
