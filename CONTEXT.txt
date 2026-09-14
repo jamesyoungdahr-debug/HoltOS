@@ -34,8 +34,12 @@ CURRENT STATE (2026-09-14)
   FIXED on master: hardware detection now matches PCI class 0380 (Strix Halo's
   Radeon 8060S was missed); see HANDOFF.md.
   GLASS DESIGN (Liam's end goal): docs/holtos-glass-design-plan.md, milestones
-  G1-G12. G1 edge-blur fix is on holtos-kwin branch edge-blur-fix, NOT
-  compiled (no cmake/ECM on Liamtab, sudo needs Liam). Liamtab runs
+  G1-G12. G1 edge-blur fix (holtos-kwin branch edge-blur-fix) COMPILED,
+  package r90 in ~/Projects/scratch/kwin-pkg. G2+G3 glass buttons + hover glow
+  on HoltOS branch glass-buttons (worktree /mnt/shares/projects/holtos-glass-buttons),
+  COMPILED, package r55 in ~/Projects/scratch/deco-pkg. Neither installed:
+  Liam installs (LIAM-HANDOFF 5a). Old skel klassyrc had every key under
+  [Windeco], so non-Windeco keys were ignored; regrouped on glass-buttons. Liamtab runs
   holtos-kwin r89 + Kvantum + org.holtos.glass, so most glass work can be
   checked there. Never install KWin/decoration builds into Liam's live
   session without him.

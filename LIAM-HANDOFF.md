@@ -90,17 +90,34 @@ The plan is `docs/holtos-glass-design-plan.md`. Tonight's work is committed
 and pushed (HoltOS master, holtos-kwin branch `edge-blur-fix`), with no tag,
 so the updater installs nothing from it.
 
-1. **Build tools, so fixes can be compiled on Liamtab.** Either install them
-   yourself (`sudo pacman -S --needed cmake extra-cmake-modules ninja`), or
-   say the builds should run in LiamPC's pipeline.
-2. **Edge blur fix** (holtos-kwin branch `edge-blur-fix`, not compiled). To
-   see the bug first, drag a Dolphin window half off the left edge over a
-   bright wallpaper: expect a see-through or smeared band along the edge.
-   After the fix is built and installed, log out and in, then repeat the
-   drag: the band should be gone.
-3. **Buttons.** macOS-style circles in traffic-light colours on the right,
-   with a hover glow. Once the build tools are there, you pick the icon
-   style by eye.
+1. **Build tools: done** (installed 2026-09-14). Both test builds compiled on
+   Liamtab.
+2. **Before installing, see the edge bug.** Drag a Dolphin window half off
+   the left edge over a bright wallpaper: expect a see-through or smeared
+   band along the edge.
+3. **Install both test packages** (the edge fix and the glass buttons with
+   the hover glow). Save your work first: this replaces KWin.
+
+       sudo pacman -U ~/Projects/scratch/kwin-pkg/holtos-kwin-6.7.5.r90-1-x86_64.pkg.tar.zst ~/Projects/scratch/deco-pkg/holtos-window-decoration-6.7.2.r55-1-x86_64.pkg.tar.zst
+
+   Your own decoration settings live in `~/.config/klassy/klassyrc`, which
+   new installs copy from the image. To get the new buttons, back yours up
+   and copy the new one:
+
+       cp ~/.config/klassy/klassyrc ~/.config/klassy/klassyrc.bak
+       cp /mnt/shares/projects/holtos-glass-buttons/archiso/airootfs/etc/skel/.config/klassy/klassyrc ~/.config/klassy/klassyrc
+
+   Then log out and back in.
+4. **Check.** Repeat the Dolphin drag: the band should be gone, also at a
+   monitor seam. The title bar buttons are red, yellow and green circles on
+   the right, and hovering one lights the glass around it in its colour. The
+   fixed klassyrc also turns on settings the old file never applied (title
+   centred across the bar, the poor-contrast guard, large shadows), so say
+   if anything looks off.
+5. **If something breaks**, go back to the current packages:
+
+       sudo pacman -U /mnt/shares/projects/holtos/local-repo/holtos-kwin-6.7.5.r89-1-x86_64.pkg.tar.zst /mnt/shares/projects/holtos/local-repo/holtos-window-decoration-6.7.2.r54-1-x86_64.pkg.tar.zst
+       cp ~/.config/klassy/klassyrc.bak ~/.config/klassy/klassyrc
 4. **Plasma theme.** `etc/xdg/plasmarc` names `klassy-dark`, but your desktop
    uses `default`. Which should HoltOS ship until it has its own glass theme?
 

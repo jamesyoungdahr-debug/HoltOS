@@ -467,6 +467,23 @@ designs and milestones G1-G12, is `docs/holtos-glass-design-plan.md`.
   free while LM Studio holds a model here. A local test package recipe
   (`~/Projects/scratch/kwin-pkg/PKGBUILD`, pkgver 6.7.5.r90) reuses the real
   PKGBUILD's metadata and packages that build.
+- **G1 compiled** (2026-09-14, after a session restart resumed the build):
+  `holtos-kwin-6.7.5.r90-1-x86_64.pkg.tar.zst` in `~/Projects/scratch/kwin-pkg/`.
+  Build and package logs are in `~/Projects/logs/holtos-kwin/`. Not installed.
+- **G2 + G3 done on HoltOS branch `glass-buttons`** (pushed; worktree
+  `/mnt/shares/projects/holtos-glass-buttons`, so the shared master checkout
+  is untouched). The decoration paints a radial glow in the hovered button's
+  colour under the buttons, clipped to the title bar and fading with the
+  hover animation, controlled by the new keys `ButtonHoverGlow` and
+  `ButtonHoverGlowRadius`. The skel klassyrc now uses small circles in
+  traffic-light colours. **Found on the way:** every key in the old klassyrc
+  sat under `[Windeco]`, but the kcfg splits them into groups
+  (TitleBarOpacity, ButtonColors, ShadowStyle and more), so KConfig ignored
+  every non-Windeco key and the compiled defaults applied instead. The file
+  is regrouped. Test package `holtos-window-decoration-6.7.2.r55-1` is in
+  `~/Projects/scratch/deco-pkg/`, with logs in
+  `~/Projects/logs/holtos-window-decoration/`. Not installed. Install and
+  rollback steps are in LIAM-HANDOFF.md section 5a.
 - **Virtual keyboard**: researched. Recommendation is to keep plasma-keyboard
   and add Vboard (AUR, uinput, modifier keys) as a tray keyboard in the next
   feature release, pending Liam's go-ahead.

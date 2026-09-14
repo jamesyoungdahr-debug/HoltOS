@@ -143,9 +143,9 @@ Each one is a small unit, built and checked before the next.
 
 | # | Unit | Verify |
 |---|---|---|
-| G1 | Edge-blur fix (branch `edge-blur-fix`) | compile, then Liamtab drag test |
-| G2 | macOS buttons: klassyrc traffic lights and circles | Liamtab, by eye |
-| G3 | Hover glow in the decoration fork | compile, then Liamtab hover test |
+| G1 | Edge-blur fix (holtos-kwin branch `edge-blur-fix`). **Compiled 2026-09-14; test package holtos-kwin 6.7.5.r90 built; waiting for Liam to install** | compile, then Liamtab drag test |
+| G2 | macOS buttons: klassyrc traffic lights and circles. **Done 2026-09-14 on HoltOS branch `glass-buttons`; klassyrc regrouped (see Decisions)** | Liamtab, by eye |
+| G3 | Hover glow in the decoration fork. **Compiled 2026-09-14 on `glass-buttons`; test package holtos-window-decoration 6.7.2.r55 built; waiting for Liam to install** | compile, then Liamtab hover test |
 | G4 | Kvantum: Dolphin view, sidebar, toolbar, tabs, Base alpha | Liamtab, Dolphin next to the reference screenshot |
 | G5 | plasmarc mismatch, then a HoltOS desktoptheme | Liamtab, restart plasmashell |
 | G6 | GTK3 rgba css | Liamtab |
@@ -155,6 +155,34 @@ Each one is a small unit, built and checked before the next.
 | G10 | Text-shadow backstop for QtWidgets labels | Liamtab |
 | G11 | Calamares rgba QSS | VM |
 | G12 | Regression pass: fullscreen, Game Mode, excluded windows, iGPU frame time | Liamtab and VM |
+
+## Decisions and findings
+
+- **2026-09-14**: the edge-blur fix and the glass buttons live on branches
+  (holtos-kwin `edge-blur-fix`, HoltOS `glass-buttons`, both pushed) until
+  Liam has tested them on Liamtab. Test packages are built locally (KWin
+  r90, decoration r55) and never published to the `packages` release.
+- **2026-09-14**: the button hover glow is on by default, with a radius of
+  250 % of the button's own radius. It is clipped to the title bar, so it
+  never paints over window content.
+- **2026-09-14, finding**: the skel klassyrc put every key under `[Windeco]`,
+  but klassy's kcfg reads most of them from other groups (TitleBarOpacity,
+  TitleBarSpacing, ButtonSizing, ButtonColors, ShadowStyle). KConfig ignored
+  them and the compiled defaults applied. The file is regrouped on
+  `glass-buttons`. That turns on settings the old file never applied
+  (centred title, poor-contrast guard, large shadows), so check the look too.
+- **2026-09-14**: Liam asked for commit and push only, no ISO builds.
+
+## Open questions for Liam
+
+1. Install the two test packages and the new klassyrc, then check the edge
+   drag and the buttons (steps in LIAM-HANDOFF.md section 5a).
+2. After testing: merge `edge-blur-fix` into holtos-kwin `holtos` and
+   `glass-buttons` into HoltOS master?
+3. Which Plasma theme should the image ship for now, `klassy-dark` (as in
+   `etc/xdg/plasmarc`) or `default` (what Liamtab uses)? (G5)
+4. Does the glow need to be stronger, softer, bigger or smaller? It can be
+   tuned with `ButtonHoverGlowRadius` without rebuilding.
 
 ## Rules for this work
 
