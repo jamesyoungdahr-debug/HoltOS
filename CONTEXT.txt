@@ -17,7 +17,11 @@ Backups: verified git bundles in /home/liam/Projects/backups/holtos/ on the Stri
 
 CURRENT STATE (2026-09-14)
 --------------------------
-- LATEST RELEASE: v0.0.7-alpha (2026-09-14, tagged and pushed; no ISO, Liam:
+- LATEST RELEASE: v0.0.7a-alpha (2026-09-14): fixes the 0.0.7 edge flicker
+  and edge line, clearer glass (15 % tint, blur 8, no extra view layer),
+  title bar opacity 12 to match, plain circle buttons; see HANDOFF.md
+  "0.0.7a-alpha".
+- PREVIOUS RELEASE: v0.0.7-alpha (2026-09-14, tagged and pushed; no ISO, Liam:
   commit and push only). The glass look (branch glass-look merged into
   master), the ten neon wallpapers with Neon Otter Night as the default, the
   hardware detection fix, and HoltOS's KWin and Plasma forks published to the

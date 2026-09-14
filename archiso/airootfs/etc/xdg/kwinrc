@@ -15,7 +15,7 @@ contrastEnabled=true
 # See holtos-kwin's src/plugins/blur/blur.kcfg for every key and its meaning.
 # BlurStrength 1-15, NoiseStrength 0-14, the rest in percent.
 [Effect-blur]
-BlurStrength=15
+BlurStrength=8
 NoiseStrength=1
 Saturation=100
 Contrast=100

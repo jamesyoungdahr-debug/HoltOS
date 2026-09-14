@@ -5,6 +5,19 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.0.7a-alpha] - 2026-09-14
+
+- **Fixed: the glass flickered and showed a line when a window crossed a
+  screen edge** (new holtos-kwin build). The 0.0.7 edge fix resized the blur
+  textures on every frame while a window moved across an edge. Their size
+  now changes only in steps, and the blur mirrors at the edge instead of
+  repeating the last row of pixels.
+- **Clearer glass:** windows and title bars use a 15 % tint (was 30 %) with
+  less blur (strength 8, was 15), so you can make out what is under a window.
+  File lists no longer add a darker layer of their own.
+- **Fixed: the title bar was darker than the window below it** at the same
+  setting; its opacity is now tuned to match (12 %). Existing accounts get the
+  new title bar at their next login.
 - **Title bar buttons are plain coloured circles**, with no close, minimise or
   maximise glyphs at rest, on hover or on press. Existing accounts get the
   change from `holtos-glass-user-update` at their next login.

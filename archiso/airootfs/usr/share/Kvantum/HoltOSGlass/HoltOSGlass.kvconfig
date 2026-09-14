@@ -66,10 +66,11 @@ no_window_pattern=false
 
 [GeneralColors]
 window.color=#171423
-# Glass (plan G4, 2026-09-14): views paint Base, so Base and AltBase carry
-# alpha (#RRGGBBAA, 40%) and the blurred wallpaper shows through file lists.
-base.color=#1D192766
-alt.base.color=#221D2F66
+# Glass (0.0.7a, Liam: clearer glass): views add no layer of their own, so a
+# file list shows the same single 15 % window tint as the rest of the window
+# (Base and AltBase at 40 % made Dolphin's file area darker than its chrome).
+base.color=#1D192700
+alt.base.color=#221D2F00
 button.color=#1D1927
 light.color=#2A2438
 mid.light.color=#262033
