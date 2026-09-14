@@ -6,11 +6,11 @@
 # forks, Calamares, Limine tools, ZFS, model extras such as z13ctl) through
 # `pacman -Syu` from HoltOS' own release instead of only at image-build time.
 #
-# Some local-repo packages must not reach installed systems yet: everything
-# named in EXCLUDE (by default HoltOS' KWin and plasma-workspace forks,
-# which replace the stock packages and have only run in the VM). They stay
-# in ISO builds; the published database is rebuilt without them, so an
-# installed system's `pacman -Syu` never swaps its compositor.
+# Every package in local-repo/ is published, including HoltOS's KWin and
+# plasma-workspace forks (Liam, 2026-09-14, with 0.0.7-alpha): they replace
+# the stock packages, so an installed system's `pacman -Syu` swaps in the
+# HoltOS builds. EXCLUDE still keeps named packages out of the published
+# database if one ever has to be held back.
 #
 #   tools/publish-packages.sh
 #   EXCLUDE="pkg other-pkg" tools/publish-packages.sh
@@ -24,7 +24,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 repo="jamesyoungdahr-debug/holtos"
-EXCLUDE="${EXCLUDE-holtos-kwin holtos-plasma-workspace}"
+EXCLUDE="${EXCLUDE-}"
 [ -f local-repo/homelab.db.tar.gz ] || { echo "local-repo/ is empty — run ./build-local-repo.sh first" >&2; exit 1; }
 
 # pkg_name FILE — the package name from name-version-release-arch.pkg.tar.zst

@@ -6,8 +6,8 @@ context. The 2026-09-11 handoff this replaces is in git history
 (`git show bc29ef6:HANDOFF.md`).
 
 Commit: see `git log` (this file is committed with the work it describes).
-Latest release: `v0.0.6d-alpha`. 0.0.7 (neon wallpapers) is on master, pushed
-2026-09-14 (Liam), not tagged or released; no ISO built for it. Newest ISO: `out/holtos-0.0.6d-alpha-x86_64.iso` (built 2026-09-13
+Latest release: `v0.0.7-alpha` (2026-09-14: the glass look and the neon
+wallpapers; no ISO built for it). Newest ISO: `out/holtos-0.0.6d-alpha-x86_64.iso` (built 2026-09-13
 23:50). Releases reach Liam's machines through the HoltOS updater; the Ventoy
 stick is no longer used. Test VM: `holtos-test` on LiamPC (Hyper-V Gen 2,
 6 vCPU, 8 GB, Secure Boot off, 60 GB VHDX under `vm/`). The repo is
@@ -394,7 +394,7 @@ marks a big-fix release. All tagged and pushed; packages published to the
   z13gui.service inside gamescope; the session stops z13gui on exit. Not yet
   tested; steps in `LIAM-HANDOFF.md`.
 
-## Neon wallpapers for 0.0.7 (2026-09-13/14, on master, pushed 2026-09-14, not tagged)
+## Neon wallpapers for 0.0.7 (2026-09-13/14, released in v0.0.7-alpha)
 
 - Commits 17d9a96 (brief), 6c13f7f (only HoltOS wallpapers), a685407 (ten
   wallpapers + packaging), 88fbf36 (pipeline tools), 2baad26 (default).
@@ -416,7 +416,7 @@ marks a big-fix release. All tagged and pushed; packages published to the
   stock wallpapers, SDDM and lock screen images exist, Aurora set as desktop
   wallpaper. Not yet tested: the Otter Night default on a fresh install
   (desktop, lock, login, Limine).
-- Release as 0.0.7 only when Liam says.
+- Released as v0.0.7-alpha on 2026-09-14 (Liam), together with the glass look.
 
 Open after 0.0.6d:
 - **Network Shares: fixed** (2026-09-14). The problem was on Liam's NAS, not
@@ -564,9 +564,15 @@ tint, publish the KWin and Plasma forks, version 0.0.7-alpha.
   `tools/publish-packages.sh` excluded them, so the VM (installed from 0.0.4)
   still ran stock KWin after updating to 0.0.6d. Liam chose to publish them
   with 0.0.7-alpha (`EXCLUDE=""`).
-- **Edge-blur fix**: holtos-kwin `edge-blur-fix` (0153fa7) is built on LiamPC
-  and checked in the VM before it is published; the result is in the
-  release notes.
+- **Edge-blur fix**: holtos-kwin `edge-blur-fix` (0153fa7) was fast-forwarded
+  into `holtos` and built on LiamPC as holtos-kwin 6.7.5.r134. In the VM the
+  session starts and a Dolphin window pushed half off the left edge (KWin
+  script setting `frameGeometry`) keeps its glass with no crash. The old r89
+  build shows no band in the VM either, so the VM cannot prove the fix; it
+  needs the drag test on real hardware (LIVETEST.md).
+- **Faster package builds**: `build-aur-packages.sh` now passes `MAKEFLAGS`
+  and `CMAKE_BUILD_PARALLEL_LEVEL` (nproc) through `su -`; holtos-kwin went
+  from over 40 minutes, one compiler at a time, to about 4.
 - **VM harness notes**: SSH as `holtos` with the session scratchpad `vmkey`;
   when Hyper-V shows no address, find it with `Get-NetNeighbor` by the VM's
   MAC. SDDM autologin for testing is `/etc/sddm.conf.d/zz-vm-autologin.conf`

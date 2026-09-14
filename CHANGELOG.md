@@ -29,6 +29,14 @@ All notable changes to HoltOS are logged here. Format loosely follows
   repository.** Systems installed from images that still run stock KWin
   switch to holtos-kwin and holtos-plasma-workspace at their next system
   update.
+- **Fixed: blur near screen edges (holtos-kwin 6.7.5.r134).** A window dragged
+  partly off the screen or across a monitor seam could show a see-through or
+  smeared band: KWin sized its blur textures from the whole window but only
+  filled the part on the output. The textures now cover only the visible
+  part. The test VM never showed the band, so this still needs confirming on
+  real hardware (LIVETEST.md).
+- HoltOS package builds use every CPU thread (holtos-kwin went from over 40
+  minutes to about 4).
 - **Ten neon HoltOS wallpapers** (Rings, Otter, Aurora, Den, Bokeh, Otter
   Night, Rain, Forest, Nebula, Cabin), each at 1920x1080, 2560x1440 and
   3840x2160, made to show off the Glass blur.
