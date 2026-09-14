@@ -434,6 +434,31 @@ Open after 0.0.6d:
   Verified on Liamtab: the old match finds no AMD GPU, the new one finds
   `c4:00.0 ... [1002:1586]`. Detection only runs at install time, so existing
   installs keep their old `hardware.log`.
+
+## Glass design: every window is glass (2026-09-14, night, unattended)
+
+Liam's end goal: every window and user-facing surface is one pane of frosted
+glass, with readable text, macOS-style buttons on the right with a hover glow,
+and no broken glass near screen edges. The full plan, with root causes,
+designs and milestones G1-G12, is `docs/holtos-glass-design-plan.md`.
+
+- **Edge bug root-caused from the code** (upstream KWin 6.7.5, made far more
+  visible by HoltOS force-blur): the blur's offscreen textures are sized from
+  the whole window, but only the on-screen part is ever copied in, so texels
+  past the edge stay transparent or stale and the blur passes smear them into
+  the glass. Fix committed on holtos-kwin branch `edge-blur-fix`: textures
+  are sized from the window clipped to the output. **Not compiled or seen on
+  screen yet**: Liamtab has no cmake or extra-cmake-modules, and installing
+  them needs Liam's sudo. Build it, install it on Liamtab, then do the drag
+  test in the plan.
+- **Research done, nothing built yet**: which surfaces are still opaque and
+  why (Dolphin view, sidebar, toolbar, tabs, Kirigami apps, GTK, Calamares),
+  adaptive text contrast (chosen: a brightness clamp in the blur shader using
+  the smallest blur level), and the button glow (a radial gradient painted in
+  `Decoration::paintTitleBar` for the hovered button).
+- Found on the way: `etc/xdg/plasmarc` names the `klassy-dark` Plasma theme
+  while the look-and-feel and Liamtab use `default` (milestone G5).
+- Nothing was installed into Liam's running session.
 - **Virtual keyboard**: researched. Recommendation is to keep plasma-keyboard
   and add Vboard (AUR, uinput, modifier keys) as a tray keyboard in the next
   feature release, pending Liam's go-ahead.
