@@ -30,7 +30,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout, QWidget,
 )
 
-ICON_PATH = "/usr/share/icons/hicolor/scalable/apps/holtos-logo.svg"
+ICON_PATH = "/usr/share/icons/hicolor/256x256/apps/holtos-logo.png"
 STATUS_PATH = "/var/lib/holtos/update-status.json"
 PROGRESS_PATH = "/run/holtos-update/progress.log"
 HISTORY_PATH = "/var/lib/holtos/history.log"

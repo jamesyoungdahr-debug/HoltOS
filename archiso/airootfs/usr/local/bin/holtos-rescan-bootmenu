@@ -2,7 +2,7 @@
 # Tray entry "Rescan Boot Menu": re-detect other operating systems and
 # rewrite their Limine entries (holtos-limine-other-os). Same yad
 # progress/result pattern as holtos-snapshot-now.
-ICON=/usr/share/icons/hicolor/scalable/apps/holtos-logo.svg
+ICON=/usr/share/icons/hicolor/256x256/apps/holtos-logo.png
 
 logfile="$(mktemp)"
 pkexec /usr/local/bin/holtos-limine-other-os 2>&1 | tee "$logfile" \

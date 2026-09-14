@@ -26,7 +26,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout, QWidget,
 )
 
-ICON_PATH = "/usr/share/icons/hicolor/scalable/apps/holtos-logo.svg"
+ICON_PATH = "/usr/share/icons/hicolor/256x256/apps/holtos-logo.png"
 CATALOG_PATH = "/usr/share/holtos/apps.json"
 REMOTE = "flathub"
 CACHE_DIR = os.path.join(os.path.expanduser("~"), ".cache", "holtos-apps", "icons")

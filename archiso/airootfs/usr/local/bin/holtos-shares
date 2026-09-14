@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
     QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget,
 )
 
-ICON_PATH = "/usr/share/icons/hicolor/scalable/apps/holtos-logo.svg"
+ICON_PATH = "/usr/share/icons/hicolor/256x256/apps/holtos-logo.png"
 BACKEND = "/usr/local/bin/holtos-share"
 MOUNT_ROOT = "/mnt/shares"
 FIELDS = ["name", "type", "server", "path", "user", "ro", "auto", "mounted", "vers"]

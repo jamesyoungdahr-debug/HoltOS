@@ -21,7 +21,7 @@ from PySide6.QtWidgets import (
     QLabel, QPushButton, QVBoxLayout,
 )
 
-ICON_PATH = "/usr/share/icons/hicolor/scalable/apps/holtos-logo.svg"
+ICON_PATH = "/usr/share/icons/hicolor/256x256/apps/holtos-logo.png"
 PROTON_GE = "/usr/local/bin/holtos-proton-ge"
 SESSION_CONF = "/etc/holtos/session.conf"
 

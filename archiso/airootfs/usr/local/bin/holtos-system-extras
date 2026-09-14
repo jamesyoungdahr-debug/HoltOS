@@ -108,6 +108,34 @@ fix_os_identity() {
         "$NAME" "$VERSION_ID" "$PRETTY_NAME" > /etc/lsb-release
 }
 
+# Neon rebrand: the new otter logo ships as PNGs derived from the ComfyUI
+# render. The updater copies new files but never deletes old ones, so the old
+# hand-drawn SVGs stayed on installed systems, and icon lookups by name could
+# still pick the old otter. Remove them and refresh the icon cache.
+remove_old_logo() {
+    local removed=0 f
+    # Only once the new icons are in place; never leave a system with no logo.
+    [ -e /usr/share/icons/hicolor/256x256/apps/holtos-logo.png ] || return 0
+    # The Den's launcher asks for the icon "the-den", which was a copy of the
+    # old SVG: give it the new mark before that copy goes.
+    if [ -e /usr/share/icons/hicolor/scalable/apps/the-den.svg ] &&
+       [ -e /usr/share/icons/hicolor/256x256/apps/holtos-logo.png ]; then
+        install -Dm644 /usr/share/icons/hicolor/256x256/apps/holtos-logo.png \
+            /usr/share/icons/hicolor/256x256/apps/the-den.png
+    fi
+    for f in /usr/share/icons/hicolor/scalable/apps/holtos-logo.svg \
+             /usr/share/icons/hicolor/scalable/apps/the-den.svg \
+             /etc/calamares/branding/holtos/logo-icon.svg \
+             /etc/calamares/branding/holtos/logo-wide.svg; do
+        if [ -e "$f" ]; then
+            rm -f "$f" && removed=1
+        fi
+    done
+    if [ "$removed" -eq 1 ] && command -v gtk-update-icon-cache >/dev/null 2>&1; then
+        gtk-update-icon-cache -q -t -f /usr/share/icons/hicolor 2>/dev/null || true
+    fi
+}
+
 case "${1:-}" in
 check)
     missing="$(missing_required; missing_z13)"
@@ -123,6 +151,7 @@ apply)
     trim_wallpapers
     trim_themes
     fix_os_identity
+    remove_old_logo
     required="$(missing_required)"
     z13="$(missing_z13)"
     if [ -z "$required" ] && [ -z "$z13" ]; then

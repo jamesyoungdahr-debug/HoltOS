@@ -471,8 +471,9 @@ install_the_den() {
 
     if [ "$first_install" -eq 1 ]; then
         echo "==> Setting up The Den for the first time..."
-        cp /usr/share/icons/hicolor/scalable/apps/holtos-logo.svg \
-           /usr/share/icons/hicolor/scalable/apps/the-den.svg 2>/dev/null || true
+        # The otter mark derived from the ComfyUI render (neon rebrand).
+        install -Dm644 /usr/share/icons/hicolor/256x256/apps/holtos-logo.png \
+           /usr/share/icons/hicolor/256x256/apps/the-den.png 2>/dev/null || true
         # The same airootfs is the live medium too — keep the service
         # off there (same /run/archiso gate as the tray and the
         # first-boot units; the live session is a read-only squashfs).

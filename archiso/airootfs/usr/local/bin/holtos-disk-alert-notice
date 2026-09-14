@@ -8,7 +8,7 @@
 # Dismissing is per user and needs no root: the alert file's modification
 # time is remembered in ~/.config/holtos, and the dialog only reappears
 # when the file changes again.
-ICON=/usr/share/icons/hicolor/scalable/apps/holtos-logo.svg
+ICON=/usr/share/icons/hicolor/256x256/apps/holtos-logo.png
 ALERT=/var/lib/holtos/disk-alert
 SEEN="${XDG_CONFIG_HOME:-$HOME/.config}/holtos/disk-alert-seen"
 

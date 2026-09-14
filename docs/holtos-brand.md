@@ -2,7 +2,8 @@
 
 The one reference for how HoltOS looks and sounds. Every value here comes from
 the file that implements it; when this guide and a file disagree, fix one of
-them (see section 9). Checked against v0.0.7-alpha, 2026-09-14.
+them (see section 9). Checked against the neon rebrand (branch `neon-rebrand`,
+after v0.0.7c-alpha), 2026-09-14.
 
 Sources of truth: the design tokens in the-den repo (`design/tokens.json`,
 shared by HoltOS's web, Qt and Android surfaces) and the desktop theme files
@@ -19,38 +20,41 @@ under `archiso/airootfs/` in this repo.
 - **Personality:** cute, but level. The otter earns a sticker; the interface
   still runs the machine.
 
-### Marks
+### Marks (neon rebrand, next major release)
 
-- **OtterMark**, the primary mark: the otter's head, used at 38 px and up. Its
-  expression lives in the eyes only: *happy* (all good), *idle* (asleep, flat
-  eye bars) and *alert* (needs you: an amber ring around the eye). It is built
-  only from circles, one squashed ellipse and rounded rectangles.
-- **RingMark**, below 38 px: the pool the otter curls around, which also reads
-  as an eye, a lens or a platter. Stroke `max(2, round(size × 0.25))`. An
-  optional filled centre dot is the first frame of the boot animation. Any
-  brand colour; purple by default.
-- **OtterFull**, the full-body otter for illustration (wallpapers, splash):
-  flat and rounded, using only current, current-deep, lilac and deep.
+Every mark comes from a ComfyUI render (Liam, 2026-09-14). Nothing is drawn
+by hand in SVG or CSS: a hand-drawn otter drifted into a teddy bear twice.
+Smaller, one-colour and cut-out versions are derived from the chosen render
+by scripts, and shown next to it for review.
 
-Logo colours: head `#B14DFF`; ears and brow band `#8F2FE0`; cheek pads and
-whiskers `#F4EBFF`; eyes and nose `#0D0B12`; eye highlight `#FFFFFF`; blush
-`#FF7ABE` at 50 % (the one colour outside the tokens).
+- **Otter mark**, the primary mark: a flat purple otter head with a wide
+  flattened skull, tiny low ears, lilac whisker pads, long white whiskers and
+  a neon rim running magenta on the left to electric blue on the right, with
+  two small lime sparks. Render: concept C, seed 4202; app icon seed 4301.
+- **Symbolic mark:** the same head as a white one-colour glyph for the tray
+  and small sizes (seed 4401).
+- **Full-body otter**, for the login screen and illustration: standing, long
+  slender body, webbed feet, long tapered tail, the same neon rim. Render:
+  seed 7301 #2. Otters have wide flat heads, ears low on the sides and long
+  bodies; round heads with ears on top read as bears.
 
-Files:
-- `usr/share/icons/hicolor/scalable/apps/holtos-logo.svg`: the installed icon,
-  used by os-release, the About page and every HoltOS app launcher.
-- `etc/calamares/branding/holtos/logo-icon.svg` (square) and `logo-wide.svg`
-  (horizontal lockup on a baked deep background).
-- Rasterised lockups in the Plymouth, SDDM and KSplash themes.
+Files (all derived, never edited by hand):
+- `usr/share/icons/hicolor/<size>/apps/holtos-logo.png` (16–512 px) and
+  `holtos-logo-symbolic.png` (16–64 px), and
+  `usr/share/holtos/brand/holtos-mark-512.png` / `-1024.png`, from
+  `tools/brand/derive_logo.py`.
+- Login otter and glow, boot watermark and glow, the lockups, the Plasma
+  splash mark and the installer's `logo-icon.png`, from
+  `tools/brand/derive_splash_art.py`.
 
 ### Lockup
 
-- Otter above 38 px, ring below.
-- Wordmark: Nunito 900 at `size × 0.55`, tracking `size × −0.027` px, line
-  height 1. The wordmark token is 20 px, weight 900, tracking −0.6.
-- Tagline: JetBrains Mono 9 px, tracking 1.6, healthy teal, uppercase.
-- Gap between mark and wordmark: 13 horizontal, 10 stacked.
-- Reverse version: ring and wordmark in deep on a purple card.
+- The otter mark on the left, "HoltOS" on the right in Nunito ExtraBold,
+  white, on a transparent background; 360 × 104 px in the boot splash, login
+  card and Plasma splash.
+- The mark fills 80 % of the height; the gap is 16 % of the height.
+- The name is set in the font, not rendered by an image model, so it is
+  always spelled right.
 
 ## 2. Voice
 
@@ -151,14 +155,14 @@ Every window is one continuous pane of frosted glass over the wallpaper.
 Reference: `docs/design-references/glass-dolphin-reference.jpg`. Glass only
 goes over something worth blurring.
 
-### Desktop (0.0.7-alpha)
+### Desktop (0.0.7a-alpha and the neon rebrand)
 
 | Layer | Value | File |
 |---|---|---|
-| Blur | KWin's blur forced on every window, title bar and menu: BlurStrength 15, NoiseStrength 1, no tint, corner radius 10 | `etc/xdg/kwinrc` |
-| Window fill | surface `#171423` at 30 % | Kvantum `HoltOSGlass.svg`, `window-normal` |
-| Dialog fill | surface at 45 % | `dialog-normal` |
-| Title bar | surface at 30 %, active and inactive; no separator line | `etc/skel/.config/klassy/klassyrc` |
+| Blur | KWin's blur forced on every window, title bar and menu: BlurStrength 8, NoiseStrength 1, no tint, corner radius 10 | `etc/xdg/kwinrc` |
+| Window fill | surface `#171423` at 15 % | Kvantum `HoltOSGlass.svg`, `window-normal` |
+| Dialog fill | surface at 30 % | `dialog-normal` |
+| Title bar | opacity 12 (matches the 15 % window fill on screen), active and inactive; no separator line | `etc/skel/.config/klassy/klassyrc` |
 | Sidebar, toolbar, tabs, status bar | nothing added | Kvantum SVG |
 | Selection / pressed / hover | current at 22 / 30 / 10 % | Kvantum SVG (`itemview-*`, `tab-*`, `tbutton-*`) |
 | Window outline | 1 px contrast outline at 12 % (inactive 8 %) | klassyrc |
@@ -169,10 +173,12 @@ goes over something worth blurring.
   title bar opacity equal to the window fill.
 - Video and creative apps stay opaque (Kvantum's `opaque=` list: VLC, Kdenlive,
   digiKam and others), and so do Chromium and Electron apps.
-- **Title bar buttons:** small circles on the right, visible at rest, coloured
-  from the scheme's warning, neutral and healthy colours. Hovering one spreads
-  a radial glow in its colour onto the glass, clipped to the title bar
-  (`ButtonHoverGlowRadius=250`).
+- **Title bar buttons:** small plain circles on the right (`IconSize=IconSmall`,
+  a less cluttered title bar; Liam, 2026-09-14), visible at rest, with no
+  close, minimise or maximise glyphs at rest, on hover or on press. They are
+  coloured from the scheme's warning, neutral and healthy colours. Hovering
+  one spreads a radial glow in its colour onto the glass, clipped to the title
+  bar (`ButtonHoverGlowRadius=250`).
 
 ### Web, Qt and Android (The Den)
 
@@ -226,10 +232,11 @@ clamp so white text keeps 4.5:1 (milestones G8 and G9 in
 | Surface | What it shows | Files |
 |---|---|---|
 | Boot menu (Limine) | Otter Night wallpaper, deep backdrop, translucent surface panel, lilac text, purple highlight, HoltOS name in purple | `usr/local/bin/homelab-limine-theme.sh` |
-| Boot splash (Plymouth) | deep ground, purple glow, otter watermark, dot ring drawing over 1.6 s, lockup | `usr/share/plymouth/themes/holtos/` |
-| Login (SDDM) | glass card, avatar, one purple Log in button, quiet Restart and Shut down, mono hostname | `usr/share/sddm/themes/holtos/` |
-| Plasma splash | deep ground, glow, purple ring | look-and-feel `org.holtos.desktop` |
-| Desktop | look-and-feel `org.holtos.desktop`, colour scheme `HoltOS`, Kvantum `HoltOSGlass`, decoration `org.holtos.glass`, Konsole `HoltOS`; Breeze Dark icons and Breeze cursor | `usr/share/`, `etc/xdg/`, `etc/skel/` |
+| Boot splash (Plymouth) | deep ground, magenta-purple-blue neon glow, otter mark, dot ring drawing over 1.6 s, lockup | `usr/share/plymouth/themes/holtos/` |
+| Login (SDDM) | neon glow, the full-body otter, glass card with the lockup, avatar, one purple Log in button, quiet Restart and Shut down, mono hostname | `usr/share/sddm/themes/holtos/` |
+| Plasma splash | deep ground, glow, otter mark, lockup | look-and-feel `org.holtos.desktop` |
+| Desktop | glass menu bar on top (launcher, app menus, tray, clock) and a floating dock with a neon rim; Plasma style `holtos-glass`; look-and-feel `org.holtos.desktop`, colour scheme `HoltOS`, Kvantum `HoltOSGlass`, decoration `org.holtos.glass`, Konsole `HoltOS`; Breeze Dark icons and Breeze cursor | `usr/share/`, `etc/xdg/`, `etc/skel/` |
+| Desktop, HoltOS Classic | the old single bottom panel on plain glass; Plasma style `holtos-glass-classic` | look-and-feel `org.holtos.classic.desktop` |
 | GTK apps | opaque twin of the colours (GTK cannot blur yet) | `etc/skel/.config/gtk-3.0/gtk.css` |
 | Installer (Calamares) | deep ground, surface sidebar with the current step in purple, raised inputs | `etc/calamares/branding/holtos/` |
 | HoltOS apps | HoltOS Updates, HoltOS Apps, Gaming, Network Shares and the tray, all with `holtos-logo` | `usr/share/applications/` |
@@ -237,9 +244,11 @@ clamp so white text keeps 4.5:1 (milestones G8 and G9 in
 
 ## 9. Known gaps
 
-- **Plasma theme:** `etc/xdg/plasmarc` names `klassy-dark` while the
-  look-and-feel uses `default`; the panel and popups are still Breeze. Waiting
-  on Liam's pick (G5).
+- **Plasma style covers panels and task buttons only:** `holtos-glass` draws
+  the menu bar, the dock and its task buttons; popups, tooltips and widgets
+  still fall back to Plasma's default style. The dock's rounded ends show
+  faint seams where they meet the straight edges in the test VM (software
+  rendering); to be judged on real hardware.
 - **Views outside Dolphin still add a layer:** Kvantum's Base and AltBase carry
   40 % on top of the 30 % window fill, so file dialogs, Kate and other list
   views look darker than Dolphin.
@@ -257,10 +266,12 @@ clamp so white text keeps 4.5:1 (milestones G8 and G9 in
   `#5FF0DC`, Calamares sidebar text `#8C8C8C`, SDDM hover `#C46EFF` (the token
   is `#C77DFF`), inactive header text `180,180,180`.
 - **Eyebrow weight:** the tokens say 400; the typography page shows 600.
-- **Missing logo files:** no RingMark SVG, no transparent-background or stacked
-  lockup, no monochrome, light-background or symbolic tray icon; the otter's
-  expressions exist only as React components; the wide lockup's wordmark is
-  live text that needs Nunito installed.
+- **Missing logo files:** no stacked (mark above name) or light-background
+  lockup, and no vector version of the mark (the icons are PNGs derived from
+  the render, 16–1024 px). The otter's expressions (happy, idle, alert) exist
+  only as The Den's React components and have not been rendered for the new
+  mark. The old hand-drawn SVG logos are deleted from the image and removed
+  from installed systems by `holtos-system-extras`.
 - **Stale positioning:** `README.md` still describes a homelab server for a Dell
   R720, and Kvantum's comment and the look-and-feel defaults still name the old
   pool-rings wallpaper.

@@ -3,7 +3,7 @@
 # boot. When the session is running from a snapshot entry of the Limine
 # menu (read-only rescue root), it says so and offers to make that
 # snapshot the system — the "I broke it, go back" path in one click.
-ICON=/usr/share/icons/hicolor/scalable/apps/holtos-logo.svg
+ICON=/usr/share/icons/hicolor/256x256/apps/holtos-logo.png
 
 src="$(findmnt -no SOURCE / 2>/dev/null)"
 case "$src" in

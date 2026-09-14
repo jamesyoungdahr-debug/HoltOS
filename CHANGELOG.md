@@ -18,6 +18,10 @@ Neon rebrand (next major release):
   next login; their old panels are kept as `*.before-neon-layout`.
 - GTK apps show their menus in the top bar (`appmenu-gtk-module`).
 - **Smaller title bar buttons and dock icons** for a less cluttered look.
+- **Every HoltOS tool uses the new otter logo** (Updates, Apps, Gaming,
+  Network Shares, the snapshot and rollback tools, notices). The old
+  hand-drawn logos are removed from installed systems, so the old otter can no
+  longer turn up in menus or notifications.
 - **New boot, login, splash and installer art** from the new otter logo: a
   full-body otter on the login screen, a neon glow behind the login and boot
   screens, and the otter with the HoltOS name on the boot splash, login card

@@ -1,7 +1,7 @@
 #!/bin/bash
 # Tray entry "Update Proton GE": runs holtos-proton-ge as the user with the
 # usual yad progress/result pattern.
-ICON=/usr/share/icons/hicolor/scalable/apps/holtos-logo.svg
+ICON=/usr/share/icons/hicolor/256x256/apps/holtos-logo.png
 logfile="$(mktemp)"
 /usr/local/bin/holtos-proton-ge 2>&1 | tee "$logfile" \
     | stdbuf -oL sed -u 's/^==> /#/' \

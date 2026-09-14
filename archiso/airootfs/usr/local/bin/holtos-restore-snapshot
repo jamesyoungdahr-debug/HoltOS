@@ -2,7 +2,7 @@
 # Tray entry "Restore Snapshot...": pick one of the retained snapshots and
 # make it the system root (holtos-btrfs-restore), then offer a reboot.
 # Same yad progress/result pattern as holtos-rollback-config.
-ICON=/usr/share/icons/hicolor/scalable/apps/holtos-logo.svg
+ICON=/usr/share/icons/hicolor/256x256/apps/holtos-logo.png
 SNAP_LOG=/var/lib/holtos/snapshots.log
 
 if [ ! -s "$SNAP_LOG" ]; then
