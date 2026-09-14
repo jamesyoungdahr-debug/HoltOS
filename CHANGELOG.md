@@ -5,6 +5,10 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+- **Title bar buttons are plain coloured circles**, with no close, minimise or
+  maximise glyphs at rest, on hover or on press. Existing accounts get the
+  change from `holtos-glass-user-update` at their next login.
+
 ## [0.0.7-alpha] - 2026-09-14
 
 - **Every window is one even pane of glass**, matched to Liam's reference

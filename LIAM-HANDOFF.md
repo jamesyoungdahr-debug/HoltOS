@@ -33,7 +33,7 @@ Liamtab (Radeon 8060S) and on the RTX 4090 HoltOS install.
 If anything looks off, send:
 
     journalctl --user -b | grep -iE 'kwin|decoration' | tail -30
-    cat ~/.local/state/holtos/glass-user-update-1
+    cat ~/.local/state/holtos/glass-user-update-2
 
 ## Earlier: testing 0.0.6d-alpha on the ROG Flow Z13
 

@@ -24,7 +24,7 @@ Do section 1 first; most of the rest depends on it.
 - [ ] The system update shows Downloading % > Installing > Installed, and a
   restart banner appears because KWin was updated. After the restart the
   banner is gone (`ls /run/holtos-reboot-required` reports no such file).
-- [ ] Log out and back in once. Expect: `cat ~/.local/state/holtos/glass-user-update-1`
+- [ ] Log out and back in once. Expect: `cat ~/.local/state/holtos/glass-user-update-2`
   shows a date, `~/.config/klassy/klassyrc.before-glass-look` exists on
   older accounts, and
   `journalctl --user -b | grep -i 'Could not locate decoration plugin'`

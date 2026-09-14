@@ -17,7 +17,9 @@
 #   colour reaches kdeglobals.
 set -u
 
-STAMP="${XDG_STATE_HOME:-$HOME/.local/state}/holtos/glass-user-update-1"
+# Bump the number when a release adds a step, so accounts that already ran an
+# older version run again (2: glyph-free buttons).
+STAMP="${XDG_STATE_HOME:-$HOME/.local/state}/holtos/glass-user-update-2"
 [ -e "$STAMP" ] && exit 0
 [ -e /run/archiso ] && exit 0
 
@@ -48,6 +50,16 @@ elif [ -f "$klassy" ]; then
     set_klassy ButtonBehaviour ShowBackgroundNormallyInactive true
     set_klassy ButtonBehaviour ShowCloseBackgroundNormallyActive true
     set_klassy ButtonBehaviour ShowCloseBackgroundNormallyInactive true
+fi
+
+# Plain traffic-light circles with no glyphs (Liam, 2026-09-14).
+if [ -f "$klassy" ]; then
+    for key in ShowIconNormally ShowIconOnHover ShowIconOnPress \
+               ShowCloseIconNormally ShowCloseIconOnHover ShowCloseIconOnPress; do
+        for state in Active Inactive; do
+            kwriteconfig6 --file "$klassy" --group ButtonBehaviour --key "$key$state" false
+        done
+    done
 fi
 
 if [ "$(kreadconfig6 --file "$CFG/kwinrc" --group Effect-blur --key NoiseStrength)" = 4 ]; then

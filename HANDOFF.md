@@ -554,8 +554,9 @@ tint, publish the KWin and Plasma forks, version 0.0.7-alpha.
 - **Found: accounts from older images never had the glass decoration.**
   `~/.config/kdedefaults/kwinrc` said `library=org.kde.klassy` (removed), so
   KWin logged "Could not locate decoration plugin" and used Breeze.
-  `holtos-glass-user-update` (autostart, once per account, stamp
-  `~/.local/state/holtos/glass-user-update-1`) fixes that, replaces the old
+  `holtos-glass-user-update` (autostart, once per account per version, stamp
+  `~/.local/state/holtos/glass-user-update-N`, bumped when a step is added;
+  2 turned the button glyphs off) fixes that, replaces the old
   ungrouped klassyrc (backup kept), drops the per-user `NoiseStrength=4`, sets
   the title weight and re-applies the colour scheme. Verified on the VM's
   0.0.4 account; a second run does nothing. KWin caches decoration settings,

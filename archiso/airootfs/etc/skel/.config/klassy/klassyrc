@@ -64,6 +64,20 @@ ShowBackgroundNormallyActive=true
 ShowBackgroundNormallyInactive=true
 ShowCloseBackgroundNormallyActive=true
 ShowCloseBackgroundNormallyInactive=true
+# Plain circles with no glyphs, at rest, on hover and on press (Liam,
+# 2026-09-14).
+ShowIconNormallyActive=false
+ShowIconNormallyInactive=false
+ShowIconOnHoverActive=false
+ShowIconOnHoverInactive=false
+ShowIconOnPressActive=false
+ShowIconOnPressInactive=false
+ShowCloseIconNormallyActive=false
+ShowCloseIconNormallyInactive=false
+ShowCloseIconOnHoverActive=false
+ShowCloseIconOnHoverInactive=false
+ShowCloseIconOnPressActive=false
+ShowCloseIconOnPressInactive=false
 
 [WindowOutlineStyle]
 WindowOutlineThickness=1
