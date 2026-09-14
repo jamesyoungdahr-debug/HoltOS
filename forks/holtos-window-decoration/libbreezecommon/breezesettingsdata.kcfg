@@ -840,6 +840,18 @@
         <default>false</default>
     </entry>
 
+    <!-- HoltOS: glow around the hovered button that spreads onto the glass title bar -->
+    <entry name="ButtonHoverGlow" type = "Bool">
+        <default>true</default>
+    </entry>
+
+    <!-- HoltOS: glow radius as a percentage of the button's own radius -->
+    <entry name="ButtonHoverGlowRadius" type = "Int">
+        <default>250</default>
+        <min>100</min>
+        <max>500</max>
+    </entry>
+
   </group>
 
   <group name="TitleBarSpacing">

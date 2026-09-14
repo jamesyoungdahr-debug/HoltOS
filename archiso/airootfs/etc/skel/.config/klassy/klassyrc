@@ -7,7 +7,26 @@
 # (inactive) with KWin blur behind, and Klassy's poor-contrast guard on so
 # a light wallpaper can never wash the title out. Corners 10px (radius-md),
 # maximized windows keep the glass (opaque twin is Breeze's scheme colour).
+#
+# Every key must sit in the group its kcfg entry belongs to
+# (libbreezecommon/breezesettingsdata.kcfg). Until 2026-09-14 every key was
+# under [Windeco], so KConfig silently ignored all but the Windeco ones and
+# the compiled-in defaults applied instead.
+#
+# Buttons (2026-09-14): macOS-style small circles in traffic-light colours,
+# kept on the right, with the HoltOS hover glow spreading onto the glass.
 [Windeco]
+MatchTitleBarToApplicationColor=false
+BoldTitle=true
+DrawTitleBarSeparator=true
+DrawBackgroundGradient=false
+DrawBorderOnMaximizedWindows=false
+RoundAllCornersWhenNoBorders=true
+WindowCornerRadius=10
+ButtonShape=ShapeSmallCircle
+UseTitleBarColorForAllBorders=true
+
+[TitleBarOpacity]
 OverrideActiveTitleBarOpacity=true
 OverrideInactiveTitleBarOpacity=true
 ActiveTitleBarOpacity=70
@@ -15,26 +34,29 @@ InactiveTitleBarOpacity=60
 BlurTransparentTitleBars=true
 ApplyOpacityToHeader=true
 OpaqueMaximizedTitleBars=false
-MatchTitleBarToApplicationColor=false
+
+[TitleBarSpacing]
+TitleAlignment=AlignCenterFullWidth
+
+[ButtonSizing]
+ButtonCornerRadius=SameAsWindow
+
+[ButtonColors]
 AdjustBackgroundColorOnPoorContrastActive=true
 AdjustBackgroundColorOnPoorContrastInactive=true
 PoorBackgroundContrastThresholdActive=1.1
 PoorBackgroundContrastThresholdInactive=1.1
-BoldTitle=true
-TitleAlignment=AlignCenterFullWidth
-DrawTitleBarSeparator=true
-DrawBackgroundGradient=false
-DrawBorderOnMaximizedWindows=false
-RoundAllCornersWhenNoBorders=true
-WindowCornerRadius=10
-ButtonCornerRadius=SameAsWindow
-ButtonShape=ShapeIntegratedRoundedRectangle
 ButtonIconColorsActive=TitleBarText
 ButtonIconColorsInactive=TitleBarText
-ButtonBackgroundColorsActive=AccentNegativeClose
-ButtonBackgroundColorsInactive=AccentNegativeClose
+ButtonBackgroundColorsActive=AccentTrafficLights
+ButtonBackgroundColorsInactive=AccentTrafficLights
+
+[ButtonBehaviour]
+ButtonHoverGlow=true
+ButtonHoverGlowRadius=250
+
+[ShadowStyle]
 ShadowSizeActive=ShadowLarge
 ShadowSizeInactive=ShadowLarge
 ShadowStrengthActive=255
 ShadowStrengthInactive=128
-UseTitleBarColorForAllBorders=true
