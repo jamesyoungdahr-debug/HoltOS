@@ -23,15 +23,6 @@ Neon rebrand (next major release):
   screens, and the otter with the HoltOS name on the boot splash, login card
   and Plasma splash. Generated on ComfyUI and prepared by
   `tools/brand/derive_splash_art.py`.
-- **Fixed: "Switch to Desktop" in Game Mode did not return to the desktop.**
-  Game Mode cleared the switch as it closed, so you landed on the login
-  screen or back in Game Mode.
-- **Fixed: Steam's system info in Game Mode called the OS "Arch Linux".**
-  Arch's `/usr/lib/os-release` and `/etc/lsb-release` now carry the HoltOS
-  name and version as well, on new installs and through the updater.
-- **Fixed: Chinese, Japanese and Korean text showed as empty boxes**, for
-  example in Steam's language list in Game Mode. HoltOS now installs the Noto
-  CJK fonts, and the updater adds them to existing systems.
 - **New HoltOS Glass Plasma style (`holtos-glass`), now the default:** the menu
   bar is plain glass with a faint bottom line; the dock is a smoked-glass
   capsule with a neon rim that runs magenta to purple to electric blue. In the
@@ -51,6 +42,20 @@ Neon rebrand (next major release):
   removed theme, colour scheme or Kvantum theme is moved to the HoltOS one.
 - **Five-colour neon palette** in the brand guide and Konsole: purple, teal,
   electric blue, magenta and lime, with amber still meaning "needs you".
+
+## [0.0.7b-alpha] - 2026-09-14
+
+Game Mode fixes found on the Z13.
+
+- **Fixed: "Switch to Desktop" in Game Mode did not return to the desktop.**
+  Game Mode cleared the switch as it closed, so you landed on the login
+  screen, or back in Game Mode with "Start in Game Mode" on.
+- **Fixed: Steam's system info in Game Mode called the OS "Arch Linux".**
+  Arch's `/usr/lib/os-release` and `/etc/lsb-release` now carry the HoltOS
+  name and version too, on new installs and through the updater.
+- **Fixed: Chinese, Japanese and Korean text showed as empty boxes**, for
+  example in Steam's language list in Game Mode. HoltOS now installs the Noto
+  CJK fonts, and the updater adds them to existing systems.
 
 ## [0.0.7a-alpha] - 2026-09-14
 

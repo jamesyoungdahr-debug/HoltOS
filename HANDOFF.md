@@ -6,8 +6,12 @@ context. The 2026-09-11 handoff this replaces is in git history
 (`git show bc29ef6:HANDOFF.md`).
 
 Commit: see `git log` (this file is committed with the work it describes).
-Latest release: `v0.0.7-alpha` (2026-09-14: the glass look and the neon
-wallpapers; no ISO built for it). Newest ISO: `out/holtos-0.0.6d-alpha-x86_64.iso` (built 2026-09-13
+Latest release: `v0.0.7b-alpha` (2026-09-14: Game Mode fixes found on the
+Z13 — Switch to Desktop, the HoltOS name in Steam's system info, CJK fonts;
+config-only, no ISO). Before it: `v0.0.7a-alpha` (glass fixes) and
+`v0.0.7-alpha` (the glass look and the neon wallpapers). The neon rebrand
+(dock, holtos-glass Plasma style, new logo and art) is on branch
+`neon-rebrand` for the next major release. Newest ISO: `out/holtos-0.0.6d-alpha-x86_64.iso` (built 2026-09-13
 23:50). Releases reach Liam's machines through the HoltOS updater; the Ventoy
 stick is no longer used. Test VM: `holtos-test` on LiamPC (Hyper-V Gen 2,
 6 vCPU, 8 GB, Secure Boot off, 60 GB VHDX under `vm/`). The repo is

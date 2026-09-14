@@ -1,6 +1,6 @@
 HoltOS — running context file (plain text, kept current by the agent)
 =====================================================================
-Last updated: 2026-09-14 (v0.0.7-alpha released: glass look, neon wallpapers, KWin and Plasma forks published; Liam tests on real hardware)
+Last updated: 2026-09-14 (v0.0.7b-alpha: Game Mode fixes from the Z13 — Switch to Desktop, HoltOS name in Steam, CJK fonts. The neon rebrand waits on branch neon-rebrand for the next major release)
 Read this first when resuming. Newest state at the top of each section.
 
 WHAT HOLTOS IS
