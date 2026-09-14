@@ -43,7 +43,10 @@ if os.path.exists("/run/archiso"):
     log("holtos-tray: live medium detected (/run/archiso), not starting")
     sys.exit(0)
 
-ICON_PATH = "/usr/share/icons/hicolor/scalable/apps/holtos-logo.svg"
+# Neon rebrand: icons come from the chosen ComfyUI renders (tools/brand/derive_logo.py).
+# Notifications show the colour app icon; the tray shows the one-colour otter glyph.
+ICON_PATH = "/usr/share/icons/hicolor/256x256/apps/holtos-logo.png"
+TRAY_ICON_PATH = "/usr/share/icons/hicolor/64x64/apps/holtos-logo-symbolic.png"
 STATUS_PATH = "/var/lib/holtos/update-status.json"
 REBOOT_MARKER = "/run/holtos-reboot-required"
 POLL_MS = 30000
@@ -163,7 +166,7 @@ def main():
     if not QSystemTrayIcon.isSystemTrayAvailable():
         log("holtos-tray: QSystemTrayIcon.isSystemTrayAvailable() is False")
 
-    tray = QSystemTrayIcon(QIcon(ICON_PATH))
+    tray = QSystemTrayIcon(QIcon(TRAY_ICON_PATH))
     tray.setToolTip("HoltOS")
 
     menu = QMenu()
