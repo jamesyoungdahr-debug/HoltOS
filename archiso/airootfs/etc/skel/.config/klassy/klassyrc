@@ -33,8 +33,8 @@ UseTitleBarColorForAllBorders=true
 [TitleBarOpacity]
 OverrideActiveTitleBarOpacity=true
 OverrideInactiveTitleBarOpacity=true
-ActiveTitleBarOpacity=30
-InactiveTitleBarOpacity=30
+ActiveTitleBarOpacity=12
+InactiveTitleBarOpacity=12
 BlurTransparentTitleBars=true
 ApplyOpacityToHeader=true
 OpaqueMaximizedTitleBars=false

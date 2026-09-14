@@ -426,7 +426,7 @@
 <path style="fill:#b14dff;fill-rule:evenodd;opacity:0.3" id="itemview-pressed-topleft" d="m 52,745 v 4 h -4 c 0,-2 2,-4 4,-4 z"/>
 <path style="fill:#b14dff;fill-rule:evenodd;opacity:0.3" id="itemview-pressed-bottomleft" d="m 48,757 h 4 v 4 c -2,0 -4,-2 -4,-4 z"/>
 <use width="100%" height="100%" xlink:href="#slider-normal-topright" id="slider-normal-bottomright" transform="matrix(1,0,0,-1,0,589.5006)"/>
-<path style="opacity:0.45;fill:#171423" id="dialog-normal" d="m 387.5,592 h 40 v 40 h -40 z"/>
+<path style="opacity:0.3;fill:#171423" id="dialog-normal" d="m 387.5,592 h 40 v 40 h -40 z"/>
 <circle cx="362.5" cy="300.50024" style="fill:url(#radialGradient6962);fill-rule:evenodd;stroke:url(#linearGradient6964)" r="8.5" id="slidercursor-focused"/>
 <use width="100%" height="100%" xlink:href="#slidercursor-focused" id="slidercursor-pressed" transform="translate(29.308819,0.34104)"/>
 <circle cx="425" cy="300.50024" style="fill:url(#radialGradient6350);fill-rule:evenodd;stroke:url(#linearGradient6352)" id="slidercursor-disabled" r="8.5"/>
@@ -728,7 +728,7 @@
 <use width="100%" height="100%" style="opacity:.42" xlink:href="#tab-close-normal" id="tab-close-disabled" transform="translate(76)"/>
 <path style="fill-rule:evenodd" id="expand-itemview-normal" d="M 0,30 H 10 V 40 H 0 Z"/>
 <rect width="14" x="226" y="-215" rx="1" height="14" style="fill:url(#linearGradient4859);stroke:url(#linearGradient4861);color:#000;stroke-width:2" id="checkbox-focused" transform="scale(1,-1)"/>
-<path style="opacity:0.3;fill:#171423" id="window-normal" d="m 387.5,640 h 40 v 40 h -40 z"/>
+<path style="opacity:0.15;fill:#171423" id="window-normal" d="m 387.5,640 h 40 v 40 h -40 z"/>
 <g id="checkbox-checked-normal">
 <rect width="16" x="273" y="-215" rx="2" height="16" style="opacity:.8;fill:url(#linearGradient5848);color:#000" id="rect4836" transform="scale(1,-1)"/>
 <rect width="12" x="275" y="-213" rx="1.5" height="12" style="fill:url(#linearGradient9243);color:#000" transform="scale(1,-1)"/>
