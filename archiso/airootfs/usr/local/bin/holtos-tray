@@ -9,6 +9,13 @@
 # notifies once for each newly found set of updates, and when an install
 # needs a restart.
 #
+# It also says when updates were installed on their own (HoltOS Updates >
+# Settings installs apps and HoltOS itself automatically by default; Liam,
+# 2026-09-14: 0.0.7b-alpha arrived without any notice). Installs are read
+# from the updater's history log, and each account remembers the newest one
+# it has announced, so an update installed in Game Mode or while logged out
+# is announced at the next login.
+#
 # PySide6's QSystemTrayIcon rather than yad --notification: yad's tray mode
 # is built on GTK3's X11-only GtkStatusIcon and never worked in the Plasma
 # Wayland session (confirmed from the old version's log).
@@ -50,6 +57,16 @@ TRAY_ICON_PATH = "/usr/share/icons/hicolor/64x64/apps/holtos-logo-symbolic.png"
 STATUS_PATH = "/var/lib/holtos/update-status.json"
 REBOOT_MARKER = "/run/holtos-reboot-required"
 POLL_MS = 30000
+HISTORY_PATH = "/var/lib/holtos/history.log"
+SEEN_PATH = os.path.expanduser("~/.local/state/holtos/installed-announced")
+INSTALLED_NAMES = {
+    "config": "HoltOS",
+    "the-den": "The Den",
+    "the-den-client": "The Den Client",
+    "system": "System packages",
+    "flatpak": "Flatpak apps",
+    "firmware": "Device firmware",
+}
 
 
 def run(cmd, *args):
@@ -62,6 +79,28 @@ def read_status():
             return json.load(f)
     except (OSError, ValueError):
         return None
+
+
+def read_history():
+    """Installs from the updater's history log, oldest first: (date, item, tag)."""
+    entries = []
+    try:
+        with open(HISTORY_PATH) as f:
+            for line in f:
+                fields = line.rstrip("\n").split("\t")
+                if len(fields) >= 3 and fields[0]:
+                    entries.append((fields[0], fields[1], fields[2]))
+    except OSError:
+        pass
+    return entries
+
+
+def installed_label(item, tag):
+    """How an installed item reads in the notification."""
+    name = INSTALLED_NAMES.get(item, item)
+    if item in ("config", "the-den", "the-den-client") and tag:
+        return f"{name} {tag}"
+    return name
 
 
 def add_gamemode_toggle(menu):
@@ -105,12 +144,62 @@ class UpdateWatcher:
         self.updates_action = updates_action
         self.notified_updates = None
         self.notified_restart = False
+        self.announced = self.load_announced()
         self.timer = QTimer()
         self.timer.timeout.connect(self.poll)
         self.timer.start(POLL_MS)
         self.poll()
 
+    def load_announced(self):
+        """The date of the newest install already announced; on the first run, the newest install now."""
+        try:
+            with open(SEEN_PATH) as f:
+                return f.read().strip()
+        except OSError:
+            entries = read_history()
+            newest = entries[-1][0] if entries else ""
+            self.save_announced(newest)
+            return newest
+
+    def save_announced(self, date):
+        try:
+            os.makedirs(os.path.dirname(SEEN_PATH), exist_ok=True)
+            with open(SEEN_PATH, "w") as f:
+                f.write(date + "\n")
+        except OSError as exc:
+            log(f"holtos-tray: could not save {SEEN_PATH}: {exc}")
+
+    def announce_installs(self):
+        """Notify once about installs newer than the last one announced."""
+        new = [e for e in read_history() if e[0] > self.announced]
+        if not new:
+            return False
+        self.announced = new[-1][0]
+        self.save_announced(self.announced)
+        done = [e for e in new if "FAILED" not in e[2]]
+        failed = [e for e in new if "FAILED" in e[2]]
+        if done:
+            labels = []
+            for _, item, tag in done:
+                label = installed_label(item, tag)
+                if label not in labels:
+                    labels.append(label)
+            self.tray.showMessage(
+                "HoltOS updated", f"Installed: {', '.join(labels)}.",
+                QIcon(ICON_PATH), 10000,
+            )
+        if failed:
+            names = ", ".join(installed_label(item, "") for _, item, _ in failed)
+            self.tray.showMessage(
+                "An update did not finish", f"{names}. Open HoltOS Updates for details.",
+                QIcon(ICON_PATH), 15000,
+            )
+        return True
+
     def poll(self):
+        # An install notice first; the available-updates notice waits for the
+        # next poll so the two do not replace each other.
+        announced = self.announce_installs()
         status = read_status() or {}
         state = status.get("state")
         updates = status.get("updates", [])
@@ -131,7 +220,7 @@ class UpdateWatcher:
             self.updates_action.setText("HoltOS Updates...")
 
         found = sorted(f"{u.get('id')}:{u.get('new')}" for u in updates)
-        if updates and state != "checking" and found != self.notified_updates:
+        if updates and state != "checking" and found != self.notified_updates and not announced:
             self.notified_updates = found
             self.tray.showMessage(
                 "HoltOS updates available", f"{names}. Click to see them.",

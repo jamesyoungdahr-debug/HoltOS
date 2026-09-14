@@ -228,6 +228,7 @@ update_config() {
         'etc/systemd/system/holtos-*.service'
         'etc/systemd/system/holtos-*.timer'
         usr/bin/steamos-update
+        usr/bin/steamos-session-select
         usr/bin/jupiter-biosupdate
         usr/bin/steamos-polkit-helpers/
         'usr/share/polkit-1/actions/org.holtos.*.policy'

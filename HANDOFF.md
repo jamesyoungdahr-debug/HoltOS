@@ -6,9 +6,11 @@ context. The 2026-09-11 handoff this replaces is in git history
 (`git show bc29ef6:HANDOFF.md`).
 
 Commit: see `git log` (this file is committed with the work it describes).
-Latest release: `v0.0.7b-alpha` (2026-09-14: Game Mode fixes found on the
-Z13 — Switch to Desktop, the HoltOS name in Steam's system info, CJK fonts;
-config-only, no ISO). Before it: `v0.0.7a-alpha` (glass fixes) and
+Latest release: `v0.0.7c-alpha` (2026-09-14: Steam's Switch to Desktop runs
+`/usr/bin/steamos-session-select`, which HoltOS now ships; the tray announces
+updates that installed on their own; config-only, no ISO). Before it:
+`v0.0.7b-alpha` (Game Mode fixes found on the Z13 — the session script kept a
+pending switch, the HoltOS name in Steam's system info, CJK fonts). And: `v0.0.7a-alpha` (glass fixes) and
 `v0.0.7-alpha` (the glass look and the neon wallpapers). The neon rebrand
 (dock, holtos-glass Plasma style, new logo and art) is on branch
 `neon-rebrand` for the next major release. Newest ISO: `out/holtos-0.0.6d-alpha-x86_64.iso` (built 2026-09-13

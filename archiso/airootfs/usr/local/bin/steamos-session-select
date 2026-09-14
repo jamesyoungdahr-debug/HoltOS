@@ -6,10 +6,16 @@
 # SDDM's relogin (holtos-session-apply) and ends the current one.
 set -euo pipefail
 
+# Every step goes to the journal (journalctl -t holtos-session-select), so a
+# switch that does nothing on real hardware leaves a trace.
+say() { logger -t holtos-session-select -- "$*" 2>/dev/null || true; }
+say "called with: $* (desktop ${XDG_CURRENT_DESKTOP:-unset}, session ${XDG_SESSION_ID:-unset})"
+
+# SteamOS' own names include plasma-wayland and plasma-x11 as well.
 case "${1:-}" in
-    plasma|desktop) target=plasma ;;
+    plasma|plasma-*|desktop) target=plasma ;;
     gamescope|gamemode|steam) target=gamemode ;;
-    *) echo "usage: steamos-session-select <plasma|gamescope>" >&2; exit 2 ;;
+    *) say "unknown session: ${1:-none}"; echo "usage: steamos-session-select <plasma|gamescope>" >&2; exit 2 ;;
 esac
 
 session_id="${XDG_SESSION_ID:-}"
@@ -18,9 +24,11 @@ if [ -z "$session_id" ]; then
 fi
 
 if ! pkexec /usr/local/bin/holtos-session-apply --next "$target"; then
+    say "pkexec holtos-session-apply --next $target failed"
     echo "Could not select the next session" >&2
     exit 1
 fi
+say "next session: $target; ending session ${session_id:-unknown}"
 
 # End this session; SDDM's Relogin autologin then starts the chosen one.
 if [ "${XDG_CURRENT_DESKTOP:-}" = "gamescope" ]; then
