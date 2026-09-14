@@ -1,32 +1,51 @@
-// HoltOS default desktop layout — the stock defaultPanel template's panel,
-// rebuilt here so its opacity can be set: "translucent" turns the panel
-// into a glass bar over the pool-rings wallpaper (with KWin Blur +
-// Background Contrast on, see ../defaults). loadTemplate() would not
-// hand the panel object back, hence the copy.
-var panel = new Panel
-var panelScreen = panel.screen
+// HoltOS default desktop layout (neon rebrand, Liam 2026-09-14): a thin glass
+// menu bar across the top (app launcher with the HoltOS otter, the active app's
+// menus, system tray, clock) and a floating glass dock at the bottom centre that
+// is only as wide as its apps. It replaces the single full-width bottom panel.
+// The glass comes from KWin Blur and Background Contrast (see ../defaults) behind
+// translucent panels. holtos-glass-user-update applies this layout to accounts
+// made before the rebrand, after backing up their panels.
 
-panel.height = 2 * Math.ceil(gridUnit * 2.5 / 2)
-panel.opacity = "translucent"
+// Menu bar
+var bar = new Panel;
+bar.location = "top";
+bar.height = Math.round(gridUnit * 1.8);
+bar.opacity = "translucent";
+bar.floating = false;
+bar.hiding = "none";
 
-const maximumAspectRatio = 21/9;
-if (panel.formFactor === "horizontal") {
-    const geo = screenGeometry(panelScreen);
-    const maximumWidth = Math.ceil(geo.height * maximumAspectRatio);
-    if (geo.width > maximumWidth) {
-        panel.alignment = "center";
-        panel.minimumLength = maximumWidth;
-        panel.maximumLength = maximumWidth;
-    }
-}
+var launcher = bar.addWidget("org.kde.plasma.kickoff");
+launcher.currentConfigGroup = ["General"];
+launcher.writeConfig("icon", "holtos-logo");
 
-panel.addWidget("org.kde.plasma.kickoff")
-panel.addWidget("org.kde.plasma.pager")
-panel.addWidget("org.kde.plasma.icontasks")
-panel.addWidget("org.kde.plasma.marginsseparator")
-panel.addWidget("org.kde.plasma.systemtray")
-panel.addWidget("org.kde.plasma.digitalclock")
-panel.addWidget("org.kde.plasma.showdesktop")
+bar.addWidget("org.kde.plasma.appmenu");
+bar.addWidget("org.kde.plasma.panelspacer");
+bar.addWidget("org.kde.plasma.systemtray");
+
+var clock = bar.addWidget("org.kde.plasma.digitalclock");
+clock.currentConfigGroup = ["Appearance"];
+clock.writeConfig("showDate", true);
+
+// Floating dock
+var dock = new Panel;
+dock.location = "bottom";
+dock.height = Math.round(gridUnit * 3.2);
+dock.opacity = "translucent";
+dock.floating = true;
+dock.lengthMode = "fit";
+dock.alignment = "center";
+dock.hiding = "none";
+
+var tasks = dock.addWidget("org.kde.plasma.icontasks");
+tasks.currentConfigGroup = ["General"];
+tasks.writeConfig("launchers", [
+    "applications:org.kde.dolphin.desktop",
+    "applications:chromium.desktop",
+    "applications:steam.desktop",
+    "applications:holtos-apps.desktop",
+    "applications:org.kde.konsole.desktop",
+    "applications:systemsettings.desktop"
+]);
 
 var desktopsArray = desktopsForActivity(currentActivity());
 for (var j = 0; j < desktopsArray.length; j++) {

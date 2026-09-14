@@ -19,8 +19,8 @@ set -u
 
 # Bump the number when a release adds a step, so accounts that already ran an
 # older version run again (2: glyph-free buttons; 3: clearer glass, title bar
-# opacity 12 to match the 15 % window tint).
-STAMP="${XDG_STATE_HOME:-$HOME/.local/state}/holtos/glass-user-update-3"
+# opacity 12 to match the 15 % window tint; 4: neon rebrand menu bar and dock).
+STAMP="${XDG_STATE_HOME:-$HOME/.local/state}/holtos/glass-user-update-4"
 [ -e "$STAMP" ] && exit 0
 [ -e /run/archiso ] && exit 0
 
@@ -74,6 +74,31 @@ fi
 if [ "$(kreadconfig6 --file "$CFG/kdeglobals" --group General --key ColorScheme)" = HoltOS ]; then
     plasma-apply-colorscheme BreezeDark >/dev/null 2>&1
     plasma-apply-colorscheme HoltOS >/dev/null 2>&1
+fi
+
+# Neon rebrand desktop layout: glass menu bar on top, floating dock below. It
+# replaces an account's old panels once (Liam, 2026-09-14: the redesign is the
+# default for everyone); the old panel config is kept as *.before-neon-layout.
+LAYOUT_STAMP="${XDG_STATE_HOME:-$HOME/.local/state}/holtos/neon-layout-1"
+LAYOUT_JS=/usr/share/plasma/look-and-feel/org.holtos.desktop/contents/layouts/org.kde.plasma.desktop-layout.js
+APPLETS="$CFG/plasma-org.kde.plasma.desktop-appletsrc"
+if [ ! -e "$LAYOUT_STAMP" ] && [ -f "$LAYOUT_JS" ]; then
+    mkdir -p "$(dirname "$LAYOUT_STAMP")"
+    if grep -q 'plugin=org.kde.plasma.appmenu' "$APPLETS" 2>/dev/null; then
+        # Already the new layout: an account made from a rebranded image.
+        date -u +%FT%TZ > "$LAYOUT_STAMP"
+    else
+        for _ in $(seq 1 30); do
+            qdbus6 org.kde.plasmashell /PlasmaShell >/dev/null 2>&1 && break
+            sleep 2
+        done
+        [ -f "$APPLETS" ] && cp "$APPLETS" "$APPLETS.before-neon-layout"
+        [ -f "$CFG/plasmashellrc" ] && cp "$CFG/plasmashellrc" "$CFG/plasmashellrc.before-neon-layout"
+        layout="$(printf 'panels().forEach(function (p) { p.remove(); });\n'; cat "$LAYOUT_JS")"
+        if qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript "$layout" >/dev/null 2>&1; then
+            date -u +%FT%TZ > "$LAYOUT_STAMP"
+        fi
+    fi
 fi
 
 qdbus6 org.kde.KWin /KWin reconfigure >/dev/null 2>&1 || true

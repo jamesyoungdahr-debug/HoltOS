@@ -5,6 +5,21 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+Neon rebrand (next major release):
+
+- **New otter logo**, generated on ComfyUI (Liam's pick: the flat otter with a
+  magenta-to-blue neon rim). App icons from 16 to 512 px, a one-colour tray
+  glyph and a large mark for the About page, cut from the renders by
+  `tools/brand/derive_logo.py`.
+- **New desktop layout:** a thin glass menu bar across the top (app launcher,
+  the active app's menus, system tray, clock) and a floating dock at the
+  bottom centre that is only as wide as its apps (Dolphin, Chromium, Steam,
+  HoltOS Apps, Konsole, System Settings). Existing accounts switch at their
+  next login; their old panels are kept as `*.before-neon-layout`.
+- GTK apps show their menus in the top bar (`appmenu-gtk-module`).
+- **Five-colour neon palette** in the brand guide and Konsole: purple, teal,
+  electric blue, magenta and lime, with amber still meaning "needs you".
+
 ## [0.0.7a-alpha] - 2026-09-14
 
 - **Fixed: the glass flickered and showed a line when a window crossed a
