@@ -10,6 +10,21 @@ LiamPC are for Liam to do in person.
 
 Do section 1 first; most of the rest depends on it.
 
+## 0.0.7b-alpha: Game Mode fixes (Z13 first, then 4090)
+
+- [ ] HoltOS Updates > Check for updates, install `v0.0.7b-alpha`. Expect:
+  `grep VERSION_ID /etc/os-release` shows `0.0.7b-alpha`.
+- [ ] Game Mode > Steam's power menu > **Switch to Desktop** returns to
+  Plasma, still logged in. Try it once with Tray > Start in Game Mode on as
+  well: it still returns to Plasma, and the next restart boots into Game
+  Mode.
+- [ ] Game Mode > Settings > System: the OS name is **HoltOS**, not Arch
+  Linux. On the desktop, `lsb_release -d` and `head -n 1 /usr/lib/os-release`
+  both say HoltOS.
+- [ ] Game Mode > Settings > System > Language: Chinese, Japanese and Korean
+  show their names, not empty boxes. `pacman -Q noto-fonts-cjk` prints a
+  version.
+
 ## 1. Update to 0.0.7-alpha (Z13, 4090)
 
 - [ ] HoltOS Updates > Check for updates, install `v0.0.7-alpha`, then also

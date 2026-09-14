@@ -150,6 +150,9 @@ libcec
 fuse2
 # On-screen keyboard for touch input (KWin's InputMethod in etc/xdg/kwinrc).
 plasma-keyboard
+# Chinese, Japanese and Korean text (Steam's language list in Game Mode showed
+# empty boxes without it; Liam, 2026-09-14)
+noto-fonts-cjk
 # Controllers (AUR, in local-repo/): Xbox pads over Bluetooth, and udev
 # rules so non-Steam controllers work without root.
 xpadneo-dkms

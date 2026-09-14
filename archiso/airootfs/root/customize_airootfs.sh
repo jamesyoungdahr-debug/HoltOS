@@ -72,6 +72,21 @@ if ! grep -q '^NoExtract = usr/share/wallpapers/' /etc/pacman.conf; then
 fi
 find /usr/share/wallpapers -mindepth 1 -maxdepth 1 ! -name 'HoltOS*' -exec rm -rf {} +
 
+# The OS is called HoltOS everywhere: Arch's filesystem package ships
+# /usr/lib/os-release naming Arch Linux (Steam's system info showed it). Use
+# ours and keep pacman from unpacking Arch's again (same as
+# holtos-system-extras' fix_os_identity). /etc/lsb-release is written from
+# os-release too, so the version lives in one file.
+if ! grep -q '^NoExtract = usr/lib/os-release' /etc/pacman.conf; then
+    sed -i '/^\[options\]/a NoExtract = usr/lib/os-release' /etc/pacman.conf
+fi
+install -m 644 /etc/os-release /usr/lib/os-release
+(
+    . /etc/os-release
+    printf 'DISTRIB_ID="%s"\nDISTRIB_RELEASE="%s"\nDISTRIB_DESCRIPTION="%s"\n' \
+        "$NAME" "$VERSION_ID" "$PRETTY_NAME" > /etc/lsb-release
+)
+
 # Stage the NVIDIA driver packages on the ISO WITHOUT installing them:
 # homelab-detect-hardware.sh installs them into the target at install
 # time only if an NVIDIA GPU is present (no network needed then). The

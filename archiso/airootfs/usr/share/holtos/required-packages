@@ -12,3 +12,6 @@ libcec
 # 0.0.6-alpha: the on-screen keyboard (plasma-keyboard) and AppImages (fuse2).
 plasma-keyboard
 fuse2
+# 0.0.7b-alpha: Chinese, Japanese and Korean text; Steam's language list in
+# Game Mode showed empty boxes without it (Liam, 2026-09-14).
+noto-fonts-cjk
