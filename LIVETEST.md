@@ -48,9 +48,13 @@ Do section 1 first; most of the rest depends on it.
 - [ ] Konsole is translucent with blur behind it.
 - [ ] Readability: text over bright parts of the wallpaper stays readable.
   Note where it does not.
-- [ ] **Edge blur (the fix the VM could not prove):** drag a Dolphin window
-  half off the left edge over a bright wallpaper. Expect no see-through or
-  smeared band along the edge.
+- [ ] **Edge blur (0.0.7a):** drag a Dolphin window slowly half off the left
+  edge over a bright wallpaper. Expect no see-through or smeared band, no
+  flicker while it moves, and no bright or dark line along the edge.
+- [ ] **Title bar matches the window (0.0.7a):** after logging out and back
+  in, the title bar has the same tint as the toolbar below it.
+- [ ] **Clearer glass (0.0.7a):** shapes behind a window are recognisable but
+  soft. Say whether the blur (strength 8) should be stronger or weaker.
 - [ ] **4090 with two monitors:** drag a window across the seam. Expect no
   band.
 - [ ] Performance: move and resize windows and open several at once. It stays

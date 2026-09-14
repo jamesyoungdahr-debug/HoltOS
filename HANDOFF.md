@@ -529,6 +529,30 @@ installs nothing from it. No ISO was built (Liam: commit and push only).
   and add Vboard (AUR, uinput, modifier keys) as a tray keyboard in the next
   feature release, pending Liam's go-ahead.
 
+## 0.0.7a-alpha: edge flicker, clearer glass, title bar (2026-09-14)
+
+Liam tested 0.0.7 on real hardware: the edge fix removed the band, but the
+glass flickered and showed a line while a window crossed a screen edge. He
+also asked for clearer glass and a title bar that matches the window. Branch
+`glass-fixes` off master; a bug-fix release (letter suffix).
+
+- **Edge flicker** (holtos-kwin `edge-flicker-fix`, 1a4b5f0): the textures
+  were sized from the on-output part of the window, which changes every frame
+  while a window moves, so they were reallocated every frame and odd sizes
+  rounded differently in the downsample passes. The rect now grows to a
+  multiple of 2^iterations (centred on the visible part, clamped to the
+  output) and the textures mirror at their edges instead of clamping. The VM
+  cannot show the bug; Liam confirms on hardware.
+- **Clearer glass:** Kvantum window 15 % (dialogs 30 %), Base and AltBase
+  alpha 0 so views add no layer, kwinrc BlurStrength 8. In the VM,
+  BlurStrength changes did not visibly apply (software rendering, or the
+  effect did not reload), so the blur amount is judged on Liamtab.
+- **Title bar:** at the same opacity the decoration renders darker than the
+  Kvantum fill. Measured in VM screenshots (title bar against toolbar RGB):
+  15 was 12 levels darker, 8 was 9 lighter, 11 was 5 lighter, so 12.
+  `holtos-glass-user-update` stamp 3 applies it to existing accounts.
+- The plain circle buttons already on master ship in this release too.
+
 ## 0.0.7-alpha: the glass look (2026-09-14)
 
 Liam's reference screenshot (`docs/design-references/glass-dolphin-reference.jpg`)
