@@ -170,9 +170,9 @@ Each one is a small unit, built and checked before the next.
 
 | # | Unit | Verify |
 |---|---|---|
-| G1 | Edge-blur fix (holtos-kwin branch `edge-blur-fix`). **Compiled 2026-09-14; test package holtos-kwin 6.7.5.r90 built; waiting for Liam to install** | compile, then Liamtab drag test |
-| G2 | macOS buttons: klassyrc traffic lights and circles. **Done 2026-09-14 on HoltOS branch `glass-buttons`; klassyrc regrouped (see Decisions)** | Liamtab, by eye |
-| G3 | Hover glow in the decoration fork. **Compiled 2026-09-14 on `glass-buttons`; test package holtos-window-decoration 6.7.2.r55 built; waiting for Liam to install** | compile, then Liamtab hover test |
+| G1 | Edge-blur fix (holtos-kwin `edge-blur-fix`, merged into `holtos`). **Released in 0.0.7-alpha as holtos-kwin 6.7.5.r134. In the VM it runs with no crash or regression at the screen edge, but the VM never showed the band, so the fix still needs the Liamtab drag test** | compile, then Liamtab drag test |
+| G2 | macOS buttons: klassyrc traffic lights and circles. **Released in 0.0.7-alpha: circles visible at rest, in HoltOS's warning, neutral and healthy colours; klassyrc regrouped (see Decisions)** | Liamtab, by eye |
+| G3 | Hover glow in the decoration fork. **Released in 0.0.7-alpha as holtos-window-decoration 6.7.2.r130; glow seen in the VM on hover** | compile, then Liamtab hover test |
 | G4 | Kvantum: Dolphin view, sidebar, toolbar, tabs, Base alpha. **Done 2026-09-14 on `glass-look`, released in 0.0.7-alpha: one 30 % window layer, dock and toolbar layers at 0, translucent purple selection, `tab-*` and `tbutton-*` elements; checked live in the VM next to the reference screenshot** | Liamtab, Dolphin next to the reference screenshot |
 | G5 | plasmarc mismatch, then a HoltOS desktoptheme | Liamtab, restart plasmashell |
 | G6 | GTK3 rgba css | Liamtab |

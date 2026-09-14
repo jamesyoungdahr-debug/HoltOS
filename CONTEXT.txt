@@ -1,6 +1,6 @@
 HoltOS — running context file (plain text, kept current by the agent)
 =====================================================================
-Last updated: 2026-09-14 (glass branches pushed, waiting for Liam's test; 0.0.7 neon wallpapers on master, pushed, not tagged; shares fixed)
+Last updated: 2026-09-14 (v0.0.7-alpha released: glass look, neon wallpapers, KWin and Plasma forks published; Liam tests on real hardware)
 Read this first when resuming. Newest state at the top of each section.
 
 WHAT HOLTOS IS
@@ -17,32 +17,26 @@ Backups: verified git bundles in /home/liam/Projects/backups/holtos/ on the Stri
 
 CURRENT STATE (2026-09-14)
 --------------------------
-- HAND-OFF STATUS (2026-09-14, committed 15:19): all work committed and pushed, no tags,
-  no ISO. Glass work waits on Liam's live test and is on branches:
-  holtos-kwin edge-blur-fix (G1, package r90), HoltOS glass-buttons (G2/G3,
-  package r55), HoltOS glass-surfaces (G4 partial). Nothing installed on
-  Liamtab yet (kwin r89, decoration r54, no Kvantum override). Test steps in
-  LIAM-HANDOFF.md 5a; the full table is in HANDOFF.md "Status at hand-off".
-- RELEASE 0.0.7-alpha (2026-09-14): the glass look plus the neon wallpapers,
-  from branch glass-look merged into master. HoltOS's KWin and Plasma forks
-  are now published to the packages release (Liam). Details in HANDOFF.md
-  "0.0.7-alpha: the glass look"; Liam tests on real hardware
-  (LIAM-HANDOFF.md section 0).
+- LATEST RELEASE: v0.0.7-alpha (2026-09-14, tagged and pushed; no ISO, Liam:
+  commit and push only). The glass look (branch glass-look merged into
+  master), the ten neon wallpapers with Neon Otter Night as the default, the
+  hardware detection fix, and HoltOS's KWin and Plasma forks published to the
+  packages release for the first time (holtos-kwin 6.7.5.r134 with the
+  edge-blur fix, holtos-window-decoration 6.7.2.r130). Details in HANDOFF.md
+  "0.0.7-alpha: the glass look"; Liam tests on real hardware from LIVETEST.md
+  and LIAM-HANDOFF.md section 0. Not yet seen on real hardware: the edge-blur
+  fix (the VM never showed the band), holtos-kwin on NVIDIA, and the Otter
+  Night default on a fresh install.
 - RELEASE TRACKS (Liam, 2026-09-14): until 1.0 there is only one track, as
   now: work on branches, merge to master, tag v*, the updater installs tags.
   At 1.0 HoltOS starts a dev track and an rc track. The researched design
   (private HoltOS-dev repo, read-only deploy key per invited device, CHANNEL
   setting in updates.conf, dev-* tags and a [holtos-dev] package repo) is in
   HANDOFF.md "Release tracks"; do not build it before 1.0.
-- LATEST RELEASE: v0.0.6d-alpha (master 043e406, pushed and tagged). Releases
-  0.0.5a through 0.0.6d are summarised in HANDOFF.md ("Releases 0.0.5-alpha
-  to 0.0.6d-alpha"); Liam's test steps are in LIAM-HANDOFF.md. Numbering: the
-  number goes up for big features, a letter marks a big-fix release.
-  NEXT RELEASE 0.0.7 (on master, pushed 2026-09-14, not tagged; Liam: no ISO
-  build, just commit and push): ten neon wallpapers, Neon
-  Otter Night as the default (desktop, lock, SDDM, Limine), only HoltOS
-  wallpapers installed; see HANDOFF.md "Neon wallpapers for 0.0.7". Release
-  only when Liam says. Otter Night default not yet tested on a fresh install.
+- EARLIER RELEASES: 0.0.5a through 0.0.6d are summarised in HANDOFF.md
+  ("Releases 0.0.5-alpha to 0.0.6d-alpha"); the 0.0.7 wallpapers in "Neon
+  wallpapers for 0.0.7". Numbering: the number goes up for big features, a
+  letter marks a big-fix release.
   FIXED: Network Shares (the problem was Liam's NAS). CHECKED 2026-09-14: The
   Den on Liamtab is active, enabled and answers /health on 127.0.0.1:8686 (the
   21:15 UTC "FAILED to start" history line was false or cleared by the next boot).
