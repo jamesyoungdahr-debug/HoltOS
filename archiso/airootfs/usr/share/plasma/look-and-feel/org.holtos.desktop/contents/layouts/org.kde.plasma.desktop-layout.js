@@ -29,7 +29,8 @@ clock.writeConfig("showDate", true);
 // Floating dock
 var dock = new Panel;
 dock.location = "bottom";
-dock.height = Math.round(gridUnit * 3.2);
+// 2.6 grid units: smaller icons, less cluttered (Liam, 2026-09-14; was 3.2).
+dock.height = Math.round(gridUnit * 2.6);
 dock.opacity = "translucent";
 dock.floating = true;
 dock.lengthMode = "fit";

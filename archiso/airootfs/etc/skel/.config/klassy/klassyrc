@@ -28,6 +28,9 @@ DrawBorderOnMaximizedWindows=false
 RoundAllCornersWhenNoBorders=true
 WindowCornerRadius=10
 ButtonShape=ShapeSmallCircle
+# Smaller circles so the title bar looks less cluttered (Liam, 2026-09-14;
+# Klassy's default is IconLargeMedium).
+IconSize=IconSmall
 UseTitleBarColorForAllBorders=true
 
 [TitleBarOpacity]
