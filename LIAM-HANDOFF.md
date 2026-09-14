@@ -129,7 +129,7 @@ start is step 6 (no password), then steps 2-5.
    Close Dolphin fully and open it again. The file list, the Places sidebar
    and the toolbar should show the blurred wallpaper. Tabs stay dark for now.
    To undo: `rm -r ~/.config/Kvantum/HoltOSGlass`, then reopen Dolphin.
-4. **Plasma theme.** `etc/xdg/plasmarc` names `klassy-dark`, but your desktop
+7. **Plasma theme.** `etc/xdg/plasmarc` names `klassy-dark`, but your desktop
    uses `default`. Which should HoltOS ship until it has its own glass theme?
 
 ## 6. Already verified on Liamtab

@@ -1,6 +1,6 @@
 HoltOS — running context file (plain text, kept current by the agent)
 =====================================================================
-Last updated: 2026-09-14 (neon wallpapers + Otter Night default on master for 0.0.7, unpushed; shares fixed)
+Last updated: 2026-09-14 (glass branches pushed, waiting for Liam's test; 0.0.7 neon wallpapers on master, pushed, not tagged; shares fixed)
 Read this first when resuming. Newest state at the top of each section.
 
 WHAT HOLTOS IS
@@ -17,7 +17,7 @@ Backups: verified git bundles in /home/liam/Projects/backups/holtos/ on the Stri
 
 CURRENT STATE (2026-09-14)
 --------------------------
-- HAND-OFF STATUS (2026-09-14 morning): all work committed and pushed, no tags,
+- HAND-OFF STATUS (2026-09-14, committed 15:19): all work committed and pushed, no tags,
   no ISO. Glass work waits on Liam's live test and is on branches:
   holtos-kwin edge-blur-fix (G1, package r90), HoltOS glass-buttons (G2/G3,
   package r55), HoltOS glass-surfaces (G4 partial). Nothing installed on
@@ -356,7 +356,7 @@ GPU-PV / dxgkrnl in Hyper-V cannot test any of this: it gives /dev/dxg
 
 OPEN DECISIONS (Liam)
 ---------------------
-- Snapshot semantics (rescue boot vs rollback).
+- Snapshot semantics: decided 2026-09-12 (Liam), real rollback; see PLAN.md.
 - Real NVIDIA machine test for hardware detection (PLAN step 7) and the
   real-GPU look of the glass: boot build 10+ from the Ventoy stick (D:\).
 

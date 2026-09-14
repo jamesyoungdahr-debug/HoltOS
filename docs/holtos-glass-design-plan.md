@@ -189,7 +189,8 @@ Each one is a small unit, built and checked before the next.
 - Compiled forks (holtos-kwin, the decoration, qqc2-desktop-style) change on
   branches until they compile. The ISO pipeline builds the `holtos` branch and
   master, so an untested C++ change must never land there.
-- Liamtab has no cmake or KDE build tools and building needs sudo. Compiling
-  happens in LiamPC's pipeline or after Liam installs them.
+- Liamtab has cmake, extra-cmake-modules and ninja (Liam installed them
+  2026-09-14), so test builds compile there; installing a build needs sudo,
+  which only Liam runs.
 - Never install a new KWin or decoration into Liam's running session without
   him: a crash takes his open apps with it.

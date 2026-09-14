@@ -12,11 +12,15 @@ Latest release: `v0.0.6d-alpha`. 0.0.7 (neon wallpapers) is on master, pushed
 stick is no longer used. Test VM: `holtos-test` on LiamPC (Hyper-V Gen 2,
 6 vCPU, 8 GB, Secure Boot off, 60 GB VHDX under `vm/`). The repo is
 `C:\projects\holtos` on LiamPC and `/mnt/shares/projects/holtos` on the Strix
-Halo (the same files over CIFS); `master` is its only branch.
+Halo (the same files over CIFS). Branches: `master`, plus `glass-buttons` and
+`glass-surfaces` (glass work waiting for Liam's test, each one commit on top
+of master; their worktrees live under `/mnt/shares/projects/` on the Strix
+Halo, so never run `git worktree prune` on LiamPC).
 
-Sections run oldest to newest. The newest state is "Neon wallpapers for 0.0.7"
-and the "Open after 0.0.6d" list under it; "Still open" further down is older
-and partly superseded (the Milestone 2 crash there is fixed and verified).
+Sections run oldest to newest. The newest state is "Glass design: every
+window is glass" and its "Status at hand-off" table; "Still open" further
+down is older and partly superseded (the Milestone 2 crash there is fixed and
+verified).
 
 ## Ground rules (unchanged)
 
@@ -499,14 +503,14 @@ designs and milestones G1-G12, is `docs/holtos-glass-design-plan.md`.
   The script's printed alpha values are wrong (always 255); trust the
   images. Not seen live. Tabs still use the opaque button element.
 
-### Status at hand-off (2026-09-14, morning)
+### Status at hand-off (2026-09-14, committed 15:19)
 
 Everything is committed and pushed, with no tags, so the HoltOS updater
 installs nothing from it. No ISO was built (Liam: commit and push only).
 
 | Repo / branch | Commit | What | Tested |
 |---|---|---|---|
-| HoltOS `master` | logs and plan | logs, glass plan, hardware detection fix | detection fix on Liamtab |
+| HoltOS `master` | 79d8bb6 | logs, glass plan, hardware detection fix | detection fix on Liamtab |
 | holtos-kwin `edge-blur-fix` | 0153fa7 | G1 edge-blur fix | compiled, package r90 built |
 | HoltOS `glass-buttons` | 6a3cdd1 | G2/G3 traffic-light buttons, hover glow, regrouped klassyrc | compiled, package r55 built |
 | HoltOS `glass-surfaces` | b449f76 | G4 glass Dolphin view, Places sidebar, toolbar | offscreen render |
@@ -608,7 +612,7 @@ installs nothing from it. No ISO was built (Liam: commit and push only).
 - **the-den-client icon**: fixed 2026-09-13 in the client repo (commit
   7f601b5, logo.svg's illegal "--" inside its XML comment removed); not
   pushed/tagged yet, so it ships with the next the-den-client release.
-- **Snapshot semantics** (rescue boot vs rollback) — undecided.
+- ~~Snapshot semantics~~ — **decided 2026-09-12 (Liam): real rollback**; see PLAN.md.
 - ~~Two orphan public GitHub repos~~ — **deleted 2026-09-13** (Liam):
   `jamesyoungdahr-debug/holtos-glass-effect` and `/holtos-window-decoration`
   are gone from GitHub.
