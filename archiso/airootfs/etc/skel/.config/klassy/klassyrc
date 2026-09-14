@@ -58,6 +58,12 @@ ButtonBackgroundColorsInactive=AccentTrafficLights
 [ButtonBehaviour]
 ButtonHoverGlow=true
 ButtonHoverGlowRadius=250
+# Traffic-light circles stay visible at rest, not only on hover (seen in the
+# VM, 2026-09-14: Klassy's defaults hid them until hovered).
+ShowBackgroundNormallyActive=true
+ShowBackgroundNormallyInactive=true
+ShowCloseBackgroundNormallyActive=true
+ShowCloseBackgroundNormallyInactive=true
 
 [WindowOutlineStyle]
 WindowOutlineThickness=1

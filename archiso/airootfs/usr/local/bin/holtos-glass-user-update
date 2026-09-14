@@ -44,6 +44,10 @@ elif [ -f "$klassy" ]; then
     set_klassy WindowOutlineStyle WindowOutlineStyleInactive WindowOutlineContrast
     set_klassy WindowOutlineStyle WindowOutlineContrastOpacityActive 12
     set_klassy WindowOutlineStyle WindowOutlineContrastOpacityInactive 8
+    set_klassy ButtonBehaviour ShowBackgroundNormallyActive true
+    set_klassy ButtonBehaviour ShowBackgroundNormallyInactive true
+    set_klassy ButtonBehaviour ShowCloseBackgroundNormallyActive true
+    set_klassy ButtonBehaviour ShowCloseBackgroundNormallyInactive true
 fi
 
 if [ "$(kreadconfig6 --file "$CFG/kwinrc" --group Effect-blur --key NoiseStrength)" = 4 ]; then
