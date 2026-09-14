@@ -66,8 +66,10 @@ no_window_pattern=false
 
 [GeneralColors]
 window.color=#171423
-base.color=#1D1927
-alt.base.color=#221D2F
+# Glass (plan G4, 2026-09-14): views paint Base, so Base and AltBase carry
+# alpha (#RRGGBBAA, 40%) and the blurred wallpaper shows through file lists.
+base.color=#1D192766
+alt.base.color=#221D2F66
 button.color=#1D1927
 light.color=#2A2438
 mid.light.color=#262033
@@ -87,7 +89,7 @@ link.visited.color=#8F2FE0
 
 [Hacks]
 transparent_ktitle_label=true
-transparent_dolphin_view=false
+transparent_dolphin_view=true
 transparent_pcmanfm_sidepane=true
 blur_translucent=true
 transparent_menutitle=false
