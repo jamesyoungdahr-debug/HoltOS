@@ -6,13 +6,17 @@ Read this first when resuming. Newest state at the top of each section.
 WHAT HOLTOS IS
 --------------
 Arch-based archiso + Calamares + Limine distro with KDE Plasma 6.7.
-Repo: C:\projects\holtos  (GitHub jamesyoungdahr-debug/HoltOS, PUBLIC, branch master)
+Repo: C:\projects\holtos on LiamPC, /mnt/shares/projects/holtos on the Strix Halo
+(the same files over CIFS). GitHub jamesyoungdahr-debug/HoltOS, PUBLIC. master is
+the only branch: apps, defaults, updater and fix-extras were merged and deleted
+2026-09-14, and the C:\projects\holtos-updater worktree record was pruned.
 Docs in repo: README.md, BUILD.md, PLAN.md, HANDOFF.md, CHANGELOG.md, BRANDING-STATUS.md,
-docs/holtos-plasma-fork-plan.md (new)
+docs/holtos-plasma-fork-plan.md, docs/holtos-must-haves-and-plan.md
 Owner: Liam (GitHub jamesyoungdahr-debug, git user Vectorly)
+Backups: verified git bundles in /home/liam/Projects/backups/holtos/ on the Strix Halo.
 
-CURRENT STATE (2026-09-13, night)
-----------------------------------
+CURRENT STATE (2026-09-14)
+--------------------------
 - LATEST RELEASE: v0.0.6d-alpha (master 043e406, pushed and tagged). Releases
   0.0.5a through 0.0.6d are summarised in HANDOFF.md ("Releases 0.0.5-alpha
   to 0.0.6d-alpha"); Liam's test steps are in LIAM-HANDOFF.md. Numbering: the
@@ -21,9 +25,15 @@ CURRENT STATE (2026-09-13, night)
   Otter Night as the default (desktop, lock, SDDM, Limine), only HoltOS
   wallpapers installed; see HANDOFF.md "Neon wallpapers for 0.0.7". Release
   only when Liam says. Otter Night default not yet tested on a fresh install.
-  FIXED: Network Shares (the problem was Liam's NAS). OPEN: The Den status on
-  Liamtab; 0.0.6d Z13-in-Game-Mode untested; virtual keyboard decision (keep
-  plasma-keyboard, add Vboard as a tray keyboard) waiting on Liam.
+  FIXED: Network Shares (the problem was Liam's NAS). CHECKED 2026-09-14: The
+  Den on Liamtab is active, enabled and answers /health on 127.0.0.1:8686 (the
+  21:15 UTC "FAILED to start" history line was false or cleared by the next boot).
+  Also on Liamtab: smartd monitors the NVMe, the update-check timer runs and
+  reports up_to_date, holtos-scrub.timer is scheduled, the tray runs, 0 failed units.
+  OPEN: 0.0.6d Z13-in-Game-Mode untested; virtual keyboard decision (keep
+  plasma-keyboard, add Vboard as a tray keyboard) waiting on Liam; the
+  out/build-0.0.7-wallpapers.log copy stops at pacman's file-conflict check,
+  so which ISO the wallpaper VM check used is not recorded.
 - NOW ON MASTER, PUSHED (2026-09-13, afternoon): Milestone 2 fix (build 23
   verified), the Windows-style updater (verified on the build 24 live VM),
   HoltOS Apps (install/remove verified on the build 24 live VM), per-disk I/O
@@ -72,7 +82,8 @@ CURRENT STATE (2026-09-13, night)
     session-cleanup autostart no longer shows as a failed unit;
     holtos-gaming form labels left-aligned. Open, cosmetic: Dolphin's
     "9 folders" status label truncates under every Kvantum theme (stock
-    KvRoughGlass too), not ours. ComfyUI machine down: design work pinned.
+    KvRoughGlass too), not ours. (ComfyUI was down then; it is back and
+    rendered the 0.0.7 neon wallpapers.)
   * Milestone 3: HoltOS blur port merged into holtos-kwin's in-tree
     src/plugins/blur (fork commit 75d843a, pushed) — compiled clean in the
     same rebuild. holtos-glass-effect stays until this is verified live.
@@ -91,8 +102,10 @@ CURRENT STATE (2026-09-13, night)
   * VM driving: vmconnect needs `key` per character (type doesn't reach
     the guest), shift+minus = underscore, Ctrl+Alt+F3 = tty. Password
     liveuser/liveuser. Never reboot LiamPC itself (dual-boots real HoltOS).
-- HOLTOS GLASS v2 (uncommitted, live-tuned in the VM only — see below for
-  exactly what's baked in vs. not): Liam's reference photo showed a much
+- HOLTOS GLASS v2 (SUPERSEDED, kept for history: the kwinrc, Konsole and
+  Kvantum .40/.55 values were later ported into the repo and committed, see the
+  LATEST item above; the Klassy title bar opacity was never ported or
+  verified): Liam's reference photo showed a much
   softer, brighter "milk glass" look than HoltOS ships. Root-caused in the
   VM (not guessed): the blur effect itself is fine (proved by swapping in
   stock unmodified KWin blur — identical flat result), the real cause was
@@ -156,11 +169,9 @@ CURRENT STATE (2026-09-13, night)
   host, VM confirmed running normally again on llvmpipe as before. Liam
   is rebooting to check/enable the BIOS setting (IOMMU / AMD-Vi / SVM
   Mode) himself; redo the same DDA steps once that's on.
-- LM Studio routing: Liam upgraded the 4080 from secondary/fallback to a
-  full co-primary worker alongside the 4090 ("we can also make the 4080 a
-  primary to speed work up") — hand independent units to both at once by
-  default now, not just when the 4090 is busy. See memory
-  lmstudio-parallel-routing.md.
+- LM Studio routing (SUPERSEDED): the local LLM scheduler on LiamPC (:8790)
+  now hands out models by profile; see the global CLAUDE.md "Model
+  scheduler" section. The 4080 is the lowest-priority `trivial` worker.
 - Standing process note from Liam this session: plan new/large requests
   and present the plan before executing, not mid-way through — see memory
   plan-before-executing.md. Applies going forward to anything sizeable

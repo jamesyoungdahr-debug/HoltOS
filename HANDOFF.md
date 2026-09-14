@@ -6,10 +6,17 @@ context. The 2026-09-11 handoff this replaces is in git history
 (`git show bc29ef6:HANDOFF.md`).
 
 Commit: see `git log` (this file is committed with the work it describes).
-Test VM: `holtos-test` (Hyper-V Gen 2, 6 vCPU, 8 GB, Secure Boot off,
-60 GB VHDX under `vm/`). ISO: `out/holtos-0.0.2-alpha-x86_64.iso`
-(build 11, from tag `v0.0.2-alpha`); a copy is always on `D:\` (the
-Ventoy stick), old copies removed.
+Latest release: `v0.0.6d-alpha`. 0.0.7 (neon wallpapers) is on master, not
+pushed. Newest ISO: `out/holtos-0.0.6d-alpha-x86_64.iso` (built 2026-09-13
+23:50). Releases reach Liam's machines through the HoltOS updater; the Ventoy
+stick is no longer used. Test VM: `holtos-test` on LiamPC (Hyper-V Gen 2,
+6 vCPU, 8 GB, Secure Boot off, 60 GB VHDX under `vm/`). The repo is
+`C:\projects\holtos` on LiamPC and `/mnt/shares/projects/holtos` on the Strix
+Halo (the same files over CIFS); `master` is its only branch.
+
+Sections run oldest to newest. The newest state is "Neon wallpapers for 0.0.7"
+and the "Open after 0.0.6d" list under it; "Still open" further down is older
+and partly superseded (the Milestone 2 crash there is fixed and verified).
 
 ## Ground rules (unchanged)
 
@@ -410,8 +417,15 @@ marks a big-fix release. All tagged and pushed; packages published to the
 Open after 0.0.6d:
 - **Network Shares: fixed** (2026-09-14). The problem was on Liam's NAS, not
   HoltOS; no code change.
-- **The Den on Liamtab**: history shows `the-den v0.8.0a (FAILED to start)`;
-  status unchecked.
+- **The Den on Liamtab: checked 2026-09-14**, active and enabled, answering
+  `/health` on 127.0.0.1:8686; the 21:15 UTC `the-den v0.8.0a (FAILED to start)`
+  history line was false or cleared by the next boot.
+- **Real hardware check on Liamtab (2026-09-14, read-only)**: `smartd` is
+  active and monitoring the NVMe drive (WD PC SN5000S), so `holtos-disk-alert`
+  can fire on a real machine (not triggered yet); `holtos-update-check.timer`
+  last ran at 04:44 UTC and wrote `up_to_date` (settings: every 6h,
+  `AUTO_INSTALL=apps`); `holtos-scrub.timer` is next due 2026-10-01;
+  `holtos-tray` is running; no failed system or user units.
 - **Virtual keyboard**: researched. Recommendation is to keep plasma-keyboard
   and add Vboard (AUR, uinput, modifier keys) as a tray keyboard in the next
   feature release, pending Liam's go-ahead.
@@ -468,8 +482,8 @@ Open after 0.0.6d:
   (`ConditionVirtualization=no`), so `holtos-disk-alert` needs real
   hardware; the disk-alert notice autostart, `/usr/lib/os-session-select`,
   `xdg-desktop-portal-kde` and `smartmontools` are all present.
-- **Design work pinned**: the ComfyUI machine is down (2026-09-13). No
-  design jobs are queued; route any that come up once it is back.
+- ~~Design work pinned~~ — **resolved**: ComfyUI on LiamPC is back; the
+  neon wallpapers were rendered on it (2026-09-13/14).
 - ~~Updater cannot reach GitHub~~ — **resolved 2026-09-12: Liam made the
   repo public.** Verified on the build 10 install: `holtos-update-check`
   reported v0.0.2-alpha (exit 0), `holtos-update-apply config` took a

@@ -40,20 +40,16 @@ If the drawer does not open in Game Mode, send these:
     journalctl --user -b -u z13gui --no-pager | tail -30
     cat "$XDG_RUNTIME_DIR/holtos-gamemode.log"
 
-## 3. The Den server
+## 3. The Den server (checked, working)
 
-The Den runs as a system service (`the-den.service`) that starts at boot and
-does not depend on Plasma or Game Mode, so it should answer in both. The
-update history on Liamtab shows `the-den v0.8.0a (FAILED to start)` at 21:15,
-which may have been a false failure.
+Checked on Liamtab on 2026-09-14 at about 02:50: `the-den` is active and
+enabled, listens on `127.0.0.1:8686` and answers `/health` with 200. The
+`the-den v0.8.0a (FAILED to start)` line in the update history at 21:15 UTC was a
+false failure or cleared itself by the next boot; that boot's journal is gone,
+so the cause can't be checked. The Den is a system service, so it should also
+answer in Game Mode. If it ever stops answering, send:
 
-In Game Mode or on the desktop, check:
-
-    systemctl is-active the-den; systemctl is-enabled the-den
-    grep -E "^WEB_(HOST|PORT)=" /etc/the-den/the-den.env
-    journalctl -u the-den -n 20 --no-pager
-
-Expect `active` and `enabled`. If it is not active, send the journal lines.
+    systemctl is-active the-den; journalctl -u the-den -n 20 --no-pager
 
 ## 4. Network Shares (fixed)
 
