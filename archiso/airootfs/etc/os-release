@@ -1,10 +1,10 @@
 NAME="HoltOS"
-PRETTY_NAME="HoltOS 0.0.7c-alpha"
+PRETTY_NAME="HoltOS 0.0.7d-alpha"
 ID=holtos
 ID_LIKE=arch
 BUILD_ID=rolling
-VERSION="0.0.7c-alpha"
-VERSION_ID="0.0.7c-alpha"
+VERSION="0.0.7d-alpha"
+VERSION_ID="0.0.7d-alpha"
 ANSI_COLOR="38;2;177;77;255"
 LOGO=holtos-logo
 HOME_URL="https://github.com/jamesyoungdahr-debug/HoltOS"

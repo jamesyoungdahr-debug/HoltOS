@@ -1,6 +1,6 @@
 HoltOS — running context file (plain text, kept current by the agent)
 =====================================================================
-Last updated: 2026-09-14 (v0.0.7c-alpha: Steam's Switch to Desktop needs /usr/bin/steamos-session-select, and the tray announces updates that installed on their own. v0.0.7b-alpha before it: HoltOS name in Steam, CJK fonts. The neon rebrand waits on branch neon-rebrand for the next major release)
+Last updated: 2026-09-14 (v0.0.7d-alpha: Steam's Switch to Desktop calls SteamOS Manager on D-Bus (com.steampowered.SteamOSManager1 SessionManagement1.SwitchToDesktopMode), not a script; HoltOS's holtos-steamos-manager stand-in starts with Game Mode and runs the switch. v0.0.7c-alpha: /usr/bin/steamos-session-select wrapper, and the tray announces updates that installed on their own. v0.0.7b-alpha before it: HoltOS name in Steam, CJK fonts. The neon rebrand waits on branch neon-rebrand for the next major release)
 Read this first when resuming. Newest state at the top of each section.
 
 WHAT HOLTOS IS

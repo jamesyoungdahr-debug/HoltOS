@@ -16,4 +16,11 @@ if [ -n "${GAMESCOPE_WAYLAND_DISPLAY:-}" ] && [ -n "${XDG_RUNTIME_DIR:-}" ]; the
     fi
 fi
 
+# Steam's Power > Switch to Desktop asks SteamOS Manager on the session bus;
+# HoltOS's stand-in answers it. Started here, inside the Game Mode session and
+# under gamescope, so the switch it runs is allowed and can find gamescope.
+if [ -x /usr/local/bin/holtos-steamos-manager ]; then
+    /usr/local/bin/holtos-steamos-manager </dev/null >/dev/null 2>&1 &
+fi
+
 exec steam -gamepadui -steamos3 -steampal -steamdeck
