@@ -10,6 +10,32 @@ LiamPC are for Liam to do in person.
 
 Do section 1 first; most of the rest depends on it.
 
+## Neon rebrand (next major release; test from the ISO first, then an update)
+
+- [ ] Fresh install from the rebrand ISO: the installer shows the new otter
+  logo; the boot splash shows the neon glow, the otter mark and the HoltOS
+  name; the login screen shows the full-body otter beside the glass card.
+- [ ] First login: a glass menu bar on top (otter launcher, app menus, tray,
+  clock) and a floating dock at the bottom with a magenta-to-blue neon rim.
+  Running apps have a magenta underline, the active app a soft purple glow.
+  Look at the dock's rounded ends up close: are there faint lines where they
+  meet the straight edges? (Seen only in the VM.)
+- [ ] Title bar buttons are small plain circles; dock icons are not crowded.
+- [ ] System Settings > Global Theme lists only HoltOS and HoltOS Classic.
+  Pick Classic: one bottom panel on plain glass. Switch back to HoltOS: the
+  menu bar and dock return. Log out and in: the choice sticks.
+- [ ] System Settings > Colours lists only HoltOS; Plasma Style lists
+  HoltOS Glass, HoltOS Glass Classic and the default fallback.
+- [ ] HoltOS Updates, HoltOS Apps, Gaming and Network Shares show the new
+  otter in their windows and notifications, never the old flat one.
+- [ ] Update an existing account (Z13) to the rebrand: at the next login the
+  menu bar and dock replace the old panel (old panels kept as
+  `~/.config/*.before-neon-layout`), and
+  `ls /usr/share/icons/hicolor/scalable/apps/holtos-logo.svg` reports no such
+  file.
+- [ ] Chinese, Japanese and Korean text shows in the menu bar's app menus
+  and the tray (not only in Steam).
+
 ## 0.0.7c-alpha: Switch to Desktop and update notices (Z13 first, then 4090)
 
 - [ ] Update to `v0.0.7c-alpha` (it may install on its own), then restart.
