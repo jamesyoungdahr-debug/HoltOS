@@ -72,6 +72,20 @@ if ! grep -q '^NoExtract = usr/share/wallpapers/' /etc/pacman.conf; then
 fi
 find /usr/share/wallpapers -mindepth 1 -maxdepth 1 ! -name 'HoltOS*' -exec rm -rf {} +
 
+# Only HoltOS themes (neon rebrand, Liam 2026-09-14): the same NoExtract rule
+# and removal as holtos-system-extras' trim_themes (keep the lists in sync).
+# Plasma's "default" style, SDDM's breeze and Plymouth's text and details stay
+# as fallbacks.
+if ! grep -q '^NoExtract = usr/share/Kvantum/Kv' /etc/pacman.conf; then
+    sed -i '/^\[options\]/a NoExtract = usr/share/Kvantum/Kv* usr/share/color-schemes/Kv* usr/share/color-schemes/Breeze* usr/share/plasma/desktoptheme/breeze-dark/* usr/share/plasma/desktoptheme/breeze-light/* usr/share/sddm/themes/elarun/* usr/share/sddm/themes/maldives/* usr/share/sddm/themes/maya/* usr/share/plymouth/themes/bgrt/* usr/share/plymouth/themes/fade-in/* usr/share/plymouth/themes/glow/* usr/share/plymouth/themes/script/* usr/share/plymouth/themes/solar/* usr/share/plymouth/themes/spinfinity/* usr/share/plymouth/themes/spinner/* usr/share/plymouth/themes/tribar/*' /etc/pacman.conf
+fi
+rm -rf /usr/share/Kvantum/Kv* /usr/share/color-schemes/Kv*.colors /usr/share/color-schemes/Breeze*.colors \
+       /usr/share/plasma/desktoptheme/breeze-dark /usr/share/plasma/desktoptheme/breeze-light \
+       /usr/share/sddm/themes/elarun /usr/share/sddm/themes/maldives /usr/share/sddm/themes/maya \
+       /usr/share/plymouth/themes/bgrt /usr/share/plymouth/themes/fade-in /usr/share/plymouth/themes/glow \
+       /usr/share/plymouth/themes/script /usr/share/plymouth/themes/solar /usr/share/plymouth/themes/spinfinity \
+       /usr/share/plymouth/themes/spinner /usr/share/plymouth/themes/tribar
+
 # Stage the NVIDIA driver packages on the ISO WITHOUT installing them:
 # homelab-detect-hardware.sh installs them into the target at install
 # time only if an NVIDIA GPU is present (no network needed then). The

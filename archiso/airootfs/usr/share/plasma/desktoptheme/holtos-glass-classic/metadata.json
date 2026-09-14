@@ -1,0 +1,18 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "HoltOS"
+            }
+        ],
+        "Category": "",
+        "Description": "Plain glass panel for HoltOS Classic",
+        "EnabledByDefault": true,
+        "Id": "holtos-glass-classic",
+        "License": "GPL-3.0-or-later",
+        "Name": "HoltOS Glass Classic",
+        "Version": "1.0",
+        "Website": "https://github.com/jamesyoungdahr-debug/holtos"
+    },
+    "X-Plasma-API": "5.0"
+}

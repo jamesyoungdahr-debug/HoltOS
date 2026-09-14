@@ -13,8 +13,9 @@ fixed=JetBrains Mono,10,-1,5,400,0,0,0,0,0
 [kdeglobals][Icons]
 Theme=breeze-dark
 
+# HoltOS Classic: the plain glass Plasma style, without the dock's neon rim.
 [plasmarc][Theme]
-name=holtos-glass
+name=holtos-glass-classic
 
 [Wallpaper]
 Image=HoltOS-Neon-OtterNight
@@ -26,10 +27,8 @@ cursorTheme=breeze_cursors
 library=org.holtos.glass
 theme=HoltOS Glass
 
-# HoltOS Glass: the panel, Kickoff and other Plasma popups become glass
-# (translucent over the pool-rings wallpaper) only if KWin's Blur and
-# Background Contrast effects are on — with them off, "translucent" is
-# just see-through, which is worse than opaque.
+# The panel and Plasma popups are glass only with KWin's Blur and Background
+# Contrast effects on.
 [kwinrc][Plugins]
 blurEnabled=true
 contrastEnabled=true

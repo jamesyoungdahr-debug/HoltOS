@@ -19,8 +19,9 @@ set -u
 
 # Bump the number when a release adds a step, so accounts that already ran an
 # older version run again (2: glyph-free buttons; 3: clearer glass, title bar
-# opacity 12 to match the 15 % window tint; 4: neon rebrand menu bar and dock).
-STAMP="${XDG_STATE_HOME:-$HOME/.local/state}/holtos/glass-user-update-4"
+# opacity 12 to match the 15 % window tint; 4: neon rebrand menu bar and dock;
+# 5: holtos-glass Plasma style, off removed stock themes).
+STAMP="${XDG_STATE_HOME:-$HOME/.local/state}/holtos/glass-user-update-5"
 [ -e "$STAMP" ] && exit 0
 [ -e /run/archiso ] && exit 0
 
@@ -71,9 +72,44 @@ if [ "$(kreadconfig6 --file "$CFG/kdeglobals" --group WM --key activeFont)" = "N
     kwriteconfig6 --file "$CFG/kdeglobals" --group WM --key activeFont "Nunito,10,-1,5,400,0,0,0,0,0"
 fi
 
+# Only HoltOS themes ship now (Liam, 2026-09-14): move an account off the
+# removed Breeze, Klassy and Kvantum themes. HoltOS Classic and its
+# holtos-glass-classic style are left alone.
+# Applying a global theme writes its choices to ~/.config/kdedefaults and
+# clears the per-user keys, so check both places. An empty value falls back
+# to /etc/xdg (holtos-glass), which also keeps a HoltOS Classic choice intact.
+for dir in "$CFG" "$CFG/kdedefaults"; do
+    case "$(kreadconfig6 --file "$dir/plasmarc" --group Theme --key name)" in
+        default|breeze-dark|breeze-light|klassy*)
+            kwriteconfig6 --file "$dir/plasmarc" --group Theme --key name holtos-glass ;;
+    esac
+    case "$(kreadconfig6 --file "$dir/kdeglobals" --group KDE --key LookAndFeelPackage)" in
+        org.kde.breeze*|org.kde.klassy*)
+            kwriteconfig6 --file "$dir/kdeglobals" --group KDE --key LookAndFeelPackage org.holtos.desktop ;;
+    esac
+    case "$(kreadconfig6 --file "$dir/kdeglobals" --group General --key ColorScheme)" in
+        Breeze*|Klassy*|Kv*|OpalFruits*)
+            kwriteconfig6 --file "$dir/kdeglobals" --group General --key ColorScheme HoltOS ;;
+    esac
+done
+if grep -q -E '^org\.kde\.(breeze|klassy)' "$CFG/kdedefaults/package" 2>/dev/null; then
+    echo org.holtos.desktop > "$CFG/kdedefaults/package"
+fi
+case "$(kreadconfig6 --file "$CFG/kdeglobals" --group Icons --key Theme)" in
+    klassy*)
+        kwriteconfig6 --file "$CFG/kdeglobals" --group Icons --key Theme --delete ;;
+esac
+case "$(kreadconfig6 --file "$CFG/Kvantum/kvantum.kvconfig" --group General --key theme)" in
+    Kv*)
+        kwriteconfig6 --file "$CFG/Kvantum/kvantum.kvconfig" --group General --key theme HoltOSGlass ;;
+esac
+
 if [ "$(kreadconfig6 --file "$CFG/kdeglobals" --group General --key ColorScheme)" = HoltOS ]; then
-    plasma-apply-colorscheme BreezeDark >/dev/null 2>&1
-    plasma-apply-colorscheme HoltOS >/dev/null 2>&1
+    # plasma-apply-colorscheme refuses the scheme that is already set, so clear
+    # the name first (Breeze Dark, the old swap target, is no longer shipped).
+    kwriteconfig6 --file "$CFG/kdeglobals" --group General --key ColorScheme ""
+    plasma-apply-colorscheme HoltOS >/dev/null 2>&1 ||
+        kwriteconfig6 --file "$CFG/kdeglobals" --group General --key ColorScheme HoltOS
 fi
 
 # Neon rebrand desktop layout: glass menu bar on top, floating dock below. It

@@ -55,4 +55,10 @@ build() {
 
 package() {
     DESTDIR="${pkgdir}" cmake --install build
+    # HoltOS ships only its own global themes (Liam, 2026-09-14): drop Breeze,
+    # Breeze Dark and Breeze Twilight. HoltOS and HoltOS Classic live in the
+    # image under /usr/share/plasma/look-and-feel.
+    rm -rf "${pkgdir}"/usr/share/plasma/look-and-feel/org.kde.breeze.desktop \
+           "${pkgdir}"/usr/share/plasma/look-and-feel/org.kde.breezedark.desktop \
+           "${pkgdir}"/usr/share/plasma/look-and-feel/org.kde.breezetwilight.desktop
 }

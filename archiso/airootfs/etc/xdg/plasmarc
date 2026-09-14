@@ -1,4 +1,5 @@
-# System-wide default Plasma desktop theme for HoltOS: our own compiled
-# theme (holtos-window-decoration package), not stock Breeze/Breeze Dark.
+# System-wide default Plasma style for HoltOS: holtos-glass, the glass menu
+# bar and the neon-rim dock (neon rebrand, Liam 2026-09-14). The HoltOS Classic
+# global theme uses holtos-glass-classic instead.
 [Theme]
-name=klassy-dark
+name=holtos-glass

@@ -1,0 +1,18 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "HoltOS"
+            }
+        ],
+        "Category": "",
+        "Description": "Glass menu bar and neon-rim dock for HoltOS",
+        "EnabledByDefault": true,
+        "Id": "holtos-glass",
+        "License": "GPL-3.0-or-later",
+        "Name": "HoltOS Glass",
+        "Version": "1.0",
+        "Website": "https://github.com/jamesyoungdahr-debug/holtos"
+    },
+    "X-Plasma-API": "5.0"
+}

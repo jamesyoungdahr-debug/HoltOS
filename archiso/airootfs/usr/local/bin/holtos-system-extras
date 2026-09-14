@@ -71,6 +71,26 @@ trim_wallpapers() {
     find /usr/share/wallpapers -mindepth 1 -maxdepth 1 ! -name 'HoltOS*' -exec rm -rf {} + 2>/dev/null || true
 }
 
+# Only HoltOS themes (neon rebrand, Liam 2026-09-14): pacman never unpacks the
+# stock Kvantum themes, Breeze and Kvantum colour schemes, Breeze Dark/Light
+# Plasma styles, or the stock SDDM and Plymouth themes, and copies already on
+# the system are removed. Kept on purpose: Plasma's "default" style (the
+# fallback for anything a theme does not draw), SDDM's breeze and Plymouth's
+# text and details themes (fallbacks if the HoltOS ones fail), Breeze icons and
+# cursors. Keep this list in sync with archiso/airootfs/root/customize_airootfs.sh.
+THEME_NOEXTRACT='usr/share/Kvantum/Kv* usr/share/color-schemes/Kv* usr/share/color-schemes/Breeze* usr/share/plasma/desktoptheme/breeze-dark/* usr/share/plasma/desktoptheme/breeze-light/* usr/share/sddm/themes/elarun/* usr/share/sddm/themes/maldives/* usr/share/sddm/themes/maya/* usr/share/plymouth/themes/bgrt/* usr/share/plymouth/themes/fade-in/* usr/share/plymouth/themes/glow/* usr/share/plymouth/themes/script/* usr/share/plymouth/themes/solar/* usr/share/plymouth/themes/spinfinity/* usr/share/plymouth/themes/spinner/* usr/share/plymouth/themes/tribar/*'
+trim_themes() {
+    if ! grep -q '^NoExtract = usr/share/Kvantum/Kv' /etc/pacman.conf; then
+        sed -i "/^\[options\]/a NoExtract = ${THEME_NOEXTRACT}" /etc/pacman.conf
+    fi
+    rm -rf /usr/share/Kvantum/Kv* /usr/share/color-schemes/Kv*.colors /usr/share/color-schemes/Breeze*.colors \
+           /usr/share/plasma/desktoptheme/breeze-dark /usr/share/plasma/desktoptheme/breeze-light \
+           /usr/share/sddm/themes/elarun /usr/share/sddm/themes/maldives /usr/share/sddm/themes/maya \
+           /usr/share/plymouth/themes/bgrt /usr/share/plymouth/themes/fade-in /usr/share/plymouth/themes/glow \
+           /usr/share/plymouth/themes/script /usr/share/plymouth/themes/solar /usr/share/plymouth/themes/spinfinity \
+           /usr/share/plymouth/themes/spinner /usr/share/plymouth/themes/tribar 2>/dev/null || true
+}
+
 case "${1:-}" in
 check)
     missing="$(missing_required; missing_z13)"
@@ -84,6 +104,7 @@ apply)
         exit 1
     fi
     trim_wallpapers
+    trim_themes
     required="$(missing_required)"
     z13="$(missing_z13)"
     if [ -z "$required" ] && [ -z "$z13" ]; then

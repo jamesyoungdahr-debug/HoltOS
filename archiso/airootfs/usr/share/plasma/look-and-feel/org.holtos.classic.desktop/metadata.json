@@ -1,0 +1,8 @@
+{
+    "KPackageStructure": "Plasma/LookAndFeel",
+    "KPlugin": {
+        "Id": "org.holtos.classic.desktop",
+        "Name": "HoltOS Classic",
+        "Description": "The HoltOS glass look with a single panel along the bottom instead of the menu bar and dock"
+    }
+}

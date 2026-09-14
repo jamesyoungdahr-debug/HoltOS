@@ -47,4 +47,11 @@ build() {
 package() {
     DESTDIR="${pkgdir}" cmake --install build
     install -Dm644 "${pkgname}/LICENSES/MIT.txt" "${pkgdir}/usr/share/licenses/${pkgname}/MIT.txt"
+    # HoltOS ships only its own themes (Liam, 2026-09-14): drop Klassy's global
+    # themes, Plasma styles, colour schemes and icon themes. The window
+    # decoration and its settings module stay.
+    rm -rf "${pkgdir}"/usr/share/plasma/look-and-feel/org.kde.klassy*
+    rm -rf "${pkgdir}"/usr/share/plasma/desktoptheme/klassy*
+    rm -f "${pkgdir}"/usr/share/color-schemes/Klassy*.colors "${pkgdir}"/usr/share/color-schemes/OpalFruits*.colors
+    rm -rf "${pkgdir}"/usr/share/icons/klassy "${pkgdir}"/usr/share/icons/klassy-dark
 }

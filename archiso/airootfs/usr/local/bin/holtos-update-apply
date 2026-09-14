@@ -239,6 +239,7 @@ update_config() {
         etc/xdg/kcm-about-distrorc
         etc/xdg/ksplashrc
         etc/xdg/dolphinrc
+        etc/xdg/plasmarc
         etc/os-release
         'etc/pacman.d/hooks/*homelab*.hook'
         etc/sddm.conf.d/holtos.conf
@@ -251,6 +252,7 @@ update_config() {
         usr/share/icons/hicolor/
         usr/share/konsole/
         usr/share/plasma/look-and-feel/
+        'usr/share/plasma/desktoptheme/holtos-*/'
         usr/share/plymouth/themes/
         usr/share/sddm/themes/
         'usr/share/wallpapers/HoltOS*/'
