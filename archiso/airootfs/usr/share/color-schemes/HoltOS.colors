@@ -2,9 +2,13 @@
 # the brand tokens only (design/docs/brand-cheat-sheet.md in the-den repo):
 #   deep #0D0B12 (window ground) · surface #171423 (views, header) ·
 #   raised #1D1927 (buttons, tooltips) · ink #FFFFFF · ink-42 for inactive ·
-#   current #B14DFF (selection, focus, links) · current-deep #8F2FE0 ·
+#   current #B14DFF (selection, focus, links) · current-hover #C77DFF (hover) ·
+#   current-deep #8F2FE0 ·
 #   healthy #28E0C8 (positive ONLY) · warning #FFB84D (neutral AND negative:
 #   "needs a human", never a second accent).
+# Neon rebrand (2026-09-14): pulse #4F7BFF, flare #FF4FD8 and volt #C6FF3D
+# are art and glow colours (the dock rim, wallpapers), never states, so they
+# do not appear in this scheme.
 # Structure follows BreezeDark.colors; only the values differ.
 
 [ColorEffects:Disabled]
@@ -31,7 +35,7 @@ IntensityEffect=0
 BackgroundAlternate=35,30,50
 BackgroundNormal=29,25,39
 DecorationFocus=177,77,255
-DecorationHover=177,77,255
+DecorationHover=199,125,255
 ForegroundActive=177,77,255
 ForegroundInactive=107,107,107
 ForegroundLink=177,77,255
@@ -45,7 +49,7 @@ ForegroundVisited=143,47,224
 BackgroundAlternate=23,20,35
 BackgroundNormal=13,11,18
 DecorationFocus=177,77,255
-DecorationHover=177,77,255
+DecorationHover=199,125,255
 ForegroundActive=177,77,255
 ForegroundInactive=107,107,107
 ForegroundLink=177,77,255
@@ -59,7 +63,7 @@ ForegroundVisited=143,47,224
 BackgroundAlternate=29,25,39
 BackgroundNormal=23,20,35
 DecorationFocus=177,77,255
-DecorationHover=177,77,255
+DecorationHover=199,125,255
 ForegroundActive=177,77,255
 ForegroundInactive=107,107,107
 ForegroundLink=177,77,255
@@ -73,7 +77,7 @@ ForegroundVisited=143,47,224
 BackgroundAlternate=23,20,35
 BackgroundNormal=23,20,35
 DecorationFocus=177,77,255
-DecorationHover=177,77,255
+DecorationHover=199,125,255
 ForegroundActive=177,77,255
 ForegroundInactive=107,107,107
 ForegroundLink=177,77,255
@@ -87,7 +91,7 @@ ForegroundVisited=143,47,224
 BackgroundAlternate=143,47,224
 BackgroundNormal=177,77,255
 DecorationFocus=177,77,255
-DecorationHover=177,77,255
+DecorationHover=199,125,255
 ForegroundActive=13,11,18
 ForegroundInactive=13,11,18
 ForegroundLink=13,11,18
@@ -101,7 +105,7 @@ ForegroundVisited=13,11,18
 BackgroundAlternate=35,30,50
 BackgroundNormal=29,25,39
 DecorationFocus=177,77,255
-DecorationHover=177,77,255
+DecorationHover=199,125,255
 ForegroundActive=177,77,255
 ForegroundInactive=107,107,107
 ForegroundLink=177,77,255
@@ -115,7 +119,7 @@ ForegroundVisited=143,47,224
 BackgroundAlternate=29,25,39
 BackgroundNormal=23,20,35
 DecorationFocus=177,77,255
-DecorationHover=177,77,255
+DecorationHover=199,125,255
 ForegroundActive=177,77,255
 ForegroundInactive=107,107,107
 ForegroundLink=177,77,255
@@ -129,7 +133,7 @@ ForegroundVisited=143,47,224
 BackgroundAlternate=23,20,35
 BackgroundNormal=13,11,18
 DecorationFocus=177,77,255
-DecorationHover=177,77,255
+DecorationHover=199,125,255
 ForegroundActive=177,77,255
 ForegroundInactive=107,107,107
 ForegroundLink=177,77,255
