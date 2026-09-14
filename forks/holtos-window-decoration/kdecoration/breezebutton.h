@@ -37,6 +37,15 @@ public:
     //* render
     void paint(QPainter *painter, const QRectF &repaintRegion) override;
 
+    //* HoltOS: colour of the glow painted around the button while it is hovered
+    QColor hoverGlowColor() const
+    {
+        return m_hoverGlowColor;
+    }
+
+    //* HoltOS: hover glow strength from 0 to 1, following the hover animation
+    qreal hoverGlowStrength() const;
+
     //* standalone buttons
     bool isStandAlone() const
     {
@@ -278,6 +287,9 @@ private:
 
     //* active state change opacity
     qreal m_opacity = 0;
+
+    //* HoltOS: hover colour kept for the glow, so it keeps its colour while fading out
+    QColor m_hoverGlowColor;
 
     DecorationButtonPalette *m_buttonPalette = nullptr;
     bool m_renderSystemIcon;

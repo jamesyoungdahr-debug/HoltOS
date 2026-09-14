@@ -230,6 +230,8 @@ private:
     void calculateWindowShape();
     void calculateTitleBarShape();
     void paintTitleBar(QPainter *painter, const QRectF &repaintRegion);
+    //* HoltOS: soft glow in the hovered button's colour, spreading onto the glass title bar
+    void paintButtonHoverGlow(QPainter *painter);
     void updateShadow(const bool forceUpdateCache = false, bool noCache = false);
     std::shared_ptr<KDecoration3::DecorationShadow> createShadowObject(QColor shadowColor);
     void updateWindowOutline(bool override = false);
