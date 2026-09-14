@@ -44,7 +44,7 @@ if [ "$AUR_PKGS" != "none" ]; then
         echo "=== Building ${pkg} (AUR) ==="
         rm -rf "/tmp/build-${pkg}"
         su - builder -c "git clone https://aur.archlinux.org/${pkg}.git /tmp/build-${pkg}"
-        su - builder -c "cd /tmp/build-${pkg} && makepkg -s --noconfirm --needed"
+        su - builder -c "cd /tmp/build-${pkg} && MAKEFLAGS='-j$(nproc)' CMAKE_BUILD_PARALLEL_LEVEL='$(nproc)' makepkg -s --noconfirm --needed"
         cp /tmp/build-"${pkg}"/*.pkg.tar.zst /tmp/pkgout/
         # Record it as installed immediately (not just copy to pkgout):
         # repo-add only runs once at the very end of this script, so without
@@ -79,7 +79,10 @@ if [ -d /pkgbuilds ]; then
                 tar -cf "/tmp/build-${pkg}/${pkg}.tar" -C /forks "${pkg}"
             fi
             chown -R builder:builder "/tmp/build-${pkg}"
-            su - builder -c "cd /tmp/build-${pkg} && HOLTOS_REV='${HOLTOS_REV:-0}' makepkg -s --noconfirm --needed"
+            # `su -` resets the environment and makepkg.conf sets no MAKEFLAGS,
+            # so builds ran one compiler at a time (holtos-kwin took over
+            # 40 minutes on 24 threads, 2026-09-14): build with every core.
+            su - builder -c "cd /tmp/build-${pkg} && HOLTOS_REV='${HOLTOS_REV:-0}' MAKEFLAGS='-j$(nproc)' CMAKE_BUILD_PARALLEL_LEVEL='$(nproc)' makepkg -s --noconfirm --needed"
             # An older build of the same package would otherwise sit next to
             # the new one and repo-add would keep whichever sorts last.
             rm -f /tmp/pkgout/"${pkg}"-*.pkg.tar.zst
