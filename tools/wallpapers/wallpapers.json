@@ -1,0 +1,108 @@
+{
+  "comfy_url": "http://127.0.0.1:8188",
+  "workflow": "zit.json",
+  "style": "Near-black deep ink background, glowing neon light in electric purple and teal, soft bloom and atmospheric haze, colour glow reaching every corner of the frame, minimal clean composition, calm uncluttered upper-left area, no text, no letters, no logos, no watermark, 16:9 desktop wallpaper, cinematic, high detail",
+  "render": {"width": 1920, "height": 1088},
+  "wallpapers": [
+    {
+      "id": "rings",
+      "name": "Rings",
+      "status": "approved",
+      "prompt": "Two interlocking circular neon tube rings glowing electric purple and teal, placed right of centre, reflected on a glossy dark floor, a soft purple haze filling the upper half of the room and teal light spilling into the left side, glow in every corner.",
+      "use_style": true,
+      "seeds": [1012],
+      "chosen": {"seed": 1012, "width": 1920, "height": 1088},
+      "denoise": 0.7
+    },
+    {
+      "id": "otter",
+      "name": "Otter",
+      "status": "approved",
+      "prompt": "A minimal neon sign of a cute friendly otter outline made of one continuous glowing purple neon tube, a small teal neon dot for the nose, simple whisker lines, mounted in the lower right of a dark wall. Purple light washes across the whole wall and a soft teal glow fills the upper left corner. Clean shapes only, no lettering or squiggles.",
+      "use_style": true,
+      "seeds": [1011],
+      "chosen": {"seed": 1011, "width": 2560, "height": 1440},
+      "denoise": 0.7
+    },
+    {
+      "id": "aurora",
+      "name": "Aurora",
+      "status": "approved",
+      "prompt": "Night sky with soft flowing aurora curtains of teal and purple light over a dark mountain lake, the aurora reflected in the water.",
+      "use_style": true,
+      "seeds": [1006],
+      "chosen": {"seed": 1006, "width": 2560, "height": 1440},
+      "denoise": 0.3
+    },
+    {
+      "id": "den",
+      "name": "Den",
+      "status": "approved",
+      "prompt": "Cosy dark living room corner at night lit by a small round purple neon ring light on the wall and a teal LED strip behind a sofa, glow washing the walls, a game controller on a low table, moody.",
+      "use_style": true,
+      "seeds": [1007],
+      "chosen": {"seed": 1007, "width": 1920, "height": 1088},
+      "denoise": 0.4
+    },
+    {
+      "id": "bokeh",
+      "name": "Bokeh",
+      "status": "approved",
+      "prompt": "Abstract out-of-focus bokeh, large soft glowing circles of purple, teal and a few amber lights on a dark background.",
+      "use_style": true,
+      "seeds": [1008],
+      "chosen": {"seed": 1008, "width": 1920, "height": 1088},
+      "denoise": 0.6
+    },
+    {
+      "id": "otter-night",
+      "name": "Otter Night",
+      "status": "approved",
+      "prompt": "A small cute otter floating on its back on a calm river at night in the lower right of the frame, the whole scene lit by glowing neon: purple neon lights along the far riverbank reflected in long streaks across the water, a teal glow in the sky and misty haze filling the upper half, colour reaching every corner. Near-black deep ink shadows, soft bloom, minimal clean composition, no text, no letters, no logos, no watermark, 16:9 desktop wallpaper, cinematic, high detail",
+      "use_style": false,
+      "seeds": [2010],
+      "chosen": {"seed": 2010, "width": 1920, "height": 1088},
+      "denoise": 0.3
+    },
+    {
+      "id": "rain",
+      "name": "Rain",
+      "status": "approved",
+      "prompt": "A quiet city street at night in the rain seen at street level, wet asphalt mirroring purple and teal neon glow from shopfronts out of focus in the distance, soft rain streaks, the glow reaching every corner, blank unreadable signs.",
+      "use_style": true,
+      "seeds": [3111, 3112, 3113],
+      "chosen": {"seed": 3113, "width": 1920, "height": 1088},
+      "denoise": 0.4
+    },
+    {
+      "id": "forest",
+      "name": "Forest",
+      "status": "approved",
+      "prompt": "A misty forest at night lit by bioluminescent glow, purple light rising between tall dark trees, teal glowing moss and mushrooms along the ground in the lower right, soft volumetric haze filling the whole frame.",
+      "use_style": true,
+      "seeds": [3121, 3122, 3123],
+      "chosen": {"seed": 3123, "width": 1920, "height": 1088},
+      "denoise": 0.4
+    },
+    {
+      "id": "nebula",
+      "name": "Nebula",
+      "status": "approved",
+      "prompt": "A soft glowing nebula in deep space, luminous translucent clouds of electric purple and teal gas glowing like neon light, smooth airy wisps and gentle gradients, a faint warm amber glow in the lower right, a few tiny bright stars, bright and dreamy, calm and wide.",
+      "use_style": true,
+      "seeds": [3134, 3135, 3136],
+      "chosen": {"seed": 3136, "width": 1920, "height": 1088},
+      "denoise": 0.5
+    },
+    {
+      "id": "cabin",
+      "name": "Cabin",
+      "status": "approved",
+      "prompt": "A small wooden cabin on a lake shore at night in the lower right, its windows glowing warm purple, a teal glow in the misty sky over dark pine hills, the lake reflecting both colours, cosy and calm.",
+      "use_style": true,
+      "seeds": [3141, 3142, 3143],
+      "chosen": {"seed": 3141, "width": 1920, "height": 1088},
+      "denoise": 0.4
+    }
+  ]
+}

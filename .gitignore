@@ -6,6 +6,12 @@ local-repo/
 .publish-stage/
 __pycache__/
 
+# Wallpaper pipeline scratch (tools/wallpapers): raw ComfyUI renders, QA
+# output and the Real-ESRGAN weights — regenerable and large
+tools/wallpapers/renders/
+tools/wallpapers/qa/
+tools/wallpapers/models/
+
 # Local copy of upstream Arch releng's archiso profile, kept only for diffing
 # against during development — not part of the build (mkarchiso is pointed at
 # archiso/ directly) and contains real Unix symlinks Windows git can't index.

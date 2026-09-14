@@ -47,3 +47,24 @@ can be the default. Each ships as its own wallpaper package.
   2560x1440. Ships as `usr/share/wallpapers/HoltOS-Neon*/contents/images/`.
 - Review: set each on the VM and screenshot Dolphin and the panel over it to
   confirm the colour reads through the glass.
+
+## Liam's review (2026-09-13)
+Kept: 1 Rings, 2 Otter, 6 Aurora, 7 Den, 8 Bokeh, 10 Otter Night.
+Dropped: 3 Flow, 4 Pool, 5 Horizon, 9 Circuit. The keepers are atmospheric
+scenes; the dropped ones are abstract shapes, so replacements are scenes.
+
+Replacement concepts (three seeds each, pick one per concept):
+11. Neon Rain: a city street at night in the rain, wet asphalt mirroring
+    purple and teal shopfront glow, blank unreadable signs.
+12. Neon Forest: a misty night forest with purple bioluminescent light
+    between the trees and teal glowing moss low right.
+13. Neon Nebula: soft purple and teal gas clouds with a faint amber core
+    low right and scattered stars.
+14. Neon Cabin: a lakeside cabin low right with purple-lit windows under a
+    teal misty sky, the lake reflecting both.
+
+Pipeline notes from this round: Z-Image-Turbo ignores negative wording
+("no noise" produced an all-black image); 2560x1440 renders hold together
+but shift composition, so render at 1920 and pick per design; grain is
+removed after rendering with Real-ESRGAN general-x4v3 at a per-wallpaper
+denoise strength.
