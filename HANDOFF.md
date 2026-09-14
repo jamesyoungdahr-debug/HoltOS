@@ -1,4 +1,4 @@
-# HoltOS Session Handoff — updated 2026-09-13
+# HoltOS Session Handoff — updated 2026-09-14
 
 What shipped, what broke, what got fixed, and what's still open — for
 whoever picks this branch up next. Treat nothing here as already-shared
@@ -383,10 +383,33 @@ marks a big-fix release. All tagged and pushed; packages published to the
   z13gui.service inside gamescope; the session stops z13gui on exit. Not yet
   tested; steps in `LIAM-HANDOFF.md`.
 
+## Neon wallpapers for 0.0.7 (2026-09-13/14, on master, not pushed)
+
+- Commits 17d9a96 (brief), 6c13f7f (only HoltOS wallpapers), a685407 (ten
+  wallpapers + packaging), 88fbf36 (pipeline tools), 2baad26 (default).
+- **Ten wallpapers** in `usr/share/wallpapers/HoltOS-Neon-*`, rendered with
+  Z-Image-Turbo on LiamPC's ComfyUI, denoised/upscaled with Real-ESRGAN
+  general-x4v3, JPEG q95 at three sizes. Liam's picks; brief and review in
+  `docs/design-briefs/wallpaper-neon.md`.
+- **Default: Neon Otter Night** (Liam, 2026-09-14): look-and-feel defaults,
+  skel kscreenlockerrc, both SDDM themes (HoltOS theme's otter overlay off,
+  the wallpaper has its own otter) and Limine (`wallpaper.jpg`; Limine reads
+  JPEG). Existing installs keep their current desktop wallpaper; the updater's
+  Limine re-theme picks up the new boot menu wallpaper.
+- **Only HoltOS wallpapers**: `NoExtract = usr/share/wallpapers/*
+  !usr/share/wallpapers/HoltOS*` in pacman.conf, `trim_wallpapers` in
+  holtos-system-extras, updater copies `usr/share/wallpapers/HoltOS*/`.
+- **Verified on the live VM** (ISO with these changes, before the default
+  switch): only HoltOS wallpapers, 10 neon sets with correct IDs, NoExtract
+  present, a real reinstall of plasma-workspace-wallpapers and breeze left no
+  stock wallpapers, SDDM and lock screen images exist, Aurora set as desktop
+  wallpaper. Not yet tested: the Otter Night default on a fresh install
+  (desktop, lock, login, Limine).
+- Release as 0.0.7 only when Liam says.
+
 Open after 0.0.6d:
-- **Network Shares still will not mount or connect** (Liam, `plex` share).
-  Waiting on `holtos-share test smb SERVER plex [USER]` output; commands in
-  `LIAM-HANDOFF.md`.
+- **Network Shares: fixed** (2026-09-14). The problem was on Liam's NAS, not
+  HoltOS; no code change.
 - **The Den on Liamtab**: history shows `the-den v0.8.0a (FAILED to start)`;
   status unchecked.
 - **Virtual keyboard**: researched. Recommendation is to keep plasma-keyboard

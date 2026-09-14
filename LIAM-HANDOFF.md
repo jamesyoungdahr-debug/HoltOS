@@ -55,28 +55,21 @@ In Game Mode or on the desktop, check:
 
 Expect `active` and `enabled`. If it is not active, send the journal lines.
 
-## 4. Network Shares still will not mount (open)
+## 4. Network Shares (fixed)
 
-Reported after 0.0.6d: the `plex` share will not connect or mount. The image
-already ships `cifs-utils` and `nfs-utils`, so the next step is the test
-output. Replace `YOUR-SERVER` with the server's IP address or name.
-
-Check the mount tools are installed:
-
-    pacman -Q cifs-utils nfs-utils smbclient; ls /usr/bin/mount.cifs
-
-Share with no login:
+The `plex` share works now (2026-09-14). The problem was on the NAS, so
+HoltOS needed no change. If a share fails again, the diagnostic still works:
 
     sudo /usr/local/bin/holtos-share test smb YOUR-SERVER plex 2>&1 | tail -15
 
-Share with a username and password (the test reads the password from input):
+## 4a. Next release (0.0.7): neon wallpapers
 
-    sudo -v
-    read -rsp 'Share password: ' P; echo
-    printf '%s' "$P" | sudo /usr/local/bin/holtos-share test smb YOUR-SERVER plex YOUR-USERNAME 2>&1 | tail -15; unset P
-
-The test tries SMB 3.1.1, 3.0, 2.1, 2.0 and 1.0 in turn and prints
-`==> OK over SMB ...` or the error for each. Send the whole output.
+Built, not released yet. After it ships and you update:
+- Settings > Wallpaper lists only HoltOS wallpapers, including the ten neon ones.
+- A fresh install uses **Neon Otter Night** on the desktop, lock screen, login
+  screen and boot menu. An existing install keeps its current desktop
+  wallpaper (pick Otter Night in Settings); the boot menu switches after the
+  update.
 
 ## 5. Virtual keyboard research (decision needed)
 

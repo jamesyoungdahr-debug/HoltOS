@@ -1,6 +1,6 @@
 HoltOS — running context file (plain text, kept current by the agent)
 =====================================================================
-Last updated: 2026-09-13 (night; releases 0.0.5a-0.0.6d, shares diagnosis and keyboard research open)
+Last updated: 2026-09-14 (neon wallpapers + Otter Night default on master for 0.0.7, unpushed; shares fixed)
 Read this first when resuming. Newest state at the top of each section.
 
 WHAT HOLTOS IS
@@ -17,9 +17,12 @@ CURRENT STATE (2026-09-13, night)
   0.0.5a through 0.0.6d are summarised in HANDOFF.md ("Releases 0.0.5-alpha
   to 0.0.6d-alpha"); Liam's test steps are in LIAM-HANDOFF.md. Numbering: the
   number goes up for big features, a letter marks a big-fix release.
-  OPEN: Network Shares still will not mount (waiting on Liam's
-  `holtos-share test smb SERVER plex` output); The Den status on Liamtab;
-  0.0.6d Z13-in-Game-Mode untested; virtual keyboard decision (keep
+  NEXT RELEASE 0.0.7 (on master, not pushed): ten neon wallpapers, Neon
+  Otter Night as the default (desktop, lock, SDDM, Limine), only HoltOS
+  wallpapers installed; see HANDOFF.md "Neon wallpapers for 0.0.7". Release
+  only when Liam says. Otter Night default not yet tested on a fresh install.
+  FIXED: Network Shares (the problem was Liam's NAS). OPEN: The Den status on
+  Liamtab; 0.0.6d Z13-in-Game-Mode untested; virtual keyboard decision (keep
   plasma-keyboard, add Vboard as a tray keyboard) waiting on Liam.
 - NOW ON MASTER, PUSHED (2026-09-13, afternoon): Milestone 2 fix (build 23
   verified), the Windows-style updater (verified on the build 24 live VM),

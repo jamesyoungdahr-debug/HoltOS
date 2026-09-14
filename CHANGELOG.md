@@ -5,6 +5,17 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+- **Ten neon HoltOS wallpapers** (Rings, Otter, Aurora, Den, Bokeh, Otter
+  Night, Rain, Forest, Nebula, Cabin), each at 1920x1080, 2560x1440 and
+  3840x2160, made to show off the Glass blur.
+- **Neon Otter Night is the default wallpaper** on the desktop, lock screen,
+  login screen and boot menu.
+- **Only HoltOS wallpapers are installed.** pacman no longer unpacks other
+  packages' wallpapers (KDE's extra set, Breeze's "Next"), existing copies are
+  removed, and the updater copies every HoltOS wallpaper set.
+- Wallpaper pipeline tools in `tools/wallpapers/` (render, QA, glass preview,
+  packaging) for making more.
+
 ## [0.0.6d-alpha] - 2026-09-13
 
 - **ROG Flow Z13 controls work in Game Mode.** z13ctl and z13gui are started
