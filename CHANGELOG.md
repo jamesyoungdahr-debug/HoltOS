@@ -18,6 +18,14 @@ Neon rebrand (next major release):
   next login; their old panels are kept as `*.before-neon-layout`.
 - GTK apps show their menus in the top bar (`appmenu-gtk-module`).
 - **Smaller title bar buttons and dock icons** for a less cluttered look.
+- **New boot, login, splash and installer art** from the new otter logo: a
+  full-body otter on the login screen, a neon glow behind the login and boot
+  screens, and the otter with the HoltOS name on the boot splash, login card
+  and Plasma splash. Generated on ComfyUI and prepared by
+  `tools/brand/derive_splash_art.py`.
+- **Fixed: Steam's system info in Game Mode called the OS "Arch Linux".**
+  Arch's `/usr/lib/os-release` and `/etc/lsb-release` now carry the HoltOS
+  name and version as well, on new installs and through the updater.
 - **Fixed: Chinese, Japanese and Korean text showed as empty boxes**, for
   example in Steam's language list in Game Mode. HoltOS now installs the Noto
   CJK fonts, and the updater adds them to existing systems.

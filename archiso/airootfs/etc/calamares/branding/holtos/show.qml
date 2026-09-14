@@ -32,7 +32,7 @@ Presentation {
     Slide {
         Image {
             id: logo1
-            source: "logo-icon.svg"
+            source: "logo-icon.png"
             width: 160; height: 160
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter

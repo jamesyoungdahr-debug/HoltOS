@@ -20,10 +20,11 @@ strings:
     knownIssuesUrl:       https://github.com/jamesyoungdahr-debug/HoltOS/issues
     releaseNotesUrl:      https://github.com/jamesyoungdahr-debug/HoltOS
 
+# The otter mark derived from the ComfyUI render (tools/brand/derive_splash_art.py).
 images:
-    productLogo:          "logo-icon.svg"
-    productIcon:          "logo-icon.svg"
-    productWelcome:       "logo-icon.svg"
+    productLogo:          "logo-icon.png"
+    productIcon:          "logo-icon.png"
+    productWelcome:       "logo-icon.png"
 
 slideshow: "show.qml"
 

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="archiso/airootfs/etc/calamares/branding/holtos/logo-wide.svg" width="420" alt="HoltOS">
+  <img src="archiso/airootfs/usr/share/sddm/themes/holtos/lockup.png" width="360" alt="HoltOS">
 </p>
 <p align="center"><sub>MEDIA-FIRST ARCH</sub></p>
 

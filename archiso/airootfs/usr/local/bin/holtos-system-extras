@@ -91,6 +91,23 @@ trim_themes() {
            /usr/share/plymouth/themes/spinner /usr/share/plymouth/themes/tribar 2>/dev/null || true
 }
 
+# The OS is called HoltOS everywhere (Liam, 2026-09-14: Steam's system info in
+# Game Mode said "Arch Linux"). /etc/os-release is ours, but Arch's filesystem
+# package ships /usr/lib/os-release and lsb-release ships /etc/lsb-release,
+# both naming Arch Linux. Copy ours over them, and stop pacman from unpacking
+# Arch's os-release again. /etc/lsb-release is a pacman backup file, so
+# lsb-release updates leave our copy alone.
+fix_os_identity() {
+    if ! grep -q '^NoExtract = usr/lib/os-release' /etc/pacman.conf; then
+        sed -i '/^\[options\]/a NoExtract = usr/lib/os-release' /etc/pacman.conf
+    fi
+    [ -f /etc/os-release ] && ! [ /etc/os-release -ef /usr/lib/os-release ] &&
+        install -m 644 /etc/os-release /usr/lib/os-release
+    . /etc/os-release
+    printf 'DISTRIB_ID="%s"\nDISTRIB_RELEASE="%s"\nDISTRIB_DESCRIPTION="%s"\n' \
+        "$NAME" "$VERSION_ID" "$PRETTY_NAME" > /etc/lsb-release
+}
+
 case "${1:-}" in
 check)
     missing="$(missing_required; missing_z13)"
@@ -105,6 +122,7 @@ apply)
     fi
     trim_wallpapers
     trim_themes
+    fix_os_identity
     required="$(missing_required)"
     z13="$(missing_z13)"
     if [ -z "$required" ] && [ -z "$z13" ]; then
