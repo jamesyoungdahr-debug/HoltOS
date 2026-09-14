@@ -84,6 +84,25 @@ Recommendation: keep plasma-keyboard for pop-up typing and add Vboard as a
 tray "full keyboard", built into our package repo, in the next feature
 release. Waiting on Liam's go-ahead.
 
+## 5a. Glass design: what needs you (from the 2026-09-14 night shift)
+
+The plan is `docs/holtos-glass-design-plan.md`. Tonight's work is committed
+locally and not pushed.
+
+1. **Build tools, so fixes can be compiled on Liamtab.** Either install them
+   yourself (`sudo pacman -S --needed cmake extra-cmake-modules ninja`), or
+   say the builds should run in LiamPC's pipeline.
+2. **Edge blur fix** (holtos-kwin branch `edge-blur-fix`, not compiled). To
+   see the bug first, drag a Dolphin window half off the left edge over a
+   bright wallpaper: expect a see-through or smeared band along the edge.
+   After the fix is built and installed, log out and in, then repeat the
+   drag: the band should be gone.
+3. **Buttons.** macOS-style circles in traffic-light colours on the right,
+   with a hover glow. Once the build tools are there, you pick the icon
+   style by eye.
+4. **Plasma theme.** `etc/xdg/plasmarc` names `klassy-dark`, but your desktop
+   uses `default`. Which should HoltOS ship until it has its own glass theme?
+
 ## 6. Already verified on Liamtab
 
 - 0.0.6c-alpha: the updater copies files that are new in a release
