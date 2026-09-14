@@ -5,6 +5,30 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.0.7-alpha] - 2026-09-14
+
+- **Every window is one even pane of glass**, matched to Liam's reference
+  screenshot: the title bar, toolbar, Places sidebar, tabs, file view and
+  status bar share one 30 % tint over the blurred wallpaper. No line under
+  the title bar, a regular-weight title, flat toolbar buttons and tabs, a
+  faint light window outline, and less grain in the blur.
+- **Selection, hover and tabs are translucent HoltOS purple.**
+- **Title bar buttons are coloured circles** in HoltOS's warning, neutral and
+  healthy colours, with a glow that spreads onto the glass around the hovered
+  button.
+- **Dolphin shows the full-width status bar with the zoom slider.** The small
+  floating one was drawn as an opaque box with truncated text.
+- **Fixed: the glass title bar never appeared on accounts made by older
+  images.** Their per-account defaults named the removed Klassy decoration,
+  so KWin fell back to Breeze. A one-time step at login
+  (`holtos-glass-user-update`) repairs that and brings older accounts' title
+  bar, blur and colour settings in line (the old `klassyrc` is kept as
+  `klassyrc.before-glass-look`). Log out and back in once after updating to
+  see the new title bar.
+- **HoltOS's KWin and Plasma builds now update through the package
+  repository.** Systems installed from images that still run stock KWin
+  switch to holtos-kwin and holtos-plasma-workspace at their next system
+  update.
 - **Ten neon HoltOS wallpapers** (Rings, Otter, Aurora, Den, Bokeh, Otter
   Night, Rain, Forest, Nebula, Cabin), each at 1920x1080, 2560x1440 and
   3840x2160, made to show off the Glass blur.

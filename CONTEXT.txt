@@ -23,6 +23,11 @@ CURRENT STATE (2026-09-14)
   package r55), HoltOS glass-surfaces (G4 partial). Nothing installed on
   Liamtab yet (kwin r89, decoration r54, no Kvantum override). Test steps in
   LIAM-HANDOFF.md 5a; the full table is in HANDOFF.md "Status at hand-off".
+- RELEASE 0.0.7-alpha (2026-09-14): the glass look plus the neon wallpapers,
+  from branch glass-look merged into master. HoltOS's KWin and Plasma forks
+  are now published to the packages release (Liam). Details in HANDOFF.md
+  "0.0.7-alpha: the glass look"; Liam tests on real hardware
+  (LIAM-HANDOFF.md section 0).
 - RELEASE TRACKS (Liam, 2026-09-14): until 1.0 there is only one track, as
   now: work on branches, merge to master, tag v*, the updater installs tags.
   At 1.0 HoltOS starts a dev track and an rc track. The researched design

@@ -529,6 +529,54 @@ installs nothing from it. No ISO was built (Liam: commit and push only).
   and add Vboard (AUR, uinput, modifier keys) as a tray keyboard in the next
   feature release, pending Liam's go-ahead.
 
+## 0.0.7-alpha: the glass look (2026-09-14)
+
+Liam's reference screenshot (`docs/design-references/glass-dolphin-reference.jpg`)
+was matched in the `holtos-test` VM on LiamPC, on branch `glass-look`
+(glass-buttons and glass-surfaces merged, then tuned), which was merged into
+master for 0.0.7-alpha together with the neon wallpapers. Liam's calls:
+traffic-light buttons stay on the right, translucent purple selection, 30 %
+tint, publish the KWin and Plasma forks, version 0.0.7-alpha.
+
+- **Kvantum**: `tools/glass/kvantum_glass.py` restyles HoltOSGlass.svg and is
+  safe to rerun with other alphas: window 30 %, dialogs 45 %, dock and
+  toolbar layers and their edges 0, item selection, press and hover in
+  `#b14dff` at 22/30/10 %, new `tab-*` and `tbutton-*` elements. kvconfig:
+  `[Tab]` uses the `tab` element, new `[ToolbarButton]`,
+  `group_toolbar_buttons=false`.
+- **Decoration and colours**: klassyrc title bar opacity 30/30, no separator,
+  `BoldTitle=false`, contrast window outline at 12/8 %, button circles at rest
+  (`ShowBackgroundNormally*`, `ShowCloseBackgroundNormally*`), hover glow from
+  glass-buttons. skel kdeglobals `activeFont` weight 400. HoltOS.colors:
+  inactive title bar is holt-surface too. kwinrc `NoiseStrength=1`.
+  `/etc/xdg/dolphinrc` sets the full-width status bar (added to the updater's
+  component list).
+- **Found: accounts from older images never had the glass decoration.**
+  `~/.config/kdedefaults/kwinrc` said `library=org.kde.klassy` (removed), so
+  KWin logged "Could not locate decoration plugin" and used Breeze.
+  `holtos-glass-user-update` (autostart, once per account, stamp
+  `~/.local/state/holtos/glass-user-update-1`) fixes that, replaces the old
+  ungrouped klassyrc (backup kept), drops the per-user `NoiseStrength=4`, sets
+  the title weight and re-applies the colour scheme. Verified on the VM's
+  0.0.4 account; a second run does nothing. KWin caches decoration settings,
+  so they show from the next login.
+- **Found: installed systems never got the KWin and Plasma forks.**
+  `tools/publish-packages.sh` excluded them, so the VM (installed from 0.0.4)
+  still ran stock KWin after updating to 0.0.6d. Liam chose to publish them
+  with 0.0.7-alpha (`EXCLUDE=""`).
+- **Edge-blur fix**: holtos-kwin `edge-blur-fix` (0153fa7) is built on LiamPC
+  and checked in the VM before it is published; the result is in the
+  release notes.
+- **VM harness notes**: SSH as `holtos` with the session scratchpad `vmkey`;
+  when Hyper-V shows no address, find it with `Get-NetNeighbor` by the VM's
+  MAC. SDDM autologin for testing is `/etc/sddm.conf.d/zz-vm-autologin.conf`
+  (VM only). Start GUI apps with `systemd-run --user dolphin`: started
+  straight from SSH they miss `XDG_CURRENT_DESKTOP` and `KDE_FULL_SESSION`,
+  load no KDE platform theme and draw dark text, which looks like a theme
+  bug. PowerShell here-strings piped to `bash -s` start with a BOM, so begin
+  them with a blank line; `pkill -f 'pattern'` over SSH matches its own
+  shell, so use `'[p]attern'`.
+
 ## Release tracks (decided 2026-09-14, for 1.0)
 
 Liam: keep the single release track until 1.0; at 1.0 start a dev track and

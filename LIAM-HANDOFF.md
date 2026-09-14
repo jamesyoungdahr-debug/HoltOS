@@ -1,6 +1,43 @@
-# Liam's hand-off: testing 0.0.6d-alpha on the ROG Flow Z13
+# Liam's hand-off: testing HoltOS releases on real hardware
 
-What this release changes and how to check it on Liamtab.
+## 0. HoltOS 0.0.7-alpha: the glass look (2026-09-14)
+
+Released through the updater (CHANGELOG.md has the full list). Test it on
+Liamtab (Radeon 8060S) and on the RTX 4090 HoltOS install.
+
+1. **Update.** HoltOS Updates > Check for updates, install `v0.0.7-alpha`,
+   then also install **System packages**: that swaps in HoltOS's own KWin
+   (with the edge-blur fix) and the new window decoration. Save your work
+   first, then restart.
+   Check: `grep VERSION_ID /etc/os-release` shows `0.0.7-alpha`, and
+   `pacman -Q holtos-kwin holtos-window-decoration` shows the versions in the
+   release notes.
+2. **Log out and back in once.** The first login runs
+   `holtos-glass-user-update`, which fixes older accounts' title bar
+   settings; KWin only picks them up at the next login.
+3. **Look.** Open Dolphin over a bright wallpaper next to
+   `docs/design-references/glass-dolphin-reference.jpg`: one even glass tint
+   over the title bar, toolbar, sidebar, tabs, files and status bar; no line
+   under the title; translucent purple selection and tabs; coloured circle
+   buttons on the right that glow on hover; a full-width status bar with the
+   zoom slider.
+4. **Edge blur.** Drag a Dolphin window half off the left edge over a bright
+   wallpaper, and across a monitor seam on the 4090 machine: no see-through
+   or smeared band.
+5. **Readability.** Text over bright parts of the wallpaper should stay
+   readable. Say if it doesn't (adaptive contrast, G8/G9, is the planned fix).
+6. **NVIDIA (4090).** This is the first time holtos-kwin reaches that install
+   through an update. If the desktop does not start, pick the pre-update
+   snapshot in the Limine boot menu and tell Claude.
+
+If anything looks off, send:
+
+    journalctl --user -b | grep -iE 'kwin|decoration' | tail -30
+    cat ~/.local/state/holtos/glass-user-update-1
+
+## Earlier: testing 0.0.6d-alpha on the ROG Flow Z13
+
+What that release changed and how to check it on Liamtab.
 
 ## 1. Update
 
@@ -84,7 +121,7 @@ Recommendation: keep plasma-keyboard for pop-up typing and add Vboard as a
 tray "full keyboard", built into our package repo, in the next feature
 release. Waiting on Liam's go-ahead.
 
-## 5a. Glass design: what needs you (from the 2026-09-14 night shift)
+## 5a. Glass design: what needs you (from the 2026-09-14 night shift; superseded by 0.0.7-alpha, section 0: no manual package installs needed any more)
 
 The plan is `docs/holtos-glass-design-plan.md`. All of it is committed and
 pushed with no tag, so the updater installs nothing from it: HoltOS master,
