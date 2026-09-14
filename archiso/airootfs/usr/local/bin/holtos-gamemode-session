@@ -71,11 +71,23 @@ fi
 # Game Mode that died within a few seconds of starting (no GPU, broken
 # driver, gamescope crash) must not leave a black screen: ask for a
 # one-shot relogin straight back into Plasma instead of just clearing
-# the switch. Otherwise clear the one-shot so the next login is normal.
+# the switch.
+#
+# Otherwise clear the one-shot that brought us into Game Mode, but never a
+# pending switch to the desktop: Steam's "Switch to Desktop" runs
+# steamos-session-select, which records NEXT=plasma and then ends gamescope,
+# so this script runs right after it. Clearing NEXT here removed SDDM's
+# relogin, and the switch landed on the login screen or back in Game Mode
+# (Liam, 2026-09-14). The desktop's holtos-session-next-done autostart
+# clears it once Plasma is up.
+next=""
+[ -f /etc/holtos/session.conf ] && next="$(sed -n 's/^NEXT=//p' /etc/holtos/session.conf)"
 if [ "$GAMESCOPE_EXIT" -ne 0 ] && [ $(( $(date +%s) - START_TS )) -lt 15 ]; then
     log "Game Mode failed to start; returning to the desktop."
     logger -t holtos-gamemode "Game Mode failed to start (gamescope exit $GAMESCOPE_EXIT); returning to Plasma"
     pkexec /usr/local/bin/holtos-session-apply --next plasma 2>/dev/null || true
+elif [ "$next" = plasma ]; then
+    log "Switching to the desktop."
 else
     pkexec /usr/local/bin/holtos-session-apply --next-done 2>/dev/null || true
 fi

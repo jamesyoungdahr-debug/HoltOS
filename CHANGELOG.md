@@ -23,6 +23,9 @@ Neon rebrand (next major release):
   screens, and the otter with the HoltOS name on the boot splash, login card
   and Plasma splash. Generated on ComfyUI and prepared by
   `tools/brand/derive_splash_art.py`.
+- **Fixed: "Switch to Desktop" in Game Mode did not return to the desktop.**
+  Game Mode cleared the switch as it closed, so you landed on the login
+  screen or back in Game Mode.
 - **Fixed: Steam's system info in Game Mode called the OS "Arch Linux".**
   Arch's `/usr/lib/os-release` and `/etc/lsb-release` now carry the HoltOS
   name and version as well, on new installs and through the updater.
