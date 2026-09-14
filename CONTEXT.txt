@@ -23,6 +23,12 @@ CURRENT STATE (2026-09-14)
   package r55), HoltOS glass-surfaces (G4 partial). Nothing installed on
   Liamtab yet (kwin r89, decoration r54, no Kvantum override). Test steps in
   LIAM-HANDOFF.md 5a; the full table is in HANDOFF.md "Status at hand-off".
+- RELEASE TRACKS (Liam, 2026-09-14): until 1.0 there is only one track, as
+  now: work on branches, merge to master, tag v*, the updater installs tags.
+  At 1.0 HoltOS starts a dev track and an rc track. The researched design
+  (private HoltOS-dev repo, read-only deploy key per invited device, CHANNEL
+  setting in updates.conf, dev-* tags and a [holtos-dev] package repo) is in
+  HANDOFF.md "Release tracks"; do not build it before 1.0.
 - LATEST RELEASE: v0.0.6d-alpha (master 043e406, pushed and tagged). Releases
   0.0.5a through 0.0.6d are summarised in HANDOFF.md ("Releases 0.0.5-alpha
   to 0.0.6d-alpha"); Liam's test steps are in LIAM-HANDOFF.md. Numbering: the

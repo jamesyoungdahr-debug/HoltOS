@@ -529,6 +529,36 @@ installs nothing from it. No ISO was built (Liam: commit and push only).
   and add Vboard (AUR, uinput, modifier keys) as a tray keyboard in the next
   feature release, pending Liam's go-ahead.
 
+## Release tracks (decided 2026-09-14, for 1.0)
+
+Liam: keep the single release track until 1.0; at 1.0 start a dev track and
+an rc track. Nothing is built yet. Design researched on 2026-09-14, to pick up
+at 1.0:
+
+- The HoltOS repo is public, so a branch in it can never be invite-only. The
+  dev line lives in a private repo (`jamesyoungdahr-debug/HoltOS-dev`, branch
+  `dev`, tags `dev-*`); an rc track can use `rc-*` tags the same way.
+- Invites are read-only GitHub deploy keys, one per device: the device makes
+  its own SSH key (root-only), Liam adds the public key to the private repo,
+  and deleting the key revokes that one device. No GitHub account or token
+  on the tester's side (fine-grained tokens cannot be scoped to another
+  owner's repo; classic tokens expose every repo).
+- Updater: `CHANNEL=stable|dev` in `/etc/holtos/updates.conf`; a root helper
+  `holtos-dev-channel join|status|leave`; `holtos-update-status` and
+  `holtos-update-apply` resolve `dev-*` tags over SSH with shipped GitHub host
+  keys, fetch the tag with a depth-1 clone instead of the tarball, and use the
+  tag message as release notes. Leaving dev offers the latest `v*` release
+  with the usual snapshot.
+- Packages: a single-commit `packages` branch in the private repo (current
+  packages only, no -debug; largest non-debug package is 25 MB), fetched over
+  the same key into a local `[holtos-dev]` pacman repo ahead of `[homelab]`.
+- Updates window: a Channel selector, the device key with a Copy button, and
+  "Waiting for invite" / "Access granted".
+- Tools: `tools/dev-release.sh`, `tools/invite-dev.sh <name> <pubkey>`.
+- The channel code must first reach machines in a public stable release.
+- The key handling and the root helper are security-sensitive: Claude writes
+  them, not a local model.
+
 ## Still open
 
 - **Milestone 2 crash: root-caused, fixed and verified on a fresh ISO (build 23).**
