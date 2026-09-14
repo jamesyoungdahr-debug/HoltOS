@@ -71,7 +71,7 @@ ForegroundVisited=143,47,224
 
 [Colors:Header][Inactive]
 BackgroundAlternate=23,20,35
-BackgroundNormal=13,11,18
+BackgroundNormal=23,20,35
 DecorationFocus=177,77,255
 DecorationHover=177,77,255
 ForegroundActive=177,77,255
@@ -145,7 +145,7 @@ Name=HoltOS
 shadeSortColumn=true
 TitleBarActiveBackground=23,20,35
 TitleBarActiveForeground=255,255,255
-TitleBarInactiveBackground=13,11,18
+TitleBarInactiveBackground=23,20,35
 TitleBarInactiveForeground=107,107,107
 AccentColor=177,77,255
 
@@ -156,6 +156,6 @@ contrast=4
 activeBackground=23,20,35
 activeBlend=23,20,35
 activeForeground=255,255,255
-inactiveBackground=13,11,18
-inactiveBlend=13,11,18
+inactiveBackground=23,20,35
+inactiveBlend=23,20,35
 inactiveForeground=107,107,107

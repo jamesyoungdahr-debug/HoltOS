@@ -1417,6 +1417,52 @@ void Decoration::calculateTitleBarShape()
 }
 
 //________________________________________________________________
+void Decoration::paintButtonHoverGlow(QPainter *painter)
+{
+    const qreal radiusFactor = m_internalSettings->buttonHoverGlowRadius() / 100.0;
+    const auto decorationButtons = m_leftButtons->buttons() + m_rightButtons->buttons();
+
+    painter->save();
+    painter->setRenderHint(QPainter::Antialiasing);
+    painter->setPen(Qt::NoPen);
+    painter->setClipPath(m_titleBarPath, Qt::IntersectClip);
+
+    for (KDecoration3::DecorationButton *decorationButton : decorationButtons) {
+        Button *button = static_cast<Button *>(decorationButton);
+        if (!button->isVisible()) {
+            continue;
+        }
+
+        const qreal strength = button->hoverGlowStrength();
+        const QColor glowColor = button->hoverGlowColor();
+        if (strength <= 0.0 || !glowColor.isValid()) {
+            continue;
+        }
+
+        const QRectF buttonRect = button->geometry();
+        const QPointF centre = buttonRect.center();
+        const qreal radius = qMin(buttonRect.width(), buttonRect.height()) * 0.5 * radiusFactor;
+
+        QColor inner = glowColor;
+        inner.setAlphaF(0.55 * strength);
+        QColor middle = glowColor;
+        middle.setAlphaF(0.2 * strength);
+        QColor outer = glowColor;
+        outer.setAlphaF(0.0);
+
+        QRadialGradient gradient(centre, radius);
+        gradient.setColorAt(0.0, inner);
+        gradient.setColorAt(0.45, middle);
+        gradient.setColorAt(1.0, outer);
+
+        painter->setBrush(gradient);
+        painter->drawEllipse(centre, radius, radius);
+    }
+
+    painter->restore();
+}
+
+//________________________________________________________________
 void Decoration::paintTitleBar(QPainter *painter, const QRectF &repaintRegion)
 {
     const auto c = window();
@@ -1511,6 +1557,11 @@ void Decoration::paintTitleBar(QPainter *painter, const QRectF &repaintRegion)
                         captionBoundingRect.right(),
                         captionBoundingRect.bottom() + halfPenWidth);
         painter->drawLine(underline);
+    }
+
+    // HoltOS: hover glow under the buttons, so it lights the glass around them
+    if (m_internalSettings->buttonHoverGlow()) {
+        paintButtonHoverGlow(painter);
     }
 
     // draw all buttons

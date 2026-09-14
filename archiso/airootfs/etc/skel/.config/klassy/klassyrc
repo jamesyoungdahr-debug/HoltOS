@@ -1,40 +1,79 @@
 # HoltOS Glass window decoration — holtos-window-decoration (our Klassy
 # fork, built into local-repo/ by build-aur-packages.sh; it still reads
 # klassy/klassyrc). The opacity, override and corner-radius defaults are
-# compiled into the fork now; this file carries the rest of the styling;
-# based on its own "Glassy Klassy" preset with the opacity raised for
-# readability: title text is ink on holt-surface at 70% (active) / 60%
-# (inactive) with KWin blur behind, and Klassy's poor-contrast guard on so
-# a light wallpaper can never wash the title out. Corners 10px (radius-md),
-# maximized windows keep the glass (opaque twin is Breeze's scheme colour).
+# compiled into the fork now; this file carries the rest of the styling.
+#
+# Glass look (2026-09-14, Liam's reference screenshot in
+# docs/design-references/): the title bar is part of one even pane of glass
+# with the window below it. Its opacity matches the Kvantum HoltOSGlass
+# window fill (holt-surface #171423, window-normal in HoltOSGlass.svg), with
+# no separator line, a regular-weight centred title and a faint light window
+# outline. Klassy's poor-contrast guard stays on so a light wallpaper can
+# never wash the title out. Corners 10px (radius-md); maximized windows keep
+# the glass.
+#
+# Every key must sit in the group its kcfg entry belongs to
+# (libbreezecommon/breezesettingsdata.kcfg). Until 2026-09-14 every key was
+# under [Windeco], so KConfig silently ignored all but the Windeco ones and
+# the compiled-in defaults applied instead.
+#
+# Buttons (2026-09-14): macOS-style small circles in traffic-light colours,
+# kept on the right, with the HoltOS hover glow spreading onto the glass.
 [Windeco]
-OverrideActiveTitleBarOpacity=true
-OverrideInactiveTitleBarOpacity=true
-ActiveTitleBarOpacity=70
-InactiveTitleBarOpacity=60
-BlurTransparentTitleBars=true
-ApplyOpacityToHeader=true
-OpaqueMaximizedTitleBars=false
 MatchTitleBarToApplicationColor=false
-AdjustBackgroundColorOnPoorContrastActive=true
-AdjustBackgroundColorOnPoorContrastInactive=true
-PoorBackgroundContrastThresholdActive=1.1
-PoorBackgroundContrastThresholdInactive=1.1
-BoldTitle=true
-TitleAlignment=AlignCenterFullWidth
-DrawTitleBarSeparator=true
+BoldTitle=false
+DrawTitleBarSeparator=false
 DrawBackgroundGradient=false
 DrawBorderOnMaximizedWindows=false
 RoundAllCornersWhenNoBorders=true
 WindowCornerRadius=10
+ButtonShape=ShapeSmallCircle
+UseTitleBarColorForAllBorders=true
+
+[TitleBarOpacity]
+OverrideActiveTitleBarOpacity=true
+OverrideInactiveTitleBarOpacity=true
+ActiveTitleBarOpacity=30
+InactiveTitleBarOpacity=30
+BlurTransparentTitleBars=true
+ApplyOpacityToHeader=true
+OpaqueMaximizedTitleBars=false
+
+[TitleBarSpacing]
+TitleAlignment=AlignCenterFullWidth
+
+[ButtonSizing]
 ButtonCornerRadius=SameAsWindow
-ButtonShape=ShapeIntegratedRoundedRectangle
+
+[ButtonColors]
+AdjustBackgroundColorOnPoorContrastActive=true
+AdjustBackgroundColorOnPoorContrastInactive=true
+PoorBackgroundContrastThresholdActive=1.1
+PoorBackgroundContrastThresholdInactive=1.1
 ButtonIconColorsActive=TitleBarText
 ButtonIconColorsInactive=TitleBarText
-ButtonBackgroundColorsActive=AccentNegativeClose
-ButtonBackgroundColorsInactive=AccentNegativeClose
+ButtonBackgroundColorsActive=AccentTrafficLights
+ButtonBackgroundColorsInactive=AccentTrafficLights
+
+[ButtonBehaviour]
+ButtonHoverGlow=true
+ButtonHoverGlowRadius=250
+# Traffic-light circles stay visible at rest, not only on hover (seen in the
+# VM, 2026-09-14: Klassy's defaults hid them until hovered).
+ShowBackgroundNormallyActive=true
+ShowBackgroundNormallyInactive=true
+ShowCloseBackgroundNormallyActive=true
+ShowCloseBackgroundNormallyInactive=true
+
+[WindowOutlineStyle]
+WindowOutlineThickness=1
+WindowOutlineStyleActive=WindowOutlineContrast
+WindowOutlineStyleInactive=WindowOutlineContrast
+WindowOutlineContrastOpacityActive=12
+WindowOutlineContrastOpacityInactive=8
+
+[ShadowStyle]
 ShadowSizeActive=ShadowLarge
 ShadowSizeInactive=ShadowLarge
 ShadowStrengthActive=255
 ShadowStrengthInactive=128
-UseTitleBarColorForAllBorders=true

@@ -46,6 +46,10 @@ Button::Button(KDecoration3::DecorationButtonType type, Decoration *decoration, 
     m_animation->setEasingCurve(QEasingCurve::InOutQuad);
     connect(m_animation, &QVariantAnimation::valueChanged, this, [this](const QVariant &value) {
         setOpacity(value.toReal());
+        // HoltOS: the hover glow reaches past the button, so repaint the whole decoration
+        if (m_d && m_d->internalSettings()->buttonHoverGlow()) {
+            m_d->update();
+        }
     });
 
     // detect the kde-gtk-config-daemon
@@ -74,6 +78,20 @@ Button::Button(KDecoration3::DecorationButtonType type, Decoration *decoration, 
     });
     connect(this, &KDecoration3::DecorationButton::hoveredChanged, this, &Button::updateWindowOutlineWithButtonColor);
     connect(this, &KDecoration3::DecorationButton::pressedChanged, this, &Button::updateWindowOutlineWithButtonColor);
+
+    // HoltOS: remember the hover colour for the glow and repaint the area around the button
+    connect(this, &KDecoration3::DecorationButton::hoveredChanged, this, [this](bool v) {
+        if (!m_d || !m_d->internalSettings()->buttonHoverGlow()) {
+            return;
+        }
+        if (v && m_buttonPalette) {
+            m_hoverGlowColor = backgroundColor(true);
+            if (!m_hoverGlowColor.isValid() || m_hoverGlowColor.alpha() == 0) {
+                m_hoverGlowColor = foregroundColor(true);
+            }
+        }
+        m_d->update();
+    });
 
     // for unison hovering
     connect(decoration, &Decoration::buttonUnisonHoveredChanged, this, [this, decoration](bool v) {
@@ -648,6 +666,17 @@ void Button::updateAnimationState(bool hovered)
     if (m_animation->state() != QAbstractAnimation::Running) {
         m_animation->start();
     }
+}
+
+qreal Button::hoverGlowStrength() const
+{
+    if (!m_d || isStandAlone()) {
+        return 0.0;
+    }
+    if (m_d->animationsDuration() > 0) {
+        return m_opacity;
+    }
+    return hovered() ? 1.0 : 0.0;
 }
 
 void Button::updateWindowOutlineWithButtonColor(bool on)

@@ -16,7 +16,7 @@ contrastEnabled=true
 # BlurStrength 1-15, NoiseStrength 0-14, the rest in percent.
 [Effect-blur]
 BlurStrength=15
-NoiseStrength=4
+NoiseStrength=1
 Saturation=100
 Contrast=100
 Brightness=100
