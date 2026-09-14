@@ -5,6 +5,17 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.0.7d-alpha] - 2026-09-14
+
+- **Fixed: "Switch to Desktop" in Game Mode stayed on "Switching to Desktop"
+  (third fix, the real cause).** Steam never ran HoltOS's switch script: it
+  asks SteamOS Manager, a background service on SteamOS, and HoltOS had none,
+  so nothing answered. HoltOS now starts its own small stand-in
+  (`holtos-steamos-manager`) with Game Mode, and it hands the request to the
+  switch. Game Mode also asks Steam to quit cleanly, and closes gamescope, then
+  the session, if Steam hangs. Each switch is logged in
+  `~/.local/state/holtos/`.
+
 ## [0.0.7c-alpha] - 2026-09-14
 
 - **Fixed: "Switch to Desktop" in Game Mode still stayed on "Switching to

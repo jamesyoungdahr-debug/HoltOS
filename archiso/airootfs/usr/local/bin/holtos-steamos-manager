@@ -1,0 +1,143 @@
+#!/usr/bin/env python3
+# HoltOS stand-in for Valve's SteamOS Manager, just enough for Steam's
+# Power > "Switch to Desktop" in Game Mode. Steam does not run
+# steamos-session-select itself: it calls SwitchToDesktopMode on
+# com.steampowered.SteamOSManager1 (session bus, object
+# /com/steampowered/SteamOSManager1, interface
+# com.steampowered.SteamOSManager1.SessionManagement1). With nothing on the
+# bus it stayed on "Switching to Desktop" (Liam, 2026-09-14, on the Z13).
+# Interface as in github.com/evlaV/steamos-manager
+# data/interfaces/com.steampowered.SteamOSManager1.xml.
+#
+# holtos-gamemode-client starts this inside the Game Mode session, before
+# Steam, so the switch runs in the user's active login session (the polkit
+# rule for holtos-session-apply only allows that) and under gamescope.
+# Each switch is handed to /usr/local/bin/steamos-session-select.
+
+import os
+import subprocess
+import time
+
+import gi
+gi.require_version("Gio", "2.0")
+from gi.repository import Gio, GLib
+
+BUS_NAME = "com.steampowered.SteamOSManager1"
+OBJECT_PATH = "/com/steampowered/SteamOSManager1"
+SESSION_SELECT = "/usr/local/bin/steamos-session-select"
+SESSION_CONF = "/etc/holtos/session.conf"
+LOG_PATH = os.path.expanduser("~/.local/state/holtos/steamos-manager.log")
+
+INTROSPECTION = """<node>
+  <interface name="com.steampowered.SteamOSManager1.SessionManagement1">
+    <method name="SwitchToDesktopMode"/>
+    <method name="SwitchToGameMode"/>
+    <method name="SwitchToLoginMode">
+      <arg type="s" name="type" direction="in"/>
+    </method>
+    <property name="DefaultDesktopSession" type="s" access="readwrite"/>
+    <property name="DefaultLoginMode" type="s" access="readwrite"/>
+    <method name="ValidDesktopSessions">
+      <arg type="as" name="sessions" direction="out"/>
+    </method>
+    <method name="CleanTemporarySessions"/>
+  </interface>
+</node>"""
+
+loop = None
+
+
+def log(msg):
+    line = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()) + " " + msg + "\n"
+    try:
+        os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
+        with open(LOG_PATH, "a") as f:
+            f.write(line)
+    except OSError:
+        pass
+    try:
+        subprocess.run(["logger", "-t", "holtos-steamos-manager", "--", msg], check=False)
+    except Exception:
+        pass
+
+
+def default_login_mode():
+    try:
+        with open(SESSION_CONF, "r") as f:
+            for line in f:
+                if line.strip() == "DEFAULT=gamemode":
+                    return "game"
+    except OSError:
+        pass
+    return "desktop"
+
+
+def switch(mode):
+    log("switch to " + mode)
+    target = "plasma" if mode == "desktop" else "gamescope"
+    try:
+        subprocess.Popen([SESSION_SELECT, target], stdin=subprocess.DEVNULL)
+    except OSError as exc:
+        log("could not run steamos-session-select: " + str(exc))
+
+
+def on_method_call(connection, sender, object_path, interface_name, method_name, parameters, invocation):
+    log(method_name + " from " + str(sender))
+    if method_name == "SwitchToDesktopMode":
+        invocation.return_value(None)
+        switch("desktop")
+    elif method_name == "SwitchToGameMode":
+        invocation.return_value(None)
+        switch("game")
+    elif method_name == "SwitchToLoginMode":
+        mode = parameters.unpack()[0]
+        if mode not in ("game", "desktop"):
+            invocation.return_dbus_error("org.freedesktop.DBus.Error.InvalidArgs", "unknown login mode: " + mode)
+        else:
+            invocation.return_value(None)
+            switch(mode)
+    elif method_name == "ValidDesktopSessions":
+        invocation.return_value(GLib.Variant("(as)", (["plasma.desktop"],)))
+    elif method_name == "CleanTemporarySessions":
+        invocation.return_value(None)
+    else:
+        invocation.return_dbus_error("org.freedesktop.DBus.Error.UnknownMethod", method_name)
+
+
+def on_get_property(connection, sender, object_path, interface_name, property_name):
+    if property_name == "DefaultDesktopSession":
+        return GLib.Variant("s", "plasma.desktop")
+    elif property_name == "DefaultLoginMode":
+        return GLib.Variant("s", default_login_mode())
+    return None
+
+
+def on_set_property(connection, sender, object_path, interface_name, property_name, value):
+    # HoltOS changes these from the tray (Start in Game Mode), not from Steam.
+    log("ignored setting " + property_name)
+    return False
+
+
+def on_bus_acquired(connection, name):
+    node = Gio.DBusNodeInfo.new_for_xml(INTROSPECTION)
+    connection.register_object(OBJECT_PATH, node.interfaces[0], on_method_call, on_get_property, on_set_property)
+    log("serving SessionManagement1 on " + OBJECT_PATH)
+
+
+def on_name_lost(connection, name):
+    log("could not own " + BUS_NAME + " (another SteamOS Manager is running?)")
+    if loop:
+        loop.quit()
+
+
+def main():
+    global loop
+    if os.path.exists("/run/archiso"):
+        return
+    loop = GLib.MainLoop()
+    Gio.bus_own_name(Gio.BusType.SESSION, BUS_NAME, Gio.BusNameOwnerFlags.NONE, on_bus_acquired, None, on_name_lost)
+    loop.run()
+
+
+if __name__ == "__main__":
+    main()

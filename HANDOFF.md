@@ -6,9 +6,16 @@ context. The 2026-09-11 handoff this replaces is in git history
 (`git show bc29ef6:HANDOFF.md`).
 
 Commit: see `git log` (this file is committed with the work it describes).
-Latest release: `v0.0.7c-alpha` (2026-09-14: Steam's Switch to Desktop runs
-`/usr/bin/steamos-session-select`, which HoltOS now ships; the tray announces
-updates that installed on their own; config-only, no ISO). Before it:
+Latest release: `v0.0.7d-alpha` (2026-09-14: Steam's Switch to Desktop does
+not run a script; it calls SteamOS Manager on the session bus
+(`com.steampowered.SteamOSManager1`, object
+`/com/steampowered/SteamOSManager1`, `SessionManagement1.SwitchToDesktopMode`).
+HoltOS's `holtos-steamos-manager` stand-in starts from
+`holtos-gamemode-client` inside the Game Mode session and hands the call to
+`steamos-session-select`, which asks Steam to quit and has a watchdog;
+config-only, no ISO). Before it: `v0.0.7c-alpha` (the `/usr/bin` wrapper,
+which Steam turned out not to call, and install notices in the tray). Before
+that:
 `v0.0.7b-alpha` (Game Mode fixes found on the Z13 — the session script kept a
 pending switch, the HoltOS name in Steam's system info, CJK fonts). And: `v0.0.7a-alpha` (glass fixes) and
 `v0.0.7-alpha` (the glass look and the neon wallpapers). The neon rebrand

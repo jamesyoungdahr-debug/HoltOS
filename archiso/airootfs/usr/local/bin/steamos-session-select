@@ -8,7 +8,13 @@ set -euo pipefail
 
 # Every step goes to the journal (journalctl -t holtos-session-select), so a
 # switch that does nothing on real hardware leaves a trace.
-say() { logger -t holtos-session-select -- "$*" 2>/dev/null || true; }
+say() {
+    logger -t holtos-session-select -- "$*" 2>/dev/null || true
+    # Also a file in the home folder: from inside Steam's runtime the journal
+    # may be out of reach (0.0.7c left no journal entries on the Z13).
+    mkdir -p "$HOME/.local/state/holtos" 2>/dev/null &&
+        printf '%s %s\n' "$(date -u +%FT%TZ)" "$*" >> "$HOME/.local/state/holtos/session-select.log" 2>/dev/null || true
+}
 say "called with: $* (desktop ${XDG_CURRENT_DESKTOP:-unset}, session ${XDG_SESSION_ID:-unset})"
 
 # SteamOS' own names include plasma-wayland and plasma-x11 as well.
@@ -30,9 +36,43 @@ if ! pkexec /usr/local/bin/holtos-session-apply --next "$target"; then
 fi
 say "next session: $target; ending session ${session_id:-unknown}"
 
+# The gamescope process this script runs under, if any: Steam runs inside
+# gamescope, so it is an ancestor. Found through the process tree because
+# gamescope's process name is not reliably "gamescope" (0.0.7c's
+# `pkill -x gamescope` matched nothing on the Z13 and Steam stayed on
+# "Switching to Desktop"; Liam, 2026-09-14).
+gamescope_pid() {
+    local p="$PPID" comm
+    while [ -n "$p" ] && [ "$p" -gt 1 ] 2>/dev/null; do
+        comm="$(cat "/proc/$p/comm" 2>/dev/null)" || return 1
+        case "$comm" in gamescope*) echo "$p"; return 0 ;; esac
+        p="$(awk '{print $4}' "/proc/$p/stat" 2>/dev/null)"
+    done
+    return 1
+}
+gs_pid="$(gamescope_pid || true)"
+
 # End this session; SDDM's Relogin autologin then starts the chosen one.
-if [ "${XDG_CURRENT_DESKTOP:-}" = "gamescope" ]; then
-    pkill -TERM -x gamescope || true
+if [ "${XDG_CURRENT_DESKTOP:-}" = "gamescope" ] || [ -n "${GAMESCOPE_WAYLAND_DISPLAY:-}" ] || [ -n "$gs_pid" ]; then
+    # Game Mode: ask Steam to quit, as gamescope-session-steam does; gamescope
+    # exits with its client and holtos-gamemode-session ends the session. A
+    # detached watchdog stops gamescope, then the whole session, if Steam
+    # does not quit.
+    say "Game Mode: steam -shutdown (gamescope pid ${gs_pid:-not found})"
+    setsid -f bash -c '
+        gs="$1"; sid="$2"
+        sleep 15
+        if [ -n "$gs" ] && kill -0 "$gs" 2>/dev/null; then
+            logger -t holtos-session-select "Steam did not quit; stopping gamescope ($gs)"
+            kill -TERM "$gs" 2>/dev/null
+        fi
+        sleep 15
+        if [ -n "$sid" ] && loginctl show-session "$sid" -p State 2>/dev/null | grep -q "State=active"; then
+            logger -t holtos-session-select "Game Mode still running; ending session $sid"
+            loginctl terminate-session "$sid" 2>/dev/null
+        fi
+    ' holtos-switch-watchdog "$gs_pid" "$session_id" </dev/null >/dev/null 2>&1
+    steam -shutdown </dev/null >/dev/null 2>&1 &
 elif command -v qdbus6 >/dev/null 2>&1; then
     qdbus6 org.kde.Shutdown /Shutdown logout || loginctl terminate-session "$session_id"
 else
