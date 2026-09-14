@@ -26,7 +26,7 @@ done
 
 mkdir -p "${ESP}/holtos"
 cp /usr/share/holtos/limine/ter-124b.bin "${ESP}/holtos/ter-124b.bin"
-[ -f "${ESP}/wallpaper.png" ] || cp /usr/share/wallpapers/HoltOS/contents/images/1920x1080.png "${ESP}/wallpaper.png"
+[ -f "${ESP}/wallpaper.jpg" ] || cp /usr/share/wallpapers/HoltOS-Neon-OtterNight/contents/images/1920x1080.jpg "${ESP}/wallpaper.jpg"
 
 . /etc/os-release
 
@@ -45,7 +45,7 @@ interface_branding_colour: B14DFF
 interface_help_colour: 6B6B6B
 interface_help_colour_bright: 28E0C8
 
-wallpaper: boot():/wallpaper.png
+wallpaper: boot():/wallpaper.jpg
 wallpaper_style: stretched
 backdrop: 0D0B12
 

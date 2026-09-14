@@ -1,6 +1,6 @@
 # Overrides the stock Breeze SDDM theme's wallpaper with the HoltOS
-# corner-otter background, without forking the theme itself.
+# default wallpaper (Neon Otter Night), without forking the theme itself.
 [General]
 type=image
-background=backgrounds/holtos.png
+background=/usr/share/wallpapers/HoltOS-Neon-OtterNight/contents/images/1920x1080.jpg
 color=#0D0B12

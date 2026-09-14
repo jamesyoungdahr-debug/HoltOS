@@ -1,6 +1,7 @@
 /* HoltOS SDDM greeter — the "Sign in" frame of HoltOS Glass.
-   Ground: pool-rings wallpaper + faint purple glow + the otter at 9%
-   bottom-right. Over it, one centred floating-glass card (400 wide,
+   Ground: the default wallpaper (Neon Otter Night) + faint purple glow;
+   the optional faint otter bottom-right is off in theme.conf because that
+   wallpaper has its own otter. Over it, one centred floating-glass card (400 wide,
    radius 14, surface at 84%, blur 28-ish) with the lockup, the user, a
    password field and the screen's single purple action. Restart / Shut
    down are quiet, at the bottom.

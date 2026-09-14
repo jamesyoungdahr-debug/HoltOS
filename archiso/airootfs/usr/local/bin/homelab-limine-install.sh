@@ -74,13 +74,14 @@ CMDLINE_EXTRA="$(tr '\n' ' ' < /var/lib/holtos/kernel-cmdline-extra 2>/dev/null 
 CMDLINE_EXTRA="${CMDLINE_EXTRA% }"
 
 # HoltOS-branded wallpaper for the Limine menu itself — reuses the same
-# raster image already used as the installed system's KDE desktop
-# wallpaper (see usr/share/plasma/look-and-feel/org.holtos.desktop), so
-# boot menu and desktop match. Limine can only read its own ESP
-# (boot():), same reason the kernel/initramfs live there instead of on
-# root — see the comment above this block for the full story; copying a
-# 30KB PNG here costs nothing.
-cp /usr/share/wallpapers/HoltOS/contents/images/1920x1080.png "${ESP}/wallpaper.png"
+# raster image used as the installed system's default KDE desktop
+# wallpaper (Neon Otter Night, see
+# usr/share/plasma/look-and-feel/org.holtos.desktop), so boot menu and
+# desktop match. Limine can only read its own ESP (boot():), same reason
+# the kernel/initramfs live there instead of on root — see the comment
+# above this block for the full story. Limine reads JPEG; the 1080p copy
+# is well under a megabyte.
+cp /usr/share/wallpapers/HoltOS-Neon-OtterNight/contents/images/1920x1080.jpg "${ESP}/wallpaper.jpg"
 
 # Real bug found live-testing this exact fallback path (not a Btrfs-
 # specific issue — pre-existed, just never actually exercised until a test
