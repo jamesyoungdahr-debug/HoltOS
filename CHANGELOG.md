@@ -5,6 +5,8 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.0.7k-alpha] - 2026-09-15
+
 - **System updates install only tested Arch packages:** Arch's packages now
   come from the day HoltOS tested (a dated snapshot of the Arch Linux
   Archive) instead of whatever Arch published that morning. HoltOS updates
