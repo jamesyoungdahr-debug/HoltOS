@@ -7,6 +7,16 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 Neon rebrand (next major release):
 
+- **KDE Partition Manager is included.** The image had only `parted` and
+  `gptfdisk`, so there was no way to add a drive, resize or format anything
+  from the desktop. Its library, kpmcore, was already present as a Calamares
+  dependency, so this is a small addition.
+  **Be careful with the root partition and the EFI system partition.** HoltOS's
+  root is Btrfs with a subvolume layout, and the Limine boot menu plus its
+  per-snapshot kernel copies live on the ESP. Resizing, moving or reformatting
+  either of those breaks snapshots and can stop the machine booting. Partition
+  editors are always dangerous; here they are dangerous in a way that is easy
+  to miss.
 - **Updates no longer move a system backwards.** The updater picked the newest
   released version but only checked whether that was the one already installed,
   so a build from a commit ahead of the newest tag was silently downgraded to

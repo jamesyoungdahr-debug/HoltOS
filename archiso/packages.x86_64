@@ -23,6 +23,7 @@ reflector
 arch-install-scripts
 parted
 gptfdisk
+partitionmanager
 dosfstools
 e2fsprogs
 btrfs-progs

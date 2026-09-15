@@ -25,7 +25,10 @@ replaces=(plasma-workspace)
 # search runner is guarded by if(KF6Baloo_FOUND) in runners/CMakeLists.txt, so
 # without it the runner is silently skipped and KRunner cannot search files
 # (found by auditing the built package against Arch's plasma-workspace).
-depends=(accountsservice appstream-qt baloo dbus fontconfig freetype2 glibc icu
+# holtos-desktop-extras carries the apps HoltOS adds on top of upstream KDE.
+# It is here because this package is on every install and already replaces
+# plasma-workspace, so it is what pulls a new app onto an existing machine.
+depends=(holtos-desktop-extras accountsservice appstream-qt baloo dbus fontconfig freetype2 glibc icu
          kactivitymanagerd karchive kauth kbookmarks kcmutils kcolorscheme
          kcompletion kconfig kconfigwidgets kcoreaddons kcrash kde-cli-tools
          kdeclarative kded kdbusaddons kglobalaccel kguiaddons kholidays ki18n
