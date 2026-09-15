@@ -1,4 +1,4 @@
-"""The page for one app in HoltOS Apps: screenshots, description, developer, sizes, licence, permissions, release notes, links, and Install / Open / Update / Remove."""
+"""The page for one app in Stash: screenshots, description, developer, sizes, licence, permissions, release notes, links, and Install / Open / Update / Remove."""
 
 import html
 from PySide6.QtCore import Qt, QUrl
@@ -374,13 +374,13 @@ class AppPage(QWidget):
                     + "\n".join("• " + w for w in risky)
                     + "\n\nInstall it anyway?"
                 )
-                if QMessageBox.question(self, "HoltOS Apps", msg) != QMessageBox.Yes:
+                if QMessageBox.question(self, "Stash", msg) != QMessageBox.Yes:
                     return
             self.store.run(app_id, "install", self)
 
     def remove_clicked(self):
         app_id = self.app["id"]
         if QMessageBox.question(
-            self, "HoltOS Apps", f"Remove {self.app['name']}?"
+            self, "Stash", f"Remove {self.app['name']}?"
         ) == QMessageBox.Yes:
             self.store.run(app_id, "remove", self)

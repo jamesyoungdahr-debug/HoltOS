@@ -25,10 +25,18 @@ Neon rebrand (next major release):
 - **Title bar buttons in HoltOS traffic-light colours:** magenta close, amber
   minimise and teal maximise, so close and minimise no longer share the same
   amber. Existing accounts get them at their next login.
-- **Icon and cursor style chosen:** glass tiles with neon rims for icons and a
-  purple neon-edged cursor with a lime spark, from ComfyUI concepts kept in
-  `docs/design-references/`. The full icon set and cursor theme are not
-  built yet.
+- **HoltOS icons:** folders, places (home, desktop, documents, downloads, music,
+  pictures, videos, network, trash), file types and the Dolphin, Konsole and
+  System Settings icons are glass tiles with neon rims, rendered on ComfyUI.
+  Everything else still comes from Breeze; Steam, Chromium and other apps keep
+  their own logos.
+- **HoltOS cursor:** purple neon-edged arrow, hand, text beam, move, resize,
+  crosshair and forbidden cursors, and an animated purple-to-teal busy ring.
+- **The app store is called Stash** (otters keep a favourite pebble in a pocket
+  under their arm). Its command and settings keep their old names, so links
+  and the dock keep working.
+- Existing accounts get the new icons and cursor at their next login, unless
+  they chose their own.
 - **Otter expressions:** the new otter now comes in Happy, Idle and Alert, rendered
   on ComfyUI to match the mark, as transparent files in `/usr/share/holtos/brand/`
   for success, waiting and warning states.

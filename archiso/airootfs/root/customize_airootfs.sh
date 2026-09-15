@@ -52,7 +52,7 @@ systemctl enable avahi-daemon.service
 sed -i '/^hosts:/{/mdns_minimal/!s/resolve/mdns_minimal [NOTFOUND=return] resolve/}' /etc/nsswitch.conf
 # Create Flatpak's system repository now, which also adds Flathub from
 # /etc/flatpak/remotes.d. Flatpak only does that on first use by root, so
-# without this HoltOS Apps' search finds nothing until something runs as
+# without this Stash's search finds nothing until something runs as
 # root. Needs no network (verified with networking cut off).
 flatpak remotes --system >/dev/null 2>&1 || true
 

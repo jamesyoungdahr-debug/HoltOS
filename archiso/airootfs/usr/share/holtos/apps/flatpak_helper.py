@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Runs Flatpak operations for HoltOS Apps through libflatpak and reports progress as JSON lines, so the window can show real percentages and download speed. A separate process keeps GLib's main loop away from Qt's threads.
+"""Runs Flatpak operations for Stash through libflatpak and reports progress as JSON lines, so the window can show real percentages and download speed. A separate process keeps GLib's main loop away from Qt's threads.
 
   flatpak_helper.py [--user] list                  installed apps
   flatpak_helper.py [--user] updates               apps and runtimes with an update

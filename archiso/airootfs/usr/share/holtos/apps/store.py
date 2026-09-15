@@ -1,4 +1,4 @@
-"""What is installed, what can be updated, and a queue of Flatpak jobs for HoltOS Apps. Jobs run one at a time through flatpak_helper.py in its own process; its JSON lines become progress the pages show."""
+"""What is installed, what can be updated, and a queue of Flatpak jobs for Stash. Jobs run one at a time through flatpak_helper.py in its own process; its JSON lines become progress the pages show."""
 
 import json
 import os
@@ -34,7 +34,7 @@ def _helper_args(*args):
 
 
 class Store(QObject):
-    """Central Flatpak job manager and state holder for HoltOS Apps."""
+    """Central Flatpak job manager and state holder for Stash."""
 
     changed = Signal()
 
@@ -352,8 +352,8 @@ class Store(QObject):
                 name = self.installed.get(ids[0], {}).get("name", ids[0])
             msg = f"Could not {FAILED[action]} {name}.\n\n{message or 'Flatpak stopped with an error.'}"
             try:
-                QMessageBox.warning(parent, "HoltOS Apps", msg)
+                QMessageBox.warning(parent, "Stash", msg)
             except RuntimeError:
-                QMessageBox.warning(None, "HoltOS Apps", msg)
+                QMessageBox.warning(None, "Stash", msg)
 
         self._next()

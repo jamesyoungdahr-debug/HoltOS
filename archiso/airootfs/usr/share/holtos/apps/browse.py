@@ -1,4 +1,4 @@
-"""Browsing in HoltOS Apps: app tiles, the Browse page (HoltOS picks, Flathub collections, categories) and a list page for categories, "See all" and search results."""
+"""Browsing in Stash: app tiles, the Browse page (HoltOS picks, Flathub collections, categories) and a list page for categories, "See all" and search results."""
 
 import html
 import json

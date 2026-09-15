@@ -26,7 +26,7 @@ Do section 1 first; most of the rest depends on it.
   menu bar and dock return. Log out and in: the choice sticks.
 - [ ] System Settings > Colours lists only HoltOS; Plasma Style lists
   HoltOS Glass, HoltOS Glass Classic and the default fallback.
-- [ ] HoltOS Updates, HoltOS Apps, Gaming and Network Shares show the new
+- [ ] HoltOS Updates, Stash, Gaming and Network Shares show the new
   otter in their windows and notifications, never the old flat one.
 - [ ] Update an existing account (Z13) to the rebrand: at the next login the
   menu bar and dock replace the old panel (old panels kept as
@@ -64,7 +64,7 @@ Do section 1 first; most of the rest depends on it.
 - [ ] Only if an update ever stops the desktop from starting: after two such
   boots HoltOS restores the snapshot from before the update, restarts, and
   says "HoltOS undid the last update" at login.
-- [ ] **HoltOS Apps:** the dock shows the new app-grid otter icon, and the
+- [ ] **Stash:** the dock shows the new app-grid otter icon, and the
   store window is glass. Browse shows Categories, the HoltOS picks and
   Flathub's Popular, Trending, New and Recently updated rows with icons.
 - [ ] Open an app's page (screenshots, sizes, licence, permissions, release
@@ -76,7 +76,7 @@ Do section 1 first; most of the rest depends on it.
   settings and data" removes `~/.var/app/<id>`; "Clean up unused runtimes"
   appears after removing the last app of a runtime.
 - [ ] Updates: "Update all" and per-app Update, with progress.
-- [ ] On flathub.org, click Install on any app: HoltOS Apps opens that app's
+- [ ] On flathub.org, click Install on any app: Stash opens that app's
   page. A downloaded .flatpakref file opens the same way.
 - [ ] **HoltOS Updates, choose what installs:** with more than one update
   waiting, untick one and press "Install selected": only the ticked ones
@@ -273,7 +273,7 @@ If z13gui fails in Game Mode, send:
   HoltOS Updates when there are any.
 - [ ] Tray: the status icon, the update notification, and every menu entry
   opens.
-- [ ] HoltOS Apps: Featured loads, search works on first open, and Install,
+- [ ] Stash: Featured loads, search works on first open, and Install,
   Open and Remove work without a password prompt.
 
 ## 6. Display, NVIDIA and video

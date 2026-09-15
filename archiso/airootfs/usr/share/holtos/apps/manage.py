@@ -1,4 +1,4 @@
-"""Managing apps in HoltOS Apps: the Installed page (sizes, sort, remove with or without data, clean up unused runtimes) and the Updates page (update one or all, with progress)."""
+"""Managing apps in Stash: the Installed page (sizes, sort, remove with or without data, clean up unused runtimes) and the Updates page (update one or all, with progress)."""
 
 import html
 import os
@@ -262,7 +262,7 @@ class InstalledPage(QWidget):
         name = info.get("name", app_id)
         box = QMessageBox(
             QMessageBox.Question,
-            "HoltOS Apps",
+            "Stash",
             f"Remove {name}?",
             QMessageBox.Yes | QMessageBox.No,
             self,
@@ -286,7 +286,7 @@ class InstalledPage(QWidget):
         count, size = self._store.unused
         reply = QMessageBox.question(
             self,
-            "HoltOS Apps",
+            "Stash",
             f"Remove {count} runtime(s) no app uses any more? This frees {flathub.human_size(size)}.",
             QMessageBox.Yes | QMessageBox.No,
         )

@@ -12,7 +12,7 @@ dressed as glass, with a menu bar and a floating dock, and ships:
 - **Steam** with Proton and Proton GE, and a **Game Mode** (Steam Big
   Picture on gamescope) that switches back to the desktop from Steam's
   power menu;
-- **HoltOS Apps**, a store for Flathub apps;
+- **Stash**, a store for Flathub apps;
 - **The Den**, a movie and TV library manager
   ([the-den](https://github.com/jamesyoungdahr-debug/the-den)), and its
   desktop app

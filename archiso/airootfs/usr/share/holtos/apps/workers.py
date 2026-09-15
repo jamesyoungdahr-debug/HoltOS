@@ -1,4 +1,4 @@
-"""Background jobs for HoltOS Apps: run blocking calls (network, flatpak) in Qt's thread pool and hand the result back on the GUI thread."""
+"""Background jobs for Stash: run blocking calls (network, flatpak) in Qt's thread pool and hand the result back on the GUI thread."""
 
 from PySide6.QtCore import QObject, QRunnable, QThreadPool, Signal
 from PySide6.QtGui import QPixmap

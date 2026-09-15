@@ -21,8 +21,9 @@ set -u
 # older version run again (2: glyph-free buttons; 3: clearer glass, title bar
 # opacity 12 to match the 15 % window tint; 4: neon rebrand menu bar and dock;
 # 5: holtos-glass Plasma style, off removed stock themes; 6: the lock screen
-# shows its wallpaper; 7: magenta, amber and teal title bar buttons).
-STAMP="${XDG_STATE_HOME:-$HOME/.local/state}/holtos/glass-user-update-7"
+# shows its wallpaper; 7: magenta, amber and teal title bar buttons; 8: HoltOS
+# icons and cursor).
+STAMP="${XDG_STATE_HOME:-$HOME/.local/state}/holtos/glass-user-update-8"
 [ -e "$STAMP" ] && exit 0
 [ -e /run/archiso ] && exit 0
 
@@ -171,6 +172,25 @@ case "$lock_image" in
                 --group General --key Image --delete
         fi
         ;;
+esac
+
+# HoltOS icons (2026-09-15): accounts still on Breeze Dark icons, or with no
+# icon theme of their own, switch to the HoltOS theme, which falls back to
+# Breeze for every icon it does not draw. A theme the account chose is kept.
+for dir in "$CFG" "$CFG/kdedefaults"; do
+    case "$(kreadconfig6 --file "$dir/kdeglobals" --group Icons --key Theme)" in
+        breeze-dark|breeze)
+            kwriteconfig6 --file "$dir/kdeglobals" --group Icons --key Theme HoltOS ;;
+    esac
+done
+for gtk in "$CFG/gtk-3.0/settings.ini" "$CFG/gtk-4.0/settings.ini"; do
+    [ -f "$gtk" ] && sed -i -e 's/^gtk-icon-theme-name=breeze-dark$/gtk-icon-theme-name=HoltOS/' \
+        -e 's/^gtk-cursor-theme-name=breeze_cursors$/gtk-cursor-theme-name=HoltOS/' "$gtk"
+done
+# The HoltOS cursor, for accounts still on Breeze's (or with none set).
+case "$(kreadconfig6 --file "$CFG/kcminputrc" --group Mouse --key cursorTheme)" in
+    ""|breeze_cursors)
+        kwriteconfig6 --file "$CFG/kcminputrc" --group Mouse --key cursorTheme HoltOS ;;
 esac
 
 qdbus6 org.kde.KWin /KWin reconfigure >/dev/null 2>&1 || true

@@ -11,7 +11,7 @@ smallestReadableFont=Nunito,8,-1,5,400,0,0,0,0,0
 fixed=JetBrains Mono,10,-1,5,400,0,0,0,0,0
 
 [kdeglobals][Icons]
-Theme=breeze-dark
+Theme=HoltOS
 
 [plasmarc][Theme]
 name=holtos-glass
@@ -20,7 +20,7 @@ name=holtos-glass
 Image=HoltOS-Neon-OtterNight
 
 [kcminputrc][Mouse]
-cursorTheme=breeze_cursors
+cursorTheme=HoltOS
 
 [kwinrc][org.kde.kdecoration2]
 library=org.holtos.glass

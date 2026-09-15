@@ -1,4 +1,4 @@
-"""Flathub web API client for HoltOS Apps: collections, categories, search, app details, permission warnings and cached media. Standard library only, so it runs in worker threads. Every response is cached on disk; when the network is down the last cached copy is used."""
+"""Flathub web API client for Stash: collections, categories, search, app details, permission warnings and cached media. Standard library only, so it runs in worker threads. Every response is cached on disk; when the network is down the last cached copy is used."""
 
 import hashlib
 from html.parser import HTMLParser

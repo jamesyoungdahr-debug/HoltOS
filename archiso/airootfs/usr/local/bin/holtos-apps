@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""HoltOS Apps: the app store.
+"""Stash: the app store.
 
 Browse HoltOS's picks and Flathub's collections and categories, search
 Flathub, open an app's page (screenshots, permissions, sizes, release notes),
@@ -66,7 +66,7 @@ def app_from_argument(arg):
                 basename = os.path.basename(parsed.path)
                 id_ = basename.rsplit(".flatpakref", 1)[0]
             else:
-                return (None, "HoltOS Apps installs apps from Flathub only.")
+                return (None, "Stash installs apps from Flathub only.")
         else:
             # Local path
             local_path = arg
@@ -100,7 +100,7 @@ def app_from_argument(arg):
                         url = value
 
             if not url or not url.startswith(FLATHUB_REPO):
-                return (None, "HoltOS Apps installs apps from Flathub only.")
+                return (None, "Stash installs apps from Flathub only.")
             id_ = name
 
     # Validate the app ID
@@ -117,7 +117,7 @@ class AppsWindow(QWidget):
     def __init__(self, start_updates=False, open_id=None):
         super().__init__()
 
-        self.setWindowTitle("HoltOS Apps")
+        self.setWindowTitle("Stash")
         self.setWindowIcon(QIcon(ICON_PATH))
         self.resize(1080, 760)
 
@@ -273,7 +273,7 @@ def main():
             continue
         open_id, error = app_from_argument(arg)
         if error:
-            QMessageBox.warning(None, "HoltOS Apps", error)
+            QMessageBox.warning(None, "Stash", error)
             break
 
     window = AppsWindow(start_updates, open_id)

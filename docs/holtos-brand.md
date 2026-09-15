@@ -13,7 +13,7 @@ under `archiso/airootfs/` in this repo.
 
 - **Name:** HoltOS, one word.
 - **What it is:** an Arch-based distro for media and gaming at home. Steam with
-  Proton and Proton GE, a gamescope Game Mode, HoltOS Apps from Flathub, The Den
+  Proton and Proton GE, a gamescope Game Mode, Stash from Flathub, The Den
   for movies and TV, and KDE Plasma dressed as glass.
 - **Tagline:** "Media-first Arch", set in mono, uppercase and teal under the
   wordmark.
@@ -33,7 +33,7 @@ by scripts, and shown next to it for review.
   two small lime sparks. Render: concept C, seed 4202; app icon seed 4301.
 - **Symbolic mark:** the same head as a white one-colour glyph for the tray
   and small sizes (seed 4401).
-- **HoltOS Apps icon** (2026-09-15, Liam's pick): a rounded glass tile with
+- **Stash icon** (2026-09-15, Liam's pick): a rounded glass tile with
   the magenta-to-blue neon rim, a grid of glowing app squares in purple,
   teal, electric blue and lilac, and a long purple otter curving through the
   grid (flat head, low ears, long body and tail), with lime sparks. Render:
@@ -52,6 +52,20 @@ by scripts, and shown next to it for review.
   `usr/share/holtos/brand/holtos-otter-{happy,idle,alert}-{1024,512}.png` from
   `tools/brand/derive_expressions.py`. They replace The Den's hand-drawn React
   expressions, which still show the old otter.
+- **Icons** (2026-09-15, Liam's pick of style concept 1, seed 7101): each icon
+  is a rounded glass tile (holt-surface, magenta-to-blue neon rim) holding one
+  flat purple symbol with lilac highlights. Rendered per icon on ComfyUI
+  (seeds 8001-8013), built into the `HoltOS` icon theme by
+  `tools/brand/derive_icon_theme.py`, which falls back to Breeze. Only
+  HoltOS-owned and KDE system icons are drawn; third-party app logos are left
+  as their makers made them.
+- **Cursor** (2026-09-15, style concept 3, seed 7201): deep purple shapes with
+  a pale lilac edge, a lime spark by the arrow, an amber forbidden sign and a
+  purple-to-teal busy ring. Rendered per shape on chroma green (seeds
+  8101-8108, 8203, 8205) and built into Xcursor files by
+  `tools/brand/derive_cursor_theme.py` (falls back to breeze_cursors).
+- **Store name:** **Stash**, Liam's pick (2026-09-15): otters keep a favourite
+  pebble in a pocket under their arm.
 - **Full-body otter**, for the login screen and illustration: standing, long
   slender body, webbed feet, long tapered tail, the same neon rim. Render:
   seed 7301 #2. Otters have wide flat heads, ears low on the sides and long
@@ -265,7 +279,7 @@ clamp so white text keeps 4.5:1 (milestones G8 and G9 in
 | Desktop, HoltOS Classic | the old single bottom panel on plain glass; Plasma style `holtos-glass-classic` | look-and-feel `org.holtos.classic.desktop` |
 | GTK apps | opaque twin of the colours (GTK cannot blur yet) | `etc/skel/.config/gtk-3.0/gtk.css` |
 | Installer (Calamares) | deep ground, surface sidebar with the current step in purple, raised inputs | `etc/calamares/branding/holtos/` |
-| HoltOS apps | HoltOS Updates, HoltOS Apps, Gaming, Network Shares and the tray, all with `holtos-logo` | `usr/share/applications/` |
+| HoltOS apps | HoltOS Updates, Stash, Gaming, Network Shares and the tray, all with `holtos-logo` | `usr/share/applications/` |
 | The Den | web UI, KDE client and Android app from the shared tokens | the-den repos |
 
 ## 9. Known gaps
