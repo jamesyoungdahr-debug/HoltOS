@@ -18,6 +18,14 @@ Neon rebrand (next major release):
   next login; their old panels are kept as `*.before-neon-layout`.
 - GTK apps show their menus in the top bar (`appmenu-gtk-module`).
 - **Smaller title bar buttons and dock icons** for a less cluttered look.
+- **Glass installer:** the installer window is frosted glass like the rest of
+  HoltOS; its top bar and step list stay solid so they stay readable.
+- **Drivers for hardware added later:** every update checks the machine's
+  hardware. An NVIDIA graphics card or a Broadcom Wi-Fi chip fitted after
+  installing gets its driver (NVIDIA also gets its boot settings), the
+  drivers then update with the system, and HoltOS asks for a restart when a
+  new driver needs one. What was found is logged in
+  `/var/lib/holtos/hardware.log`.
 - **Every HoltOS tool uses the new otter logo** (Updates, Apps, Gaming,
   Network Shares, the snapshot and rollback tools, notices). The old
   hand-drawn logos are removed from installed systems, so the old otter can no

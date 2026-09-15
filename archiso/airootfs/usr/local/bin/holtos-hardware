@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+# Which drivers this machine's hardware needs, from the rules in
+# /usr/share/holtos/hardware-drivers.conf (format documented there).
+# Used by the installer (homelab-detect-hardware.sh) and by every update
+# (holtos-system-extras), so both agree on what a machine needs.
+#
+#   holtos-hardware needed         packages the hardware needs, one per line:
+#                                  "<package><TAB><description>"
+#   holtos-hardware missing        the same, only packages not installed
+#   holtos-hardware log <file>     append what was detected to <file>
+#
+# Testing without the hardware: HOLTOS_HW_FIXTURE=<dir> reads <dir>/lspci
+# (output of `lspci -n`), <dir>/lsusb (output of `lsusb`), <dir>/cpuinfo,
+# and looks up sysfs globs under <dir> (so /sys/bus/iio/... becomes
+# <dir>/sys/bus/iio/...). HOLTOS_HW_RULES overrides the rules file.
+set -uo pipefail
+
+RULES="${HOLTOS_HW_RULES:-/usr/share/holtos/hardware-drivers.conf}"
+FIXTURE="${HOLTOS_HW_FIXTURE:-}"
+
+pci_list() { if [ -n "$FIXTURE" ]; then cat "$FIXTURE/lspci" 2>/dev/null; else lspci -n 2>/dev/null; fi; }
+
+usb_list() { if [ -n "$FIXTURE" ]; then cat "$FIXTURE/lsusb" 2>/dev/null; else lsusb 2>/dev/null; fi; }
+
+cpu_vendor() {
+    local file="/proc/cpuinfo"
+    [ -n "$FIXTURE" ] && file="$FIXTURE/cpuinfo"
+    awk -F': *' '/^vendor_id/ {print $2; exit}' "$file" 2>/dev/null
+}
+
+match_pci() {
+    local match="$1" ids prefix vendor devices slot class vd dev_vendor dev_id
+    ids="${match%@*}"; prefix="${match#*@}"
+    vendor="${ids%%:*}"; devices="${ids#*:}"
+    while read -r slot class vd _; do
+        class="${class%:}"
+        vd="${vd,,}"
+        dev_vendor="${vd%%:*}"; dev_id="${vd#*:}"
+        [ "$dev_vendor" = "$vendor" ] || continue
+        [[ "$class" == "$prefix"* ]] || continue
+        if [ "$devices" = "*" ] || [[ ",$devices," == *",$dev_id,"* ]]; then
+            return 0
+        fi
+    done < <(pci_list)
+    return 1
+}
+
+match_usb() {
+    local match="$1" line id item
+    while read -r line; do
+        id="$(awk '{for (i = 1; i < NF; i++) if ($i == "ID") {print tolower($(i + 1)); exit}}' <<< "$line")"
+        [ -n "$id" ] || continue
+        for item in ${match//,/ }; do
+            # shellcheck disable=SC2053
+            [[ "$id" == $item ]] && return 0
+        done
+    done < <(usb_list)
+    return 1
+}
+
+match_cpu() { [ "$(cpu_vendor)" = "$1" ]; }
+
+match_sysfs() { compgen -G "${FIXTURE}$1" >/dev/null; }
+
+needed() {
+    local line kind match packages description pkg
+    declare -A seen=()
+    while IFS= read -r line; do
+        [[ "$line" =~ ^[[:space:]]*(#|$) ]] && continue
+        read -r kind match packages description <<< "$line"
+        case "$kind" in
+            pci) match_pci "$match" || continue ;;
+            usb) match_usb "$match" || continue ;;
+            cpu) match_cpu "$match" || continue ;;
+            sysfs) match_sysfs "$match" || continue ;;
+            *) continue ;;
+        esac
+        for pkg in ${packages//,/ }; do
+            [ -n "${seen[$pkg]:-}" ] && continue
+            seen[$pkg]=1
+            printf '%s\t%s\n' "$pkg" "$description"
+        done
+    done < "$RULES"
+}
+
+missing() {
+    local pkg desc
+    needed | while IFS=$'\t' read -r pkg desc; do
+        pacman -Q "$pkg" >/dev/null 2>&1 || printf '%s\t%s\n' "$pkg" "$desc"
+    done
+}
+
+log_to() {
+    local file="$1" out
+    mkdir -p "$(dirname "$file")"
+    {
+        echo "# HoltOS hardware check, $(date -u +%FT%TZ)"
+        echo "## Display controllers"; pci_list | awk '$2 ~ /^03/'
+        echo "## Network controllers"; pci_list | awk '$2 ~ /^02/'
+        echo "## Audio"; pci_list | awk '$2 ~ /^040/'
+        echo "## CPU vendor: $(cpu_vendor)"
+        echo "## Drivers this hardware needs"
+        out="$(needed)"; [ -n "$out" ] && sed 's/^/  /' <<< "$out" || echo "  none"
+        echo "## Of those, not installed"
+        out="$(missing)"; [ -n "$out" ] && sed 's/^/  /' <<< "$out" || echo "  none"
+    } >> "$file"
+}
+
+case "${1:-}" in
+    needed|missing|log)
+        if [ ! -f "$RULES" ]; then echo "holtos-hardware: no rules file at $RULES" >&2; exit 1; fi ;;
+esac
+case "${1:-}" in
+    needed) needed ;;
+    missing) missing ;;
+    log) [ -n "${2:-}" ] || { echo "usage: holtos-hardware log <file>" >&2; exit 2; }; log_to "$2" ;;
+    *) echo "usage: holtos-hardware needed|missing|log <file>" >&2; exit 2 ;;
+esac

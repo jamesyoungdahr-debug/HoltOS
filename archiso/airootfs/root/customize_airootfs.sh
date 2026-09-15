@@ -101,9 +101,12 @@ install -m 644 /etc/os-release /usr/lib/os-release
         "$NAME" "$VERSION_ID" "$PRETTY_NAME" > /etc/lsb-release
 )
 
-# Stage the NVIDIA driver packages on the ISO WITHOUT installing them:
-# homelab-detect-hardware.sh installs them into the target at install
-# time only if an NVIDIA GPU is present (no network needed then). The
+# Stage the hardware-specific driver packages on the ISO WITHOUT installing
+# them: every package named in /usr/share/holtos/hardware-drivers.conf
+# (NVIDIA, Broadcom Wi-Fi, laptop audio firmware, sensors, fingerprint
+# readers...), indexed as a small local repo so the installer can resolve
+# their dependencies offline. homelab-detect-hardware.sh installs only the
+# ones the install target's hardware needs (holtos-hardware). The
 # dependency set is resolved against THIS image, so nothing already in
 # packages.x86_64 is duplicated. The [homelab] local repo is only
 # reachable at build time from the host, so the download uses a
@@ -116,18 +119,22 @@ install -m 644 /etc/os-release /usr/lib/os-release
 # space" (this exact failure killed a build on 2026-09-11), and
 # DownloadUser goes with it so the download runs as root and can write
 # to the root-owned staging dir.
-echo "==> Staging NVIDIA driver packages for install-time detection..."
+echo "==> Staging hardware driver packages for install-time detection..."
 sed -e '/^\[homelab\]/,$d' \
     -e 's/^SigLevel .*/SigLevel = Never/' \
     -e 's/^LocalFileSigLevel .*/LocalFileSigLevel = Never/' \
     -e '/^CheckSpace/d' \
     -e '/^DownloadUser/d' \
     /etc/pacman.conf > /tmp/pacman-stage.conf
-mkdir -p /usr/share/holtos/drivers/nvidia
-pacman -Syw --noconfirm --config /tmp/pacman-stage.conf \
-    --cachedir /usr/share/holtos/drivers/nvidia nvidia-open-dkms nvidia-utils lib32-nvidia-utils
-rm -f /usr/share/holtos/drivers/nvidia/*.sig /tmp/pacman-stage.conf
-echo "    staged: $(ls /usr/share/holtos/drivers/nvidia | tr '\n' ' ')"
+driver_packages="$(awk '!/^[[:space:]]*#/ && NF >= 3 { print $3 }' /usr/share/holtos/hardware-drivers.conf | tr ',' '\n' | sort -u | tr '\n' ' ')"
+mkdir -p /usr/share/holtos/drivers
+# shellcheck disable=SC2086
+pacman -Syw --noconfirm --needed --config /tmp/pacman-stage.conf \
+    --cachedir /usr/share/holtos/drivers $driver_packages
+rm -f /usr/share/holtos/drivers/*.sig /tmp/pacman-stage.conf
+repo-add -q /usr/share/holtos/drivers/holtos-drivers.db.tar.gz /usr/share/holtos/drivers/*.pkg.tar.zst
+echo "    staged for: $driver_packages"
+echo "    files: $(ls /usr/share/holtos/drivers | wc -l)"
 
 # Install The Den + The Den Client from the release trees build-vendor-apps.sh
 # staged under /opt/holtos-vendor (see that script). Runs the same install

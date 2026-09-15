@@ -39,34 +39,56 @@ mkdir -p /var/lib/holtos
 
 : > "$CMDLINE_EXTRA"
 
-# --- NVIDIA -------------------------------------------------------------
-if lspci -n -d 10de: 2>/dev/null | grep -qE ' 03(00|02|80): '; then
-    echo "## NVIDIA GPU present" >> "$LOG"
-    if compgen -G "$DRIVERS/nvidia/*.pkg.tar.zst" > /dev/null; then
-        echo "==> NVIDIA GPU detected — installing the staged driver packages (DKMS build follows)..."
-        # Local files: pacman.conf's LocalFileSigLevel is Optional, so no
-        # keyring is needed for these (they came from the official mirrors
-        # over HTTPS at image-build time).
-        pacman -U --noconfirm --needed "$DRIVERS"/nvidia/*.pkg.tar.zst 2>&1 | tail -20
-        echo "installed: $(pacman -Q nvidia-open-dkms nvidia-utils 2>&1 | tr '\n' ' ')" >> "$LOG"
-        # KMS is what Wayland/Plasma need from the nvidia driver; the
-        # bootloader script appends this to the kernel command line.
-        echo "nvidia_drm.modeset=1" >> "$CMDLINE_EXTRA"
-        echo "cmdline: nvidia_drm.modeset=1" >> "$LOG"
-        # modeset=1 alone leaves simpledrm contending for the console
-        # framebuffer on NVIDIA; fbdev=1 hands it over cleanly. Needed for
-        # gamescope/Game Mode to behave well on NVIDIA (CachyOS ships the
-        # same file for the same reason).
-        cat > /etc/modprobe.d/nvidia-drm.conf <<'EOF'
+# --- Drivers this machine's hardware needs ------------------------------
+# The rules in /usr/share/holtos/hardware-drivers.conf decide (holtos-hardware,
+# the same check every update runs); the packages come from the local repo
+# staged on the ISO by customize_airootfs.sh, so no network is needed.
+# Liam, 2026-09-14: check the install target's hardware and provide working
+# drivers, not just NVIDIA.
+needed=""
+if [ -x /usr/local/bin/holtos-hardware ] && [ -f "$DRIVERS/holtos-drivers.db.tar.gz" ]; then
+    needed="$(/usr/local/bin/holtos-hardware missing | cut -f1 | tr '\n' ' ')"
+    echo "## Drivers this hardware needs: ${needed:-none}" >> "$LOG"
+    if [ -n "${needed// /}" ]; then
+        echo "==> Installing drivers for this machine: $needed"
+        cat > /tmp/pacman-drivers.conf <<EOF
+[options]
+Architecture = auto
+SigLevel = Never
+LocalFileSigLevel = Never
+
+[holtos-drivers]
+Server = file://$DRIVERS
+EOF
+        # shellcheck disable=SC2086
+        pacman -Sy --noconfirm --needed --config /tmp/pacman-drivers.conf $needed 2>&1 | tail -20 || \
+            echo "WARNING: installing drivers failed: $needed" | tee -a "$LOG" >&2
+        rm -f /tmp/pacman-drivers.conf /var/lib/pacman/sync/holtos-drivers.db /var/lib/pacman/sync/holtos-drivers.files
+        echo "installed: $(pacman -Q $needed 2>&1 | tr '\n' ' ')" >> "$LOG"
+    fi
+    case " $needed " in
+        *" thermald "*) systemctl enable thermald.service >/dev/null 2>&1 || true ;;
+    esac
+else
+    echo "WARNING: no holtos-hardware or no staged driver repo under $DRIVERS — image built without them?" | tee -a "$LOG" >&2
+fi
+
+# --- NVIDIA boot settings ------------------------------------------------
+if pacman -Q nvidia-utils >/dev/null 2>&1; then
+    echo "## NVIDIA driver installed" >> "$LOG"
+    # KMS is what Wayland/Plasma need from the nvidia driver; the
+    # bootloader script appends this to the kernel command line.
+    echo "nvidia_drm.modeset=1" >> "$CMDLINE_EXTRA"
+    echo "cmdline: nvidia_drm.modeset=1" >> "$LOG"
+    # modeset=1 alone leaves simpledrm contending for the console
+    # framebuffer on NVIDIA; fbdev=1 hands it over cleanly. Needed for
+    # gamescope/Game Mode to behave well on NVIDIA (CachyOS ships the
+    # same file for the same reason).
+    cat > /etc/modprobe.d/nvidia-drm.conf <<'EOF'
 options nvidia_drm modeset=1
 options nvidia_drm fbdev=1
 EOF
-        echo "wrote: /etc/modprobe.d/nvidia-drm.conf (modeset=1 fbdev=1)" >> "$LOG"
-    else
-        echo "WARNING: NVIDIA GPU detected but no staged packages under $DRIVERS/nvidia — image built without them?" | tee -a "$LOG" >&2
-    fi
-else
-    echo "## No NVIDIA GPU — nothing to install" >> "$LOG"
+    echo "wrote: /etc/modprobe.d/nvidia-drm.conf (modeset=1 fbdev=1)" >> "$LOG"
 fi
 
 # --- AMD / Intel (Mesa is in the image; nothing to install) --------------

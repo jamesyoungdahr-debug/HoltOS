@@ -61,6 +61,56 @@ missing_z13() {
     done
 }
 
+# Drivers for this machine's hardware (rules in
+# /usr/share/holtos/hardware-drivers.conf, read by holtos-hardware). The
+# installer installs them from the ISO; every update installs any that are
+# missing, such as for an NVIDIA card fitted later, and they then update with
+# the system (Liam, 2026-09-14: check the hardware and provide working
+# drivers, not just NVIDIA).
+HARDWARE_LOG=/var/lib/holtos/hardware.log
+CMDLINE_EXTRA=/var/lib/holtos/kernel-cmdline-extra
+
+missing_drivers() {
+    [ -x /usr/local/bin/holtos-hardware ] || return 0
+    /usr/local/bin/holtos-hardware missing 2>/dev/null | cut -f1
+}
+
+# After the NVIDIA driver is first installed on a running system: the same
+# settings the installer writes, and the kernel option added to the existing
+# boot entries (homelab-limine-sync.sh copies kernels but never rewrites the
+# entries).
+setup_nvidia() {
+    local esp conf
+    cat > /etc/modprobe.d/nvidia-drm.conf <<'EOF'
+options nvidia_drm modeset=1
+options nvidia_drm fbdev=1
+EOF
+    mkdir -p "$(dirname "$CMDLINE_EXTRA")"
+    grep -qx 'nvidia_drm.modeset=1' "$CMDLINE_EXTRA" 2>/dev/null || echo 'nvidia_drm.modeset=1' >> "$CMDLINE_EXTRA"
+    for esp in /boot/efi /efi /boot; do
+        for conf in "$esp/EFI/limine/limine.conf" "$esp/EFI/BOOT/limine.conf"; do
+            [ -f "$conf" ] || continue
+            sed -i '/^[[:space:]]*cmdline:.*root=/{/nvidia_drm\.modeset=1/!s/$/ nvidia_drm.modeset=1/}' "$conf"
+        done
+    done
+}
+
+setup_drivers() {   # the driver packages just installed
+    local installed=" $* "
+    case "$installed" in
+        *" nvidia-utils "*|*" nvidia-open-dkms "*) setup_nvidia ;;
+    esac
+    case "$installed" in
+        *" thermald "*) systemctl enable --now thermald.service >/dev/null 2>&1 || true ;;
+    esac
+    # Kernel modules and firmware load at the next boot.
+    case "$installed" in
+        *" nvidia-open-dkms "*|*" broadcom-wl-dkms "*|*" sof-firmware "*)
+            echo "new drivers were installed ($(echo "$*" | tr ' ' ','))" > /run/holtos-reboot-required
+            echo "==> New drivers installed; restart to use them" ;;
+    esac
+}
+
 # Only HoltOS wallpapers: the same pacman NoExtract rule the image ships,
 # and removal of other packages' wallpapers already on the system (KDE's
 # extra wallpapers, Breeze's "Next").
@@ -138,7 +188,7 @@ remove_old_logo() {
 
 case "${1:-}" in
 check)
-    missing="$(missing_required; missing_z13)"
+    missing="$(missing_required; missing_z13; missing_drivers)"
     [ -n "$missing" ] || exit 1
     echo "$missing"
     exit 0
@@ -154,7 +204,10 @@ apply)
     remove_old_logo
     required="$(missing_required)"
     z13="$(missing_z13)"
-    if [ -z "$required" ] && [ -z "$z13" ]; then
+    drivers="$(missing_drivers | tr '\n' ' ')"
+    drivers="${drivers% }"
+    [ -x /usr/local/bin/holtos-hardware ] && /usr/local/bin/holtos-hardware log "$HARDWARE_LOG" 2>/dev/null
+    if [ -z "$required" ] && [ -z "$z13" ] && [ -z "$drivers" ]; then
         echo "==> No HoltOS components missing"
         exit 0
     fi
@@ -162,11 +215,16 @@ apply)
     # A full -Syu with the new packages, never a bare -S: installing against
     # a refreshed database without upgrading is a partial upgrade on Arch.
     # shellcheck disable=SC2086
-    if ! pacman -Syu --noconfirm --needed $required $z13; then
+    if ! pacman -Syu --noconfirm --needed $required $z13 $drivers; then
         echo "==> Installing HoltOS components failed" >&2
         exit 1
     fi
     [ -n "$required" ] && echo "==> Installed packages this HoltOS release needs: $(echo $required)"
+    if [ -n "$drivers" ]; then
+        echo "==> Installed drivers for this machine's hardware: $drivers"
+        # shellcheck disable=SC2086
+        setup_drivers $drivers
+    fi
     if [ -n "$z13" ]; then
         echo "==> ASUS ROG Flow Z13 (2025) detected; setting up its controls"
         z13ctl setup || { echo "==> WARNING: z13ctl setup failed; run 'sudo z13ctl setup' after a reboot" >&2; rc=1; }
