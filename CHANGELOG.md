@@ -5,6 +5,15 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.0.7f-alpha] - 2026-09-15
+
+- **Fixed: the built-in microphones on the ASUS ROG Flow Z13 (2025).** The
+  Z13's firmware tells Linux its microphones are switched off, so only a
+  hissing, empty input was left. HoltOS now installs a small driver fix
+  (`holtos-acp-mic-dkms`) on the Z13 with this update. Restart once it has
+  installed; the built-in microphone then appears in the sound settings.
+  Other computers are not affected.
+
 ## [0.0.7e-alpha] - 2026-09-15
 
 - **New: dev update channel.** HoltOS Updates > Settings > Update channel.

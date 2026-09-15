@@ -61,6 +61,21 @@ missing_z13() {
     done
 }
 
+# The Z13's built-in microphones (2026-09-15): its firmware hides them from
+# Linux, and holtos-acp-mic-dkms rebuilds the AMD audio module with a quirk
+# for the GZ302. DKMS builds it against the kernel headers. Its own switch,
+# ASUS_Z13_2025_MIC, so it can be turned off without touching z13ctl.
+Z13_MIC_PACKAGES="holtos-acp-mic-dkms linux-headers"
+
+missing_z13_mic() {
+    local pkg
+    model_enabled ASUS_Z13_2025_MIC || return 0
+    is_asus_z13_2025 || return 0
+    for pkg in $Z13_MIC_PACKAGES; do
+        pacman -Q "$pkg" >/dev/null 2>&1 || echo "$pkg"
+    done
+}
+
 # Only HoltOS wallpapers: the same pacman NoExtract rule the image ships,
 # and removal of other packages' wallpapers already on the system (KDE's
 # extra wallpapers, Breeze's "Next").
@@ -90,7 +105,7 @@ fix_os_identity() {
 
 case "${1:-}" in
 check)
-    missing="$(missing_required; missing_z13)"
+    missing="$(missing_required; missing_z13; missing_z13_mic)"
     [ -n "$missing" ] || exit 1
     echo "$missing"
     exit 0
@@ -104,7 +119,8 @@ apply)
     fix_os_identity
     required="$(missing_required)"
     z13="$(missing_z13)"
-    if [ -z "$required" ] && [ -z "$z13" ]; then
+    mic="$(missing_z13_mic)"
+    if [ -z "$required" ] && [ -z "$z13" ] && [ -z "$mic" ]; then
         echo "==> No HoltOS components missing"
         exit 0
     fi
@@ -112,7 +128,7 @@ apply)
     # A full -Syu with the new packages, never a bare -S: installing against
     # a refreshed database without upgrading is a partial upgrade on Arch.
     # shellcheck disable=SC2086
-    if ! pacman -Syu --noconfirm --needed $required $z13; then
+    if ! pacman -Syu --noconfirm --needed $required $z13 $mic; then
         echo "==> Installing HoltOS components failed" >&2
         exit 1
     fi
@@ -126,6 +142,9 @@ apply)
             usermod -aG users "$user"
         done
         echo "==> Z13 controls installed; log out and back in to start them"
+    fi
+    if [ -n "$mic" ]; then
+        echo "==> ASUS ROG Flow Z13 (2025) microphone fix installed; restart the computer to use the built-in microphones"
     fi
     exit "$rc"
     ;;
