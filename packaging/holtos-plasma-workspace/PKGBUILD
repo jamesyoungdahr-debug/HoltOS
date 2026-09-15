@@ -1,11 +1,14 @@
 # HoltOS Plasma Workspace — the plasma-workspace fork HoltOS owns (fork of KDE's
 # plasma-workspace at github.com/jamesyoungdahr-debug/holtos-plasma-workspace, branch
-# "holtos", pinned off tag v6.7.5). This builds a vanilla Plasma workspace so HoltOS
-# can eventually customize the Plasma shell/panel/Kirigami chrome directly.
+# "holtos", pinned off tag v6.7.5). The source is still upstream; the only
+# HoltOS change so far is packaging: package() drops Breeze's three
+# look-and-feel packages, because HoltOS ships only its own themes. The HoltOS
+# themes live in the image under /usr/share/plasma/look-and-feel and carry the
+# logout dialog Breeze's package used to provide.
 pkgname=holtos-plasma-workspace
 pkgver=6.7.5.r${HOLTOS_REV:-0}
 pkgrel=1
-pkgdesc="HoltOS's fork of plasma-workspace (Milestone 1: vanilla build, no HoltOS customization yet)"
+pkgdesc="HoltOS's fork of plasma-workspace"
 arch=(x86_64)
 url="https://github.com/jamesyoungdahr-debug/holtos-plasma-workspace"
 license=(GPL-2.0-or-later GPL-3.0-or-later LGPL-2.1-or-later)
