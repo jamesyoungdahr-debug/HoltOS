@@ -438,7 +438,10 @@ install_pkgbuild_depends() {
     [ "${#deps[@]}" -gt 0 ] || return 0
     local d
     for d in "${deps[@]}"; do
-        pacman -Qq "$d" >/dev/null 2>&1 || missing+=("$d")
+        # pacman -T resolves provides (holtos-kirigami satisfies kirigami);
+        # pacman -Qq only matches installed package names, which made the
+        # update try to install the stock package over the HoltOS fork.
+        pacman -T "$d" >/dev/null 2>&1 || missing+=("$d")
     done
     [ "${#missing[@]}" -gt 0 ] || return 0
     if ! booted; then

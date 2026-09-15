@@ -211,8 +211,8 @@ samba
 wsdd
 qt6-declarative
 libtorrent-rasterbar
-kirigami
-qqc2-desktop-style
+holtos-kirigami
+holtos-qqc2-desktop-style
 
 # HoltOS Glass windows: Kvantum is the one Qt widget style that can make
 # application windows translucent and ask KWin to blur behind them
@@ -230,6 +230,7 @@ holtos-window-decoration
 # HoltOS's own full builds of KWin and plasma-workspace (Milestone 1 of docs/holtos-plasma-fork-plan.md) -- provides=()/conflicts=() in their PKGBUILDs replace the stock extra/ versions; no HoltOS customization in them yet, this just proves the build pipeline works.
 holtos-kwin
 holtos-plasma-workspace
+holtos-plasma-integration
 
 # Hardware support that is safe on every machine (see
 # usr/local/bin/holtos-detect-hardware.sh for the one that is not: NVIDIA).

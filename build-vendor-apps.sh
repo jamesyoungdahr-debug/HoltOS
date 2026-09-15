@@ -60,8 +60,13 @@ for app in "${APPS[@]}"; do
     if [ -f "$VENDOR_DIR/$app/PKGBUILD" ]; then
         while read -r dep; do
             [ -n "$dep" ] || continue
-            if ! grep -qxF "$dep" archiso/packages.x86_64; then
-                echo "build-vendor-apps: $app $tag depends on '$dep' but archiso/packages.x86_64 does not list it — add it and rebuild" >&2
+            # A HoltOS fork listed in the image counts when its PKGBUILD
+            # provides the dependency (holtos-kirigami provides kirigami).
+            if ! grep -qxF "$dep" archiso/packages.x86_64 \
+                && ! grep -lE "^provides=\((.*[[:space:]'\"])?['\"]?${dep}(=|\)|[[:space:]'\"])" packaging/*/PKGBUILD 2>/dev/null \
+                    | sed -e 's|^packaging/||' -e 's|/PKGBUILD$||' \
+                    | grep -qxFf - archiso/packages.x86_64; then
+                echo "build-vendor-apps: $app $tag depends on '$dep' but archiso/packages.x86_64 does not list it or a package providing it — add it and rebuild" >&2
                 exit 1
             fi
         done < <(awk '/^depends=\(/ { f = 1 } f { print } f && /\)/ { f = 0 }' "$VENDOR_DIR/$app/PKGBUILD" \
