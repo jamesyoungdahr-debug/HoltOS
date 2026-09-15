@@ -5,6 +5,8 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.0.7j-alpha] - 2026-09-15
+
 - **KRunner can search your files again.** Its file-search runner is only
   built when Baloo is present, and Baloo was missing from the image, so
   searching from Alt+Space found no files. Baloo is installed now.
