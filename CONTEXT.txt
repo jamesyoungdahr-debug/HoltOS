@@ -8,8 +8,9 @@ NEON REBRAND STATUS (branch neon-rebrand, next major release; 2026-09-14)
 Done and pushed: new otter logo and derived icons; glass menu bar + neon-rim
 dock (holtos-glass Plasma style) and HoltOS Classic; only HoltOS themes ship;
 boot/login/splash/installer art from ComfyUI; brand guide; old logos removed
-on update; glass installer (`pkexec calamares -style kvantum`, QML bars stay
-opaque); hardware drivers for installer and
+on update; glass installer PARKED (with `-style kvantum` under pkexec/X11
+the QML top bar draws blank, so the ISO keeps the opaque installer; see
+LIVETEST.md, test on bare metal); hardware drivers for installer and
 updater (usr/share/holtos/hardware-drivers.conf + holtos-hardware, staged
 holtos-drivers repo on the ISO). Merged master through v0.0.7d-alpha.
 Rebrand ISO built once (out/holtos-0.0.7c-alpha-x86_64.iso, before the glass

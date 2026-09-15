@@ -33,8 +33,6 @@ Neon rebrand (next major release):
   Updating renames the section in `pacman.conf`; the repository is published
   under both names for a while, so installs that have not updated yet keep
   getting HoltOS packages.
-- **Glass installer:** the installer window is frosted glass like the rest of
-  HoltOS; its top bar and step list stay solid so they stay readable.
 - **Drivers for hardware added later:** every update checks the machine's
   hardware. An NVIDIA graphics card or a Broadcom Wi-Fi chip fitted after
   installing gets its driver (NVIDIA also gets its boot settings), the

@@ -35,6 +35,13 @@ Do section 1 first; most of the rest depends on it.
   file.
 - [ ] Chinese, Japanese and Korean text shows in the menu bar's app menus
   and the tray (not only in Steam).
+- [ ] **Parked: glass installer.** Started as `pkexec calamares -style
+  kvantum`, the page area is glass but the top bar (Back, logo, Cancel,
+  Next) draws blank, so the rebrand ISO keeps the opaque installer for now.
+  Reproduced in the VM with a pkexec-like environment (X11, bare root
+  env); removing QtQuick Controls from calamares-navigation.qml did not fix
+  it. The glass stylesheet is in git (commit 7584599). To try on bare
+  metal: the root installer on Wayland, or a non-QML top bar.
 
 ## 0.0.7d-alpha: Switch to Desktop through SteamOS Manager (Z13 first, then 4090)
 
