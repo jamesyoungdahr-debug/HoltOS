@@ -62,6 +62,17 @@ match_cpu() { [ "$(cpu_vendor)" = "$1" ]; }
 
 match_sysfs() { compgen -G "${FIXTURE}$1" >/dev/null; }
 
+# match_dmi FIELD=GLOB — a file in /sys/class/dmi/id (board_name,
+# product_name, sys_vendor, ...) whose content matches the shell glob, for
+# fixes that belong to one laptop model (2026-09-15: the ROG Flow Z13 mics).
+match_dmi() {
+    local field="${1%%=*}" glob="${1#*=}" value
+    [[ "$field" =~ ^[a-z_]+$ ]] || return 1
+    value="$(cat "${FIXTURE}/sys/class/dmi/id/$field" 2>/dev/null)" || return 1
+    # shellcheck disable=SC2053
+    [[ "$value" == $glob ]]
+}
+
 needed() {
     local line kind match packages description pkg
     declare -A seen=()
@@ -73,6 +84,7 @@ needed() {
             usb) match_usb "$match" || continue ;;
             cpu) match_cpu "$match" || continue ;;
             sysfs) match_sysfs "$match" || continue ;;
+            dmi) match_dmi "$match" || continue ;;
             *) continue ;;
         esac
         for pkg in ${packages//,/ }; do
