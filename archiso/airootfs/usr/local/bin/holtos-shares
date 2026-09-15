@@ -7,20 +7,30 @@ goes through `pkexec holtos-share ...` (one authentication prompt per
 change), same pattern as the updater. Those calls run in the background, so
 a slow or unreachable server never freezes the window. PySide6, like
 holtos-tray, so it wears the HoltOS Glass theme like every other Qt window.
+The "Add a network share" dialog can browse the local network (mDNS and
+NetBIOS) for servers and their shares, without a password prompt. The
+"Share from this computer" tab shares folders on this computer with the
+local network through `pkexec holtos-samba`.
 """
+import getpass
+import os
+import re
+import socket
 import subprocess
 import sys
 
 from PySide6.QtCore import QObject, QProcess, Qt, QTimer
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
-    QApplication, QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFormLayout,
-    QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMainWindow, QMessageBox,
-    QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget,
+    QApplication, QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFileDialog,
+    QFormLayout, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListWidget,
+    QListWidgetItem, QMainWindow, QMessageBox, QPushButton, QTableWidget,
+    QTableWidgetItem, QVBoxLayout, QWidget, QTabWidget,
 )
 
 ICON_PATH = "/usr/share/icons/hicolor/256x256/apps/holtos-logo.png"
 BACKEND = "/usr/local/bin/holtos-share"
+SAMBA = "/usr/local/bin/holtos-samba"
 MOUNT_ROOT = "/mnt/shares"
 FIELDS = ["name", "type", "server", "path", "user", "ro", "auto", "mounted", "vers"]
 SMB_VERSIONS = [
@@ -54,7 +64,7 @@ class BackendCall(QObject):
     """Runs `pkexec holtos-share ...` without blocking the window: a mount
     can take up to 30 seconds, and finding an SMB version longer."""
 
-    def __init__(self, parent, args, stdin_text, on_done):
+    def __init__(self, parent, args, stdin_text, on_done, program=BACKEND):
         super().__init__(parent)
         self.on_done = on_done
         self.done = False
@@ -62,7 +72,7 @@ class BackendCall(QObject):
         self.process.setProcessChannelMode(QProcess.MergedChannels)
         self.process.finished.connect(self.finished)
         self.process.errorOccurred.connect(self.failed)
-        self.process.start("pkexec", [BACKEND, *args])
+        self.process.start("pkexec", [program, *args])
         if stdin_text is not None:
             self.process.write(stdin_text.encode())
         self.process.closeWriteChannel()
@@ -80,6 +90,164 @@ class BackendCall(QObject):
             self.done = True
             self.on_done(127, "Could not start pkexec.")
             self.deleteLater()
+
+
+class LocalCall(QObject):
+    """Runs `holtos-share ...` as the current user without blocking the
+    window. Used for browsing (no root needed)."""
+
+    def __init__(self, parent, args, stdin_text, on_done):
+        super().__init__(parent)
+        self.on_done = on_done
+        self.done = False
+        self.process = QProcess(self)
+        self.process.setProcessChannelMode(QProcess.MergedChannels)
+        self.process.finished.connect(self.finished)
+        self.process.errorOccurred.connect(self.failed)
+        self.process.start(BACKEND, list(args))
+        if stdin_text is not None:
+            self.process.write(stdin_text.encode())
+        self.process.closeWriteChannel()
+
+    def finished(self, code, _status):
+        if self.done:
+            return
+        self.done = True
+        out = bytes(self.process.readAll()).decode(errors="replace").strip()
+        self.on_done(code, out)
+        self.deleteLater()
+
+    def failed(self, error):
+        if error == QProcess.FailedToStart and not self.done:
+            self.done = True
+            self.on_done(127, "Could not start holtos-share.")
+            self.deleteLater()
+
+
+class BrowseDialog(QDialog):
+    def __init__(self, parent, user, password):
+        super().__init__(parent)
+        self.setWindowTitle("Browse the network")
+        self.setWindowIcon(QIcon(ICON_PATH))
+        self.setMinimumWidth(520)
+        layout = QVBoxLayout(self)
+
+        layout.addWidget(QLabel("Servers"))
+        self.servers = QListWidget()
+        layout.addWidget(self.servers)
+        self.server_status = QLabel()
+        self.server_status.setWordWrap(True)
+        layout.addWidget(self.server_status)
+
+        layout.addWidget(QLabel("Shares"))
+        self.share_list = QListWidget()
+        layout.addWidget(self.share_list)
+        self.share_status = QLabel("Pick a server to see its shares.")
+        self.share_status.setWordWrap(True)
+        layout.addWidget(self.share_status)
+
+        buttons = QDialogButtonBox()
+        self.rescan_btn = buttons.addButton("Search again", QDialogButtonBox.ActionRole)
+        self.ok_btn = buttons.addButton(QDialogButtonBox.Ok)
+        self.ok_btn.setText("Use this share")
+        self.ok_btn.setEnabled(False)
+        buttons.addButton(QDialogButtonBox.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        self.rescan_btn.clicked.connect(self.scan)
+        layout.addWidget(buttons)
+
+        self.user = user
+        self.password = password
+        self.request = 0
+        self.kind = ""
+        self.host = ""
+
+        self.servers.currentItemChanged.connect(self.list_shares)
+        self.share_list.currentItemChanged.connect(
+            lambda cur, _prev: self.ok_btn.setEnabled(cur is not None))
+
+        self.scan()
+
+    def scan(self):
+        # A share list still on its way belongs to the old results.
+        self.request += 1
+        self.servers.clear()
+        self.share_list.clear()
+        self.rescan_btn.setEnabled(False)
+        self.server_status.setText("Looking for servers on your network...")
+        LocalCall(self, ["browse"], None, self.scan_done)
+
+    def scan_done(self, rc, out):
+        self.rescan_btn.setEnabled(True)
+        if rc != 0:
+            self.server_status.setText(f"Could not search the network:\n{out}")
+            return
+        n = 0
+        for line in out.splitlines():
+            parts = line.split("\t")
+            if len(parts) != 4:
+                continue
+            kind, name, host, _addr = parts
+            item = QListWidgetItem(
+                f"{name}  ({host})  {'SMB' if kind == 'smb' else 'NFS'}")
+            item.setData(Qt.UserRole, (kind, host))
+            self.servers.addItem(item)
+            n += 1
+        if n == 0:
+            self.server_status.setText(
+                "No servers answered. You can still type the server's name or address.")
+        else:
+            self.server_status.setText(
+                f"Found {n} server(s). Servers that do not announce themselves on "
+                "the network will not appear here.")
+
+    def list_shares(self, cur, _prev):
+        self.share_list.clear()
+        self.ok_btn.setEnabled(False)
+        if cur is None:
+            return
+        self.kind, self.host = cur.data(Qt.UserRole)
+        self.request += 1
+        req = self.request
+        self.share_status.setText(f"Asking {self.host} for its shares...")
+        args = ["shares", self.kind, self.host]
+        stdin = None
+        if self.kind == "smb" and self.user:
+            args.append(self.user)
+            stdin = self.password
+        LocalCall(self, args, stdin,
+                  lambda rc, out, req=req: self.shares_done(req, rc, out))
+
+    def shares_done(self, req, rc, out):
+        if req != self.request:
+            return
+        if rc != 0:
+            msg = f"Could not list the shares:\n{out}"
+            if self.kind == "smb" and not self.user:
+                msg += (
+                    "\nIf the server needs a login, enter the username and password "
+                    "in the previous window, then browse again.")
+            self.share_status.setText(msg)
+            return
+        n = 0
+        for line in out.splitlines():
+            name, _, comment = line.partition("\t")
+            if not name:
+                continue
+            text = name + (f"  -  {comment}" if comment else "")
+            item = QListWidgetItem(text)
+            item.setData(Qt.UserRole, name)
+            self.share_list.addItem(item)
+            n += 1
+        if n == 0:
+            self.share_status.setText("This server has no shares you can see.")
+        else:
+            self.share_status.setText(f"{n} share(s).")
+
+    def choice(self):
+        return (self.kind, self.host,
+                self.share_list.currentItem().data(Qt.UserRole))
 
 
 class ShareDialog(QDialog):
@@ -118,7 +286,12 @@ class ShareDialog(QDialog):
 
         form.addRow("Name", self.name)
         form.addRow("Type", self.type)
-        form.addRow("Server", self.server)
+        server_row = QHBoxLayout()
+        server_row.addWidget(self.server)
+        self.browse_btn = QPushButton("Browse...")
+        self.browse_btn.clicked.connect(self.browse)
+        server_row.addWidget(self.browse_btn)
+        form.addRow("Server", server_row)
         self.path_label = QLabel("Share")
         form.addRow(self.path_label, self.path)
         self.user_label = QLabel("Username")
@@ -152,6 +325,18 @@ class ShareDialog(QDialog):
         self.path.setPlaceholderText("Media" if smb else "/export/media")
         for w in (self.user, self.password, self.user_label, self.pass_label, self.vers, self.vers_label):
             w.setVisible(smb)
+
+    def browse(self):
+        d = BrowseDialog(self, self.user.text().strip(), self.password.text())
+        if d.exec() != QDialog.Accepted:
+            return
+        kind, host, share = d.choice()
+        self.type.setCurrentIndex(0 if kind == "smb" else 1)
+        self.server.setText(host)
+        self.path.setText(share)
+        if self.name.isEnabled() and not self.name.text().strip():
+            safe = re.sub(r"[^A-Za-z0-9_.-]", "-", share).lstrip("-._")[:41] or "share"
+            self.name.setText(safe)
 
     def values(self):
         smb = self.type.currentData() == "smb"
@@ -198,14 +383,308 @@ class ShareDialog(QDialog):
             super().accept()
 
 
+class ShareFolderDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Share a folder")
+        self.setWindowIcon(QIcon(ICON_PATH))
+        self.setMinimumWidth(480)
+        form = QFormLayout(self)
+
+        folder_row = QHBoxLayout()
+        self.folder = QLineEdit()
+        choose_btn = QPushButton("Choose...")
+        choose_btn.clicked.connect(self.choose_folder)
+        folder_row.addWidget(self.folder)
+        folder_row.addWidget(choose_btn)
+        form.addRow("Folder", folder_row)
+
+        self.name = QLineEdit()
+        self.name.setPlaceholderText("Media")
+        form.addRow("Share name", self.name)
+
+        self.guest = QCheckBox("Anyone on the network can open it (read-only)")
+        form.addRow("", self.guest)
+
+        self.read_only = QCheckBox("Read-only for me too")
+        form.addRow("", self.read_only)
+
+        hint = QLabel(
+            "Only computers on your local network can connect. You open the share "
+            "from another computer with your user name and network password."
+        )
+        hint.setWordWrap(True)
+        hint.setStyleSheet("color: palette(mid);")
+        form.addRow(hint)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        buttons.button(QDialogButtonBox.Ok).setText("Share")
+        form.addRow(buttons)
+
+    def choose_folder(self):
+        path = QFileDialog.getExistingDirectory(
+            self, "Choose a folder to share", os.path.expanduser("~")
+        )
+        if path:
+            self.folder.setText(path)
+            if not self.name.text().strip():
+                base = os.path.basename(os.path.normpath(path))
+                safe = re.sub(r"[^A-Za-z0-9_-]", "-", base).strip("-_")[:24] or "Shared"
+                self.name.setText(safe)
+
+    def values(self):
+        return {
+            "name": self.name.text().strip(),
+            "folder": self.folder.text().strip(),
+            "guest": self.guest.isChecked(),
+            "read_only": self.read_only.isChecked(),
+        }
+
+    def accept(self):
+        if not self.folder.text().strip() or not self.name.text().strip():
+            QMessageBox.warning(
+                self, "Network Shares", "Choose a folder and a share name."
+            )
+            return
+        super().accept()
+
+
+class PasswordDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Network password")
+        form = QFormLayout(self)
+
+        self.password1 = QLineEdit()
+        self.password1.setEchoMode(QLineEdit.Password)
+        form.addRow("Password", self.password1)
+
+        self.password2 = QLineEdit()
+        self.password2.setEchoMode(QLineEdit.Password)
+        form.addRow("Repeat password", self.password2)
+
+        hint = QLabel(
+            "This is the password other computers ask for when they open your shares. "
+            "It can differ from your login password."
+        )
+        hint.setWordWrap(True)
+        form.addRow(hint)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        form.addRow(buttons)
+
+    def password(self):
+        return self.password1.text()
+
+    def accept(self):
+        if not self.password1.text():
+            QMessageBox.warning(self, "Network Shares", "Enter a password.")
+            return
+        if self.password1.text() != self.password2.text():
+            QMessageBox.warning(self, "Network Shares", "The passwords do not match.")
+            return
+        super().accept()
+
+
+class HostPage(QWidget):
+    def __init__(self, parent=None):
+        super().__init__()
+        layout = QVBoxLayout(self)
+
+        host = socket.gethostname()
+        intro = QLabel(
+            f"Folders shared here open from other computers on your network as "
+            f"\\\\{host}\\<name> on Windows, or smb://{host}.local/<name> on a Mac or Linux."
+        )
+        intro.setWordWrap(True)
+        layout.addWidget(intro)
+
+        self.state = QLabel()
+        self.state.setWordWrap(True)
+        layout.addWidget(self.state)
+
+        self.table = QTableWidget(0, 3)
+        self.table.setHorizontalHeaderLabels(["Name", "Folder", "Who can open it"])
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.table.setSelectionMode(QTableWidget.SingleSelection)
+        self.table.setEditTriggers(QTableWidget.NoEditTriggers)
+        self.table.verticalHeader().setVisible(False)
+        layout.addWidget(self.table)
+
+        row = QHBoxLayout()
+        self.share_btn = QPushButton("Share a folder...")
+        self.stop_btn = QPushButton("Stop sharing")
+        self.password_btn = QPushButton("Set network password...")
+        self.refresh_btn = QPushButton("Refresh")
+        row.addWidget(self.share_btn)
+        row.addWidget(self.stop_btn)
+        row.addWidget(self.password_btn)
+        row.addStretch()
+        row.addWidget(self.refresh_btn)
+        layout.addLayout(row)
+
+        self.status = QLabel()
+        self.status.setWordWrap(True)
+        layout.addWidget(self.status)
+
+        self.share_btn.clicked.connect(self.share)
+        self.stop_btn.clicked.connect(self.stop)
+        self.password_btn.clicked.connect(self.set_password)
+        self.refresh_btn.clicked.connect(self.refresh)
+        self.table.itemSelectionChanged.connect(self.update_buttons)
+
+        self.rows = []
+        self.busy = False
+        QTimer.singleShot(0, self.refresh)
+
+    def installed(self):
+        return os.access(SAMBA, os.X_OK) and os.path.exists("/usr/bin/smbd")
+
+    def refresh(self):
+        if not self.installed():
+            self.rows = []
+            self.table.setRowCount(0)
+            self.state.setText(
+                "Sharing folders needs Samba, which arrives with the next HoltOS update."
+            )
+            self.update_buttons()
+            return
+
+        list_proc = subprocess.run([SAMBA, "list"], capture_output=True, text=True)
+        status_proc = subprocess.run([SAMBA, "status"], capture_output=True, text=True)
+
+        rows = []
+        for line in list_proc.stdout.splitlines():
+            parts = line.split("\t")
+            if len(parts) == 5:
+                rows.append(parts)
+
+        self.rows = rows
+
+        status_lines = status_proc.stdout.strip().splitlines()
+        first = status_lines[0] if status_lines else "stopped"
+        users = status_lines[1:] if len(status_lines) > 1 else []
+        me = getpass.getuser()
+
+        state_parts = [
+            "Sharing is on." if first == "running" else "Sharing is off until you share a folder.",
+        ]
+        if me in users:
+            state_parts.append("Your network password is set.")
+        else:
+            state_parts.append(
+                "Set a network password so you can open your shares from other computers."
+            )
+        self.state.setText(" ".join(state_parts))
+
+        self.table.setRowCount(len(rows))
+        for i, (name, path, owner, guest, readonly) in enumerate(rows):
+            who = "You can read and change files" if readonly == "0" else "You can read files"
+            if guest == "1":
+                who += "; everyone else on the network can read them"
+            if owner != me:
+                who += f" (shared by {owner})"
+
+            for j, v in enumerate([name, path, who]):
+                item = QTableWidgetItem(v)
+                item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+                self.table.setItem(i, j, item)
+
+        self.update_buttons()
+
+    def update_buttons(self):
+        idle = not self.busy and self.installed()
+        self.share_btn.setEnabled(idle)
+        self.password_btn.setEnabled(idle)
+        selected_row = self.table.currentRow()
+        has_selection = 0 <= selected_row < len(self.rows)
+        self.stop_btn.setEnabled(idle and has_selection)
+
+    def run(self, args, stdin_text, busy_text, done):
+        self.busy = True
+        self.status.setText(busy_text)
+        self.update_buttons()
+
+        def finished(rc, out):
+            self.busy = False
+            self.status.setText("")
+            done(rc, out)
+            self.refresh()
+
+        BackendCall(self, args, stdin_text, finished, program=SAMBA)
+
+    def share(self):
+        d = ShareFolderDialog(self)
+        if d.exec() != QDialog.Accepted:
+            return
+        v = d.values()
+        args = ["add", v["name"], v["folder"]]
+        if v["guest"]:
+            args.append("--guest")
+        if v["read_only"]:
+            args.append("--read-only")
+
+        def done(rc, out):
+            if rc not in (0, 126):
+                QMessageBox.critical(
+                    self, "Network Shares", f"Sharing the folder failed:\n\n{out}"
+                )
+            elif rc == 0 and "WARNING" in out:
+                QMessageBox.information(
+                    self, "Network Shares",
+                    "The folder is shared. Set a network password so you can open it from other computers."
+                )
+
+        self.run(args, None, f"Sharing {v['folder']}...", done)
+
+    def stop(self):
+        r = self.table.currentRow()
+        if not (0 <= r < len(self.rows)):
+            return
+        name = self.rows[r][0]
+        if QMessageBox.question(
+            self, "Network Shares",
+            f'Stop sharing "{name}"?\n\nThe folder and its files stay on this computer.'
+        ) != QMessageBox.Yes:
+            return
+
+        def done(rc, out):
+            if rc not in (0, 126):
+                QMessageBox.critical(self, "Network Shares", out)
+
+        self.run(["remove", name], None, f"Stopping {name}...", done)
+
+    def set_password(self):
+        d = PasswordDialog(self)
+        if d.exec() != QDialog.Accepted:
+            return
+
+        def done(rc, out):
+            if rc not in (0, 126):
+                QMessageBox.critical(
+                    self, "Network Shares", f"Setting the network password failed:\n\n{out}"
+                )
+            elif rc == 0:
+                QMessageBox.information(self, "Network Shares", "Network password set.")
+
+        self.run(["password"], d.password() + "\n", "Setting your network password...", done)
+
+
 class SharesWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Network Shares")
         self.setWindowIcon(QIcon(ICON_PATH))
-        self.resize(760, 400)
+        self.resize(800, 460)
+        tabs = QTabWidget()
+        self.setCentralWidget(tabs)
         central = QWidget()
-        self.setCentralWidget(central)
+        tabs.addTab(central, "Shares on other computers")
         layout = QVBoxLayout(central)
 
         intro = QLabel("Shares mount under /mnt/shares and appear in Dolphin. "
@@ -251,6 +730,9 @@ class SharesWindow(QMainWindow):
         self.shares = []
         self.busy = False
         QTimer.singleShot(0, self.refresh)
+
+        self.host_page = HostPage(self)
+        tabs.addTab(self.host_page, "Share from this computer")
 
     def selected(self):
         r = self.table.currentRow()

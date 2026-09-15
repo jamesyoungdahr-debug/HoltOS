@@ -14,6 +14,8 @@
 #   holtos-share list               one line per share: NAME TYPE SERVER PATH USER RO AUTO MOUNTED SMBVERS
 #   holtos-share mount|unmount NAME
 #   holtos-share test   TYPE SERVER PATH [USER] [--vers V]   (password on stdin) — try it once, no config
+#   holtos-share browse             (any user) servers on the LAN: KIND NAME HOST ADDRESS, tab-separated
+#   holtos-share shares TYPE SERVER [USER]   (any user) shares on one server: NAME COMMENT; password on stdin if USER
 set -euo pipefail
 
 CONF_DIR=/etc/holtos/shares
@@ -27,15 +29,19 @@ UNIT_DIR=/etc/systemd/system
 SMB_VERSIONS="3.1.1 3.0 2.1 2.0 1.0"
 PROBE_TIMEOUT=10
 
-# `list` is the one read-only command and runs as any user: share metadata
-# (.conf, mode 644) holds no secrets — SMB passwords live in the .cred
-# files, mode 600 — so the GUI opens without an authentication prompt.
-# Everything else changes the system and needs root.
-if [ "${1:-}" != "list" ]; then
-    [ "$(id -u)" -eq 0 ] || { echo "holtos-share must run as root (pkexec)" >&2; exit 1; }
-    mkdir -p "$CONF_DIR" "$MOUNT_ROOT"
-    chmod 755 "$CONF_DIR"
-fi
+# `list`, `browse` and `shares` are the read-only commands and run as any
+# user: share metadata (.conf, mode 644) holds no secrets — SMB passwords
+# live in the .cred files, mode 600 — and browsing only asks the network, so
+# the GUI opens and browses without an authentication prompt. Everything
+# else changes the system and needs root.
+case "${1:-}" in
+    list|browse|shares) ;;
+    *)
+        [ "$(id -u)" -eq 0 ] || { echo "holtos-share must run as root (pkexec)" >&2; exit 1; }
+        mkdir -p "$CONF_DIR" "$MOUNT_ROOT"
+        chmod 755 "$CONF_DIR"
+        ;;
+esac
 
 # Files land owned by the desktop user that asked (pkexec tells us), so
 # SMB shares are writable by that user rather than by root only.
@@ -247,6 +253,106 @@ test)
     rmdir "$tmp" 2>/dev/null || true
     exit "$rc"
     ;;
+# browse: SMB/NFS servers on the LAN, KIND<TAB>NAME<TAB>HOST<TAB>ADDRESS per line.
+browse)
+    if ! command -v avahi-browse >/dev/null && ! command -v nmblookup >/dev/null; then
+        echo "avahi and smbclient are not installed" >&2; exit 1
+    fi
+    declare -A seen
+    # mDNS via Avahi
+    if command -v avahi-browse >/dev/null; then
+        for svc in _smb._tcp _nfs._tcp; do
+            case "$svc" in _smb._tcp) kind=smb ;; *) kind=nfs ;; esac
+            while IFS=';' read -r flag iface proto name _type _domain host addr _rest; do
+                [ "$flag" = "=" ] || continue
+                [ "$proto" = "IPv4" ] || continue
+                # This machine's own services also appear on the loopback.
+                [ "$iface" != "lo" ] || continue
+                [[ "$addr" != 127.* ]] || continue
+                # avahi writes special characters as \NNN in decimal
+                # (\032 space, \038 &) and escapes a dot or backslash inside
+                # a name as "\." or "\\". Decode in one pass, left to right,
+                # so a decoded character is never read as an escape again.
+                decoded=""; i=0
+                while [ "$i" -lt "${#name}" ]; do
+                    ch="${name:i:1}"
+                    if [ "$ch" = "\\" ] && [[ "${name:i+1:3}" =~ ^[0-9]{3}$ ]]; then
+                        printf -v ch "\\$(printf '%03o' "$((10#${name:i+1:3}))")"
+                        i=$((i + 4))
+                    elif [ "$ch" = "\\" ] && [ $((i + 1)) -lt "${#name}" ]; then
+                        ch="${name:i+1:1}"
+                        i=$((i + 2))
+                    else
+                        i=$((i + 1))
+                    fi
+                    decoded+="$ch"
+                done
+                name="$decoded"
+                [ -z "${seen["$kind $addr"]+x}" ] || continue
+                seen["$kind $addr"]=1
+                printf '%s\t%s\t%s\t%s\n' "$kind" "$name" "$host" "$addr"
+            done < <(timeout 8 avahi-browse -ptr "$svc" 2>/dev/null || true)
+        done
+    fi
+    # NetBIOS via nmblookup
+    if command -v nmblookup >/dev/null; then
+        while read -r ip _rest; do
+            [[ "$ip" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] || continue
+            [ -z "${seen["smb $ip"]+x}" ] || continue
+            nb="$(timeout 4 nmblookup -s /dev/null -A "$ip" 2>/dev/null | awk '/<20>/ && !/<GROUP>/ {print $1; exit}' || true)"
+            [ -n "$nb" ] || continue
+            seen["smb $ip"]=1
+            printf 'smb\t%s\t%s\t%s\n' "$nb" "$ip" "$ip"
+        # -s /dev/null: a client-only system has no smb.conf, and without
+        # this every Samba tool first complains that it cannot load one.
+        done < <(timeout 6 nmblookup -s /dev/null '*' 2>/dev/null | grep -E '^[0-9.]+ \*<00>$' || true)
+    fi
+    exit 0
+    ;;
+# shares TYPE SERVER [USER]: the shares one server offers, NAME<TAB>COMMENT per line.
+shares)
+    type="${1:?TYPE}"; server="${2:?SERVER}"; user="${3:-}"
+    if ! [[ "$server" =~ ^[A-Za-z0-9][A-Za-z0-9._-]{0,252}$ ]]; then
+        echo "bad server name: $server" >&2; exit 2
+    fi
+    case "$type" in
+        smb)
+            if ! command -v smbclient >/dev/null; then
+                echo "smbclient is not installed" >&2; exit 1
+            fi
+            auth="$(mktemp)"; chmod 600 "$auth"; trap 'rm -f "$auth"' EXIT
+            if [ -n "$user" ]; then
+                printf 'username = %s\npassword = %s\n' "$user" "$(cat)" > "$auth"
+                login=(-A "$auth")
+            else
+                login=(-N)
+            fi
+            # -s /dev/null: no "Can't load /etc/samba/smb.conf" in the error
+            # text on a system that does not share anything itself.
+            if ! out="$(timeout 15 smbclient -s /dev/null -g -L "//$server" "${login[@]}" 2>&1)"; then
+                echo "$out" >&2; exit 1
+            fi
+            printf '%s\n' "$out" | while IFS='|' read -r kind name comment; do
+                [ "$kind" = "Disk" ] || continue
+                case "$name" in *'$') continue ;; esac
+                printf '%s\t%s\n' "$name" "$comment"
+            done
+            ;;
+        nfs)
+            if ! command -v showmount >/dev/null; then
+                echo "showmount is not installed" >&2; exit 1
+            fi
+            if ! out="$(timeout 15 showmount -e --no-headers "$server" 2>&1)"; then
+                echo "$out" >&2; exit 1
+            fi
+            printf '%s\n' "$out" | while read -r path clients; do
+                [ -n "$path" ] || continue
+                printf '%s\t%s\n' "$path" "$clients"
+            done
+            ;;
+        *) echo "TYPE must be smb or nfs" >&2; exit 2 ;;
+    esac
+    ;;
 *)
-    sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+    sed -n '2,18p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
 esac

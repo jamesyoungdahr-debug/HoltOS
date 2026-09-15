@@ -198,6 +198,17 @@ qt6-wayland
 # tool (holtos-shares GUI, holtos-share backend, systemd automount units).
 cifs-utils
 nfs-utils
+# LAN browsing in Network Shares: avahi finds SMB/NFS servers that announce
+# themselves over mDNS, nss-mdns resolves their .local names, smbclient
+# lists a server's shares and finds Windows machines over NetBIOS (nmblookup).
+avahi
+nss-mdns
+smbclient
+# "Share from this computer" in Network Shares: Samba serves the folders and
+# wsdd makes this computer appear in Windows' Network view. Both stay off
+# until a folder is shared (holtos-samba).
+samba
+wsdd
 qt6-declarative
 libtorrent-rasterbar
 kirigami

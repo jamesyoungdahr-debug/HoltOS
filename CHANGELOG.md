@@ -22,6 +22,17 @@ Neon rebrand (next major release):
   the kernel-update hook and the installer shortcut carry the HoltOS name.
   Updating removes the old homelab files once the renamed ones are in place,
   so the boot menu still refreshes exactly once per kernel update.
+- **Network Shares finds servers for you:** "Browse..." in the Add dialog
+  lists the SMB and NFS servers on your network (announced over mDNS, or
+  Windows PCs found over NetBIOS) and the shares each one offers, so nothing
+  has to be typed. Computers' `.local` names now resolve.
+- **Share folders from this computer:** Network Shares > "Share from this
+  computer" shares a folder with the other computers on your local network,
+  optionally read-only for everyone, and sets the network password you open
+  it with. Windows finds the computer in its Network view (wsdd), Macs and
+  Linux over mDNS. Only folders in your home folder (not hidden ones) or on
+  drives under /mnt, /media, /run/media and /srv can be shared, only local
+  addresses may connect, and Samba runs only while something is shared.
 - **Updates that break the desktop undo themselves:** if the desktop (or the
   login screen) does not come up on two boots in a row after an update,
   HoltOS restores the snapshot taken just before that update and restarts,

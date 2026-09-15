@@ -206,6 +206,19 @@ remove_old_homelab_files() {
     return 0
 }
 
+# Network Shares browses the LAN: once avahi and nss-mdns are installed (they
+# are on the required list), start avahi and let .local names resolve, the
+# same as a fresh install (customize_airootfs.sh).
+enable_lan_discovery() {
+    if pacman -Q avahi >/dev/null 2>&1; then
+        systemctl enable --now avahi-daemon.service >/dev/null 2>&1 || true
+    fi
+    if pacman -Q nss-mdns >/dev/null 2>&1 && ! grep -q '^hosts:.*mdns' /etc/nsswitch.conf; then
+        sed -i '/^hosts:/s/resolve/mdns_minimal [NOTFOUND=return] resolve/' /etc/nsswitch.conf
+    fi
+    return 0
+}
+
 case "${1:-}" in
 check)
     missing="$(missing_required; missing_z13; missing_drivers)"
@@ -230,6 +243,7 @@ apply)
     [ -x /usr/local/bin/holtos-hardware ] && /usr/local/bin/holtos-hardware log "$HARDWARE_LOG" 2>/dev/null
     if [ -z "$required" ] && [ -z "$z13" ] && [ -z "$drivers" ]; then
         echo "==> No HoltOS components missing"
+        enable_lan_discovery
         exit 0
     fi
     rc=0
@@ -256,6 +270,7 @@ apply)
         done
         echo "==> Z13 controls installed; log out and back in to start them"
     fi
+    enable_lan_discovery
     exit "$rc"
     ;;
 *)

@@ -141,9 +141,24 @@ Not written to disk yet -- waiting on decky-loader's own build verification firs
 
 ### 2.2 Network Shares — done (2026-09-12)
 
-SMB/NFS with systemd automount, GUI, tray entry. Next: browse the LAN
-(Avahi/WS-Discovery) so servers and shares can be picked instead of
-typed, and a "share this folder" (Samba server) page for the box itself.
+SMB/NFS with systemd automount, GUI, tray entry.
+
+**LAN browsing and sharing from this computer — done (2026-09-15, neon
+branch):** "Browse..." in the Add dialog runs `holtos-share browse`
+(avahi `_smb._tcp`/`_nfs._tcp`, NetBIOS through nmblookup) and
+`holtos-share shares` (smbclient -L / showmount -e), both as the user with no
+password prompt; avahi-daemon and nss-mdns are enabled on new installs and by
+`holtos-system-extras` on updated ones. The "Share from this computer" tab
+drives `holtos-samba` (root, written by hand): folders only under the
+owner's home (not hidden) or /mnt, /media, /run/media/<owner>, /srv; files
+served as the owner (`force user`), guests read-only; LAN-only `hosts
+allow`, SMB2+, no NetBIOS; the generated smb.conf passes testparm before use;
+smb + wsdd run only while something is shared. VM-tested: refusals, guest
+read/no write, symlink escape blocked, mDNS announce, services stop when the
+last share goes. Not tested: opening a share with a network password (needs a
+password set on real hardware), WS-Discovery from a Windows PC. Still open:
+WS-Discovery browsing of Windows PCs that do not answer NetBIOS (wsdd 0.9's
+discovery socket), and the media-pool export decision (2.3).
 
 ### 2.3 Media stack — see `docs/media-server-must-haves.md`
 

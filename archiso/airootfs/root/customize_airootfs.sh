@@ -46,6 +46,10 @@ systemctl enable smartd.service holtos-scrub.timer
 systemctl enable holtos-update-check.timer
 # Undo an update that stops the desktop from starting (holtos-boot-guard).
 systemctl enable holtos-boot-guard.service holtos-boot-guard-check.timer
+# Network Shares browses the LAN: avahi finds servers, and .local names
+# resolve through nss-mdns (before resolve, as the Arch wiki sets it up).
+systemctl enable avahi-daemon.service
+sed -i '/^hosts:/{/mdns_minimal/!s/resolve/mdns_minimal [NOTFOUND=return] resolve/}' /etc/nsswitch.conf
 # Create Flatpak's system repository now, which also adds Flathub from
 # /etc/flatpak/remotes.d. Flatpak only does that on first use by root, so
 # without this HoltOS Apps' search finds nothing until something runs as
