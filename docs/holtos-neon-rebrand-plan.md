@@ -51,13 +51,16 @@ what is done and what is left.
 | 14 | Brand completion (2026-09-15, Liam: "complete everything on our lists, then test"): title bar buttons magenta/amber/teal; otter expressions (Happy, Idle, Alert); HoltOS icon theme and cursor theme from ComfyUI renders; the store renamed Stash; The Den client and web sign-in moved to the new otter; vector otter mark traced from the render | Done, including the vector mark (`holtos-mark.svg`); not VM-tested (VM on hold) |
 | 15 | Glass for System Settings and other Kirigami apps (glass plan G7) | Research started 2026-09-15; fork build to follow |
 
-Deliberately not done in the backlog run (need Liam): darker list views
-(would undo the 0.0.7a clearer-glass decision), GTK rgba glass (GTK cannot
-ask KWin for blur, so text would sit on the bare wallpaper), title bar
-button colours, media player and storage decisions, first-run wizard
-choices, otter expression renders, icons and cursor, adaptive contrast, The
-Den client, the Stash name, the Xbox wireless dongle, the version
-number and publishing packages.
+Deliberately still open (need Liam): darker list views (would undo the
+0.0.7a clearer-glass decision), GTK rgba glass (GTK cannot ask KWin for
+blur, so text would sit on the bare wallpaper), media player and storage
+decisions, first-run wizard choices, adaptive contrast, the Xbox wireless
+dongle.
+
+Completed since this list was first written (milestone 14 absorbed them):
+title bar button colours, otter expression renders, the icon and cursor
+themes, The Den client, the Stash name. The version number is decided
+(0.1.0, in `profiledef.sh`); publishing packages is milestone 12.
 
 ## Left to do
 

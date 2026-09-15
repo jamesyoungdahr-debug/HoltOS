@@ -37,7 +37,7 @@ near-black ground `#0D0B12`.
   why the recolour was dropped.
 - **A deterministic hue-remap plus spark pass was rejected.** It tints the
   brightest pixels and reads as hot-spots on the subject rather than neon —
-  `tools/wallpapers/color_grade.py`, committed but unused.
+  the script was written, rejected and deleted (`e52bce5`).
 
 ## Gotcha
 
