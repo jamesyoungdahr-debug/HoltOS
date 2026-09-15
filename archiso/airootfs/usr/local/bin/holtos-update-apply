@@ -88,6 +88,35 @@ already_current() {
     progress "$1" skip 100
 }
 
+# version_newer <a> <b> — true when version a is strictly newer than b.
+# GNU version sort, with any leading "v" stripped so a release tag
+# (v0.0.7k-alpha) compares against an os-release VERSION_ID (0.1.0).
+#
+# This exists so an install can never be moved BACKWARDS. resolve_release()
+# only ever finds the newest v* TAG, so a build made from a commit that is
+# ahead of the newest tag looks "out of date" against an older release and
+# was silently downgraded to it. Found live 2026-09-15: a fresh, untagged
+# 0.1.0 install pulled v0.0.7k-alpha on its first boot. Written by hand: it
+# decides what root installs.
+version_newer() {
+    local a="${1#v}" b="${2#v}"
+    [ -n "$a" ] && [ -n "$b" ] || return 1
+    [ "$a" = "$b" ] && return 1
+    [ "$(printf '%s\n%s\n' "$a" "$b" | sort -V | tail -n 1)" = "$a" ]
+}
+
+# refuse_downgrade <item> <latest tag> — true (having reported it) when the
+# item's installed version is already newer than the release the updater
+# resolved, so the caller must stop rather than move the system backwards.
+refuse_downgrade() {
+    local item="$1" latest="$2" inst
+    inst="$(installed_tag "$item")"
+    version_newer "$inst" "$latest" || return 1
+    echo "==> $item $inst is newer than the latest release $latest; nothing to do"
+    progress "$item" skip 100
+    return 0
+}
+
 # update_setting <KEY> — a value from /etc/holtos/updates.conf (parsed, never
 # sourced), checked the way holtos-update-settings checks it; empty when
 # missing or invalid. Written by hand: it decides what root installs.
@@ -228,6 +257,16 @@ update_config() {
         echo "No tagged HoltOS release found${target_tag:+ ($target_tag)}." >&2
         return 1
     fi
+
+    # Never move backwards (see refuse_downgrade). A build made from a commit
+    # ahead of the newest tag would otherwise be "updated" down to an older
+    # release. A named tag — a rollback, or the handed-over updater finishing
+    # a release — is always applied, and the dev channel tracks commit
+    # snapshots rather than versions, so both are exempt.
+    if [ -z "$target_tag" ] && [ -z "$dev_branch" ] && refuse_downgrade config "$latest_tag"; then
+        return 0
+    fi
+
     # A named tag (rollback, or the handed-over updater finishing a release)
     # is always applied; only "latest" can already be installed.
     if [ -z "$target_tag" ] && already_current config "$new_commit" "$latest_tag"; then
@@ -496,6 +535,9 @@ update_the_den() {
         echo "No tagged The Den release found${target_tag:+ ($target_tag)}." >&2
         return 1
     fi
+    if [ -z "$target_tag" ] && refuse_downgrade the-den "$latest_tag"; then
+        return 0
+    fi
     if [ -z "$target_tag" ] && already_current the-den "$new_commit" "$latest_tag"; then
         return 0
     fi
@@ -734,6 +776,9 @@ update_the_den_client() {
     if ! IFS=$'\t' read -r new_commit latest_tag < <(resolve_release "$repo" "$target_tag"); then
         echo "No tagged The Den Client release found${target_tag:+ ($target_tag)}." >&2
         return 1
+    fi
+    if [ -z "$target_tag" ] && refuse_downgrade the-den-client "$latest_tag"; then
+        return 0
     fi
     if [ -z "$target_tag" ] && already_current the-den-client "$new_commit" "$latest_tag"; then
         return 0
