@@ -193,6 +193,10 @@ breeze-gtk
 # to build the image without it (2026-09-12).
 python
 pyside6
+# The Den Client 0.5.0d+: certificate pinning and LAN discovery (its PKGBUILD
+# depends; build-vendor-apps.sh fails the image build without them).
+python-cryptography
+python-zeroconf
 qt6-wayland
 # cifs-utils + nfs-utils: mount.cifs / mount.nfs for the Network Shares
 # tool (holtos-shares GUI, holtos-share backend, systemd automount units).
