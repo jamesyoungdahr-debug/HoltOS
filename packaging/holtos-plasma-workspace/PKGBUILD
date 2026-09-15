@@ -18,7 +18,11 @@ replaces=(plasma-workspace)
 # here is simply absent from the image (plasmashell aborted its shell load
 # because kactivitymanagerd was gone; plasma-integration/kde-cli-tools/milou/
 # qt6-tools too). "kwin" resolves to holtos-kwin via its provides=.
-depends=(accountsservice appstream-qt dbus fontconfig freetype2 glibc icu
+# baloo is a build dependency as well as a runtime one: the KRunner file
+# search runner is guarded by if(KF6Baloo_FOUND) in runners/CMakeLists.txt, so
+# without it the runner is silently skipped and KRunner cannot search files
+# (found by auditing the built package against Arch's plasma-workspace).
+depends=(accountsservice appstream-qt baloo dbus fontconfig freetype2 glibc icu
          kactivitymanagerd karchive kauth kbookmarks kcmutils kcolorscheme
          kcompletion kconfig kconfigwidgets kcoreaddons kcrash kde-cli-tools
          kdeclarative kded kdbusaddons kglobalaccel kguiaddons kholidays ki18n
@@ -39,8 +43,8 @@ depends=(accountsservice appstream-qt dbus fontconfig freetype2 glibc icu
          kdnssd knotifyconfig kpeople breeze plasma-wayland-protocols
          libkscreen networkmanager-qt pipewire
          polkit-qt6 qqc2-desktop-style hwdata packagekit-qt6 flatpak)
-makedepends=(cmake extra-cmake-modules git qt6-tools pkgconf wayland-protocols
-             kdoctools kwin)
+makedepends=(baloo cmake extra-cmake-modules git qt6-tools pkgconf
+             wayland-protocols kdoctools kwin)
 options=(!debug)
 source=("git+${url}.git#branch=holtos")
 sha256sums=('SKIP')
