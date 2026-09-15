@@ -1,10 +1,23 @@
 HoltOS — running context file (plain text, kept current by the agent)
 =====================================================================
-Last updated: 2026-09-15 (v0.0.7k-alpha, the current stable release; the neon rebrand is on branch neon-rebrand as 0.1.0)
+Last updated: 2026-09-15 (v0.0.7l-alpha, the current stable release; the neon rebrand is on branch neon-rebrand as 0.1.0)
 Read this first when resuming. Newest state at the top of each section.
 
 LATEST (2026-09-15) — read this before the dated sections below, which are history
 ---------------------------------------------------------------------------------
+- RELEASED on the stable channel: v0.0.7l-alpha — the updater no longer moves
+  a system backwards. It picked the newest released version but only checked
+  whether that was the one already installed, so a build from a commit ahead of
+  the newest tag was silently downgraded to an older release; a fresh 0.1.0
+  install pulled 0.0.7k-alpha's scripts on its first boot. It now compares
+  versions, for HoltOS itself, The Den and The Den Client. On this branch the
+  boot splash and login glow are also fixed (both placed the glow so ~70 % of
+  it fell off the top of the screen, leaving the splash flat black), and the
+  SDDM glass card now shows a pre-blurred backdrop where Qt uses software
+  rendering — which is why the blur never worked on the Z13. The Kirigami glass
+  is lightened (Page/Pane 40 %, Drawer 60 %) but NOT yet published. A new ISO
+  is on the Ventoy stick and the older HoltOS ISOs were removed from it.
+  Bare-metal test list: `docs/bare-metal-test-list.md` (Z13 first, then 4090).
 - RELEASED on the stable channel: v0.0.7j-alpha, a bug-fix release — KRunner
   file search is back. baloo was never a build dependency, so the file-search
   runner was silently skipped. Package rebuilt, verified, published to the

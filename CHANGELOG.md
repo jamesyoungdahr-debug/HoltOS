@@ -7,6 +7,21 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 Neon rebrand (next major release):
 
+- **Updates no longer move a system backwards.** The updater picked the newest
+  released version but only checked whether that was the one already installed,
+  so a build from a commit ahead of the newest tag was silently downgraded to
+  an older release — a fresh 0.1.0 install pulled 0.0.7k-alpha's scripts on its
+  first boot. It now compares versions, for HoltOS itself, The Den and The Den
+  Client.
+- **The boot splash and login glow show again.** Both the Plymouth script and
+  the SDDM theme placed the glow so that about 70 % of it fell off the top of
+  the screen, which left the splash looking flat black.
+- **The login card is glass on software rendering.** It fell back to a solid
+  slab wherever Qt could not blur — which includes the Z13's greeter, so the
+  blur never worked there. It now shows a pre-blurred ground instead.
+- **Kirigami apps are glassier:** Page and Pane at 40 % of the theme background
+  (was 60 %) and Drawer at 60 % (was 80 %).
+
 - **New otter logo**, generated on ComfyUI (Liam's pick: the flat otter with a
   magenta-to-blue neon rim). App icons from 16 to 512 px, a one-colour tray
   glyph and a large mark for the About page, cut from the renders by
