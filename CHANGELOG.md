@@ -29,6 +29,15 @@ Neon rebrand (next major release):
   "Checking...", then when it finished and how many drivers are installed.
   A check that fails says so instead of showing "None needed". A new Sound
   devices list shows the speakers and microphones HoltOS can see.
+- **System updates install only tested Arch packages:** Arch's packages now
+  come from the day HoltOS tested (a dated snapshot of the Arch Linux
+  Archive) instead of whatever Arch published that morning. HoltOS updates
+  move the date forward once a newer set has been tested. Packages installed
+  earlier from a newer day go back to the tested versions at the next
+  system update.
+- **Fixed: a kernel update could leave HoltOS unable to start** (the boot
+  copy of the kernel on the EFI partition was never refreshed; also in stable
+  0.0.7h-alpha).
 - **Built-in microphones on the ASUS ROG Flow Z13 (2025):** the Z13's
   firmware hides its microphones from Linux. HoltOS now installs a small
   driver fix (`holtos-acp-mic-dkms`, version 2, also in stable 0.0.7g-alpha)

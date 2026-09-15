@@ -60,6 +60,18 @@ flatpak remotes --system >/dev/null 2>&1 || true
 # in the image; without this the installed system could not update them).
 sed -i '/^#\[multilib\]/,/^#Include = \/etc\/pacman.d\/mirrorlist/ s/^#//' /etc/pacman.conf
 
+# Arch's core, extra and multilib come from HoltOS's tested snapshot date of
+# the Arch Linux Archive (/etc/pacman.d/holtos-mirrorlist), not the live
+# mirrors, so a system update installs only the package set HoltOS tested
+# (Liam, 2026-09-15). The config update does the same on existing installs.
+if [ -f /etc/pacman.d/holtos-mirrorlist ]; then
+    awk '
+        /^\[/ { arch_repo = ($0 ~ /^\[(core|extra|multilib)\]$/) }
+        arch_repo && $0 == "Include = /etc/pacman.d/mirrorlist" { $0 = "Include = /etc/pacman.d/holtos-mirrorlist" }
+        { print }
+    ' /etc/pacman.conf > /etc/pacman.conf.holtos-new && install -m 644 /etc/pacman.conf.holtos-new /etc/pacman.conf && rm -f /etc/pacman.conf.holtos-new
+fi
+
 # The HoltOS package repository for the live AND installed system: the
 # profile's pacman.conf (with its build-time file:// server) is only used
 # by mkarchiso itself; the rootfs carries the pacman package's stock
