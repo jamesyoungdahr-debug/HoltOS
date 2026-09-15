@@ -1,8 +1,8 @@
-# HoltOS: out-of-tree build of snd-acp-legacy-common (Linux 7.2.4 source,
-# sound/soc/amd/acp/acp-legacy-common.c) with the GZ302 microphone quirk.
+# HoltOS: out-of-tree build of snd-pci-ps (Linux 7.2.4 source,
+# sound/soc/amd/ps/pci-ps.c and ps-common.c) with the GZ302 microphone quirk.
 # DKMS calls the kernel build system with M= pointing here.
-obj-m := snd-acp-legacy-common.o
-snd-acp-legacy-common-y := acp-legacy-common.o
+obj-m := snd-pci-ps.o
+snd-pci-ps-y := pci-ps.o ps-common.o
 
 KDIR ?= /lib/modules/$(shell uname -r)/build
 
