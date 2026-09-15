@@ -13,10 +13,18 @@
    Calamares because it sits next to branding.desc.
 */
 
+/* Glass (Liam, 2026-09-14; milestone G11): the installer starts with
+   `-style kvantum`, so the HoltOS Glass Kvantum theme gives it a translucent
+   window and KWin blurs what is behind it. Widgets are transparent; the
+   window itself carries the tint (surface #171423 at 55 %). */
 QWidget {
     color: rgba(255, 255, 255, 0.85);
-    background-color: #0D0B12;
+    background-color: transparent;
     font-family: "Nunito";
+}
+
+CalamaresWindow, QMainWindow, QDialog {
+    background-color: rgba(23, 20, 35, 0.55);
 }
 
 QLabel {
@@ -25,7 +33,7 @@ QLabel {
 }
 
 QLineEdit, QPlainTextEdit, QTextEdit, QSpinBox {
-    background-color: #1D1927;
+    background-color: rgba(29, 25, 39, 0.60);
     color: #FFFFFF;
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 10px;
@@ -38,7 +46,7 @@ QLineEdit:focus, QPlainTextEdit:focus, QTextEdit:focus, QSpinBox:focus {
 }
 
 QComboBox {
-    background-color: #1D1927;
+    background-color: rgba(29, 25, 39, 0.60);
     color: #FFFFFF;
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 10px;
@@ -113,7 +121,7 @@ QScrollBar::handle:horizontal { background: rgba(255, 255, 255, 0.15); border-ra
 QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0px; border: none; background: none; }
 
 QListView, QTreeView, QTableView {
-    background-color: #171423;
+    background-color: rgba(23, 20, 35, 0.45);
     color: #FFFFFF;
     alternate-background-color: #1D1927;
     border: 1px solid rgba(255, 255, 255, 0.09);
@@ -124,7 +132,7 @@ QListView::item:selected, QTreeView::item:selected, QTableView::item:selected {
     color: #0D0B12;
 }
 QHeaderView::section {
-    background-color: #171423;
+    background-color: transparent;
     color: rgba(255, 255, 255, 0.55);
     border: none;
     padding: 4px 8px;

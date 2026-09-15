@@ -1,0 +1,6 @@
+# System-wide Kvantum theme: HoltOS Glass. Accounts get their own copy from
+# /etc/skel; this one is for programs that run as root and have no account
+# settings, such as the installer (started with `-style kvantum`), so they
+# are glass too (Liam, 2026-09-14).
+[General]
+theme=HoltOSGlass
