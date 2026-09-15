@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Welcome to HoltOS
+Comment=First-run guide, shown once at a new account's first login
+Exec=/usr/local/bin/holtos-welcome --autostart
+Icon=holtos-logo
+Terminal=false
+NoDisplay=true
+X-KDE-autostart-phase=2

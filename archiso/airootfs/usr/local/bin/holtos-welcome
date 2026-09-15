@@ -1,0 +1,353 @@
+#!/usr/bin/env python3
+"""HoltOS Welcome: the first-run guide for a new account. Five short steps: welcome, desktop layout, updates, apps and shares, snapshots. Starts once at a new account's first login (/etc/skel/.config/autostart/holtos-welcome.desktop runs it with --autostart) and any time from the app menu. Accounts that existed before it are never shown it automatically."""
+
+import os
+import subprocess
+import sys
+
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QIcon, QPixmap
+from PySide6.QtWidgets import (
+    QApplication,
+    QButtonGroup,
+    QCheckBox,
+    QHBoxLayout,
+    QLabel,
+    QMessageBox,
+    QPushButton,
+    QRadioButton,
+    QStackedWidget,
+    QVBoxLayout,
+    QWidget,
+)
+
+ICON_PATH = "/usr/share/icons/hicolor/256x256/apps/holtos-logo.png"
+OTTER_PATH = "/usr/share/holtos/brand/holtos-otter-happy-512.png"
+STAMP = os.path.join(
+    os.environ.get("XDG_STATE_HOME") or os.path.expanduser("~/.local/state"),
+    "holtos",
+    "welcome-done",
+)
+UPDATES_CONF = "/etc/holtos/updates.conf"
+LAYOUTS = [
+    (
+        "org.holtos.desktop",
+        "HoltOS",
+        "A glass menu bar at the top and a floating dock at the bottom.",
+    ),
+    (
+        "org.holtos.classic.desktop",
+        "HoltOS Classic",
+        "One panel along the bottom with the app launcher, open windows and the tray.",
+    ),
+]
+
+
+def mark_done():
+    try:
+        os.makedirs(os.path.dirname(STAMP), exist_ok=True)
+        with open(STAMP, "w") as f:
+            f.write("done\n")
+    except OSError:
+        pass
+
+
+def current_layout():
+    try:
+        proc = subprocess.run(
+            ["kreadconfig6", "--file", "kdeglobals", "--group", "KDE", "--key", "LookAndFeelPackage"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        result = proc.stdout.strip()
+        if result:
+            return result
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return "org.holtos.desktop"
+
+
+def current_auto_install():
+    try:
+        with open(UPDATES_CONF) as f:
+            for line in f:
+                if line.startswith("AUTO_INSTALL="):
+                    value = line.split("=", 1)[1].strip()
+                    if value.startswith('"') and value.endswith('"'):
+                        value = value[1:-1]
+                    return value
+    except OSError:
+        pass
+    return "apps"
+
+
+def launch(path):
+    try:
+        subprocess.Popen([path], start_new_session=True)
+    except OSError:
+        QMessageBox.warning(None, "HoltOS Welcome", f"Could not open {path}.")
+
+
+def page(title, text):
+    widget = QWidget()
+    layout = QVBoxLayout(widget)
+
+    title_label = QLabel(f"<h2>{title}</h2>")
+    title_label.setTextFormat(Qt.RichText)
+    layout.addWidget(title_label)
+
+    body_label = QLabel(text)
+    body_label.setWordWrap(True)
+    body_label.setTextFormat(Qt.PlainText)
+    layout.addWidget(body_label)
+
+    return widget, layout
+
+
+class WelcomeWindow(QWidget):
+
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Welcome to HoltOS")
+        self.setWindowIcon(QIcon(ICON_PATH))
+        self.resize(640, 480)
+
+        self.stack = QStackedWidget()
+        self.stack.addWidget(self.welcome_page())
+        self.stack.addWidget(self.layout_page())
+        self.stack.addWidget(self.updates_page())
+        self.stack.addWidget(self.apps_page())
+        self.stack.addWidget(self.snapshots_page())
+
+        self.again = QCheckBox("Show this guide again next time I log in")
+        self.again.setChecked(False)
+
+        bottom_row = QHBoxLayout()
+        self.step_label = QLabel()
+        self.back = QPushButton("Back")
+        self.next = QPushButton("Next")
+
+        self.back.clicked.connect(self.go_back)
+        self.next.clicked.connect(self.go_next)
+
+        bottom_row.addWidget(self.step_label)
+        bottom_row.addStretch(1)
+        bottom_row.addWidget(self.back)
+        bottom_row.addWidget(self.next)
+
+        main_layout = QVBoxLayout(self)
+        main_layout.addWidget(self.stack, stretch=1)
+        main_layout.addWidget(self.again)
+        main_layout.addLayout(bottom_row)
+
+        self.update_buttons()
+
+    def update_buttons(self):
+        i = self.stack.currentIndex()
+        n = self.stack.count()
+        self.step_label.setText(f"Step {i + 1} of {n}")
+        self.back.setEnabled(i > 0)
+        if i == n - 1:
+            self.next.setText("Finish")
+        else:
+            self.next.setText("Next")
+        self.again.setVisible(i == n - 1)
+
+    def go_back(self):
+        self.stack.setCurrentIndex(self.stack.currentIndex() - 1)
+        self.update_buttons()
+
+    def go_next(self):
+        if self.stack.currentIndex() == self.stack.count() - 1:
+            self.finish()
+        else:
+            self.stack.setCurrentIndex(self.stack.currentIndex() + 1)
+            self.update_buttons()
+
+    def finish(self):
+        if not self.again.isChecked():
+            mark_done()
+        self.finished = True
+        self.close()
+
+    def closeEvent(self, event):
+        if not getattr(self, "finished", False) and not self.again.isChecked():
+            mark_done()
+        event.accept()
+
+    # ---- Page builders ----
+
+    def welcome_page(self):
+        widget, layout = page(
+            "Welcome to HoltOS",
+            "HoltOS is ready to use. This short guide sets up a few things the way you like them. Every choice here can be changed later in System Settings and HoltOS Updates.",
+        )
+        if os.path.exists(OTTER_PATH):
+            otter_label = QLabel()
+            pixmap = QPixmap(OTTER_PATH).scaled(180, 180, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            otter_label.setPixmap(pixmap)
+            otter_label.setAlignment(Qt.AlignCenter)
+            layout.addWidget(otter_label)
+        layout.addStretch(1)
+        return widget
+
+    def layout_page(self):
+        widget, layout = page(
+            "Desktop layout",
+            "Pick how your desktop is arranged. You can switch at any time in System Settings > Global Theme.",
+        )
+        self.layout_group = QButtonGroup()
+        current = current_layout()
+        first_checked = False
+        for package, name, description in LAYOUTS:
+            radio = QRadioButton(f"{name}: {description}")
+            radio.setProperty("package", package)
+            self.layout_group.addButton(radio)
+            layout.addWidget(radio)
+            if not first_checked and package == current:
+                radio.setChecked(True)
+                first_checked = True
+        if not first_checked:
+            self.layout_group.buttons()[0].setChecked(True)
+
+        apply_btn = QPushButton("Apply layout")
+        apply_btn.clicked.connect(self.apply_layout)
+        layout.addWidget(apply_btn)
+
+        self.layout_status = QLabel("")
+        self.layout_status.setWordWrap(True)
+        layout.addWidget(self.layout_status)
+
+        layout.addStretch(1)
+        return widget
+
+    def apply_layout(self):
+        button = self.layout_group.checkedButton()
+        if not button:
+            self.layout_status.setText("No layout selected.")
+            return
+        package = button.property("package")
+        try:
+            proc = subprocess.run(
+                ["plasma-apply-lookandfeel", "--apply", package],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+        except (OSError, subprocess.SubprocessError):
+            self.layout_status.setText("Could not change the layout: plasma-apply-lookandfeel did not run.")
+            return
+
+        if proc.returncode == 0:
+            self.layout_status.setText("Layout applied.")
+        else:
+            error = (proc.stderr or proc.stdout).strip() or "unknown error"
+            self.layout_status.setText(f"Could not change the layout: {error}.")
+
+    def updates_page(self):
+        widget, layout = page(
+            "Updates",
+            "HoltOS checks for updates in the background. A snapshot of the system is taken before every update, so an update that goes wrong can be undone.",
+        )
+        self.update_group = QButtonGroup()
+
+        current_setting = current_auto_install()
+
+        if current_setting == "all":
+            all_label = QLabel("Right now every update, including system updates, installs automatically. Picking an option here changes that.")
+            all_label.setWordWrap(True)
+            layout.addWidget(all_label)
+
+        self.auto_apps = QRadioButton(
+            "Install HoltOS and app updates automatically, and ask before system updates (recommended)"
+        )
+        self.auto_off = QRadioButton("Ask me before installing anything")
+
+        self.update_group.addButton(self.auto_apps)
+        self.update_group.addButton(self.auto_off)
+        layout.addWidget(self.auto_apps)
+        layout.addWidget(self.auto_off)
+
+        if current_setting == "off":
+            self.auto_off.setChecked(True)
+        else:
+            self.auto_apps.setChecked(True)
+
+        save_btn = QPushButton("Save update setting")
+        save_btn.clicked.connect(self.save_updates)
+        layout.addWidget(save_btn)
+
+        self.updates_status = QLabel("")
+        self.updates_status.setWordWrap(True)
+        layout.addWidget(self.updates_status)
+
+        layout.addStretch(1)
+        return widget
+
+    def save_updates(self):
+        value = "apps" if self.auto_apps.isChecked() else "off"
+        try:
+            proc = subprocess.run(
+                ["pkexec", "/usr/local/bin/holtos-update-settings", f"AUTO_INSTALL={value}"],
+                capture_output=True,
+                text=True,
+            )
+        except OSError:
+            self.updates_status.setText("Could not save: pkexec is not available.")
+            return
+
+        if proc.returncode == 0:
+            self.updates_status.setText("Saved.")
+        elif proc.returncode in (126, 127):
+            self.updates_status.setText("Not saved: the password prompt was cancelled.")
+        else:
+            error = proc.stderr.strip() or "unknown error"
+            self.updates_status.setText(f"Could not save: {error}.")
+
+    def apps_page(self):
+        widget, layout = page(
+            "Apps and shared folders",
+            "Stash is the HoltOS app store: browse apps from Flathub and install them in one click. Network Shares connects folders from a NAS or another computer, and can share folders from this one.",
+        )
+        btn_row = QHBoxLayout()
+
+        stash_btn = QPushButton("Open Stash")
+        stash_btn.clicked.connect(lambda: launch("/usr/local/bin/holtos-apps"))
+        btn_row.addWidget(stash_btn)
+
+        shares_btn = QPushButton("Open Network Shares")
+        shares_btn.clicked.connect(lambda: launch("/usr/local/bin/holtos-shares"))
+        btn_row.addWidget(shares_btn)
+
+        layout.addLayout(btn_row)
+        layout.addStretch(1)
+        return widget
+
+    def snapshots_page(self):
+        widget, layout = page(
+            "Snapshots and help",
+            "Before every update HoltOS saves a snapshot of the system. If something breaks, pick an earlier snapshot in the boot menu, or open HoltOS Updates > Snapshots. If the desktop fails to start twice after an update, HoltOS rolls back on its own. To report a problem, use Create Support Bundle in the HoltOS tray icon's menu.",
+        )
+        updates_btn = QPushButton("Open HoltOS Updates")
+        updates_btn.clicked.connect(lambda: launch("/usr/local/bin/holtos-updates"))
+        layout.addWidget(updates_btn)
+        layout.addStretch(1)
+        return widget
+
+
+def main():
+    if "--autostart" in sys.argv and (os.path.exists(STAMP) or os.path.exists("/run/archiso")):
+        return 0
+
+    app = QApplication(sys.argv)
+    app.setApplicationName("holtos-welcome")
+    app.setDesktopFileName("holtos-welcome")
+
+    window = WelcomeWindow()
+    window.show()
+    return app.exec()
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -22,7 +22,7 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 
-from PySide6.QtCore import QProcess, Qt, QTime, QTimer
+from PySide6.QtCore import QProcess, Qt, QThread, QTime, QTimer, Signal
 from PySide6.QtGui import QFontDatabase, QIcon
 from PySide6.QtWidgets import (
     QApplication, QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFormLayout,
@@ -689,11 +689,106 @@ class HistoryTab(QWidget):
                 self.table.setItem(row, column, QTableWidgetItem(text))
 
 
+def sound_devices(kind):
+    """Names of the speakers ("sinks") or microphones ("sources") PipeWire
+    can see, or None when it cannot be asked. Monitor sources (the copy of
+    what a speaker plays) are not microphones and are left out."""
+    try:
+        proc = subprocess.run(
+            ["pactl", "-f", "json", "list", kind],
+            capture_output=True, text=True, timeout=5,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if proc.returncode != 0:
+        return None
+    try:
+        devices = json.loads(proc.stdout)
+    except ValueError:
+        return None
+    names = []
+    for device in devices if isinstance(devices, list) else []:
+        if not isinstance(device, dict):
+            continue
+        name = str(device.get("name", ""))
+        if kind == "sources" and (
+            name.endswith(".monitor")
+            or device.get("monitor_of_sink") not in (None, "", "n/a")
+        ):
+            continue
+        names.append(str(device.get("description") or name))
+    return names
+
+
+# AMD audio coprocessor 7.x (Strix Halo / Strix Point, PCI 1022:15e2). Its
+# built-in digital microphones get no capture device on Linux yet: the
+# kernel has no machine driver or quirk for most of these laptops and
+# alsa-ucm-conf has no ACP 7 profile (alsa-ucm-conf issue 745, linux-cachyos
+# issue 880 for the ROG Flow Z13; unfixed as of 2026-09). Nothing HoltOS can
+# configure fixes it, so the Hardware tab says so instead.
+ACP7_PCI_ID = "1022:15e2"
+
+
+class HardwareCheck(QThread):
+    """Runs the driver and sound device checks without freezing the window."""
+
+    done = Signal(dict)
+
+    def run(self):
+        result = {
+            "error": "", "rows": [], "missing": 0,
+            "speakers": None, "microphones": None, "acp7": False,
+        }
+        try:
+            proc = subprocess.run(
+                ["/usr/local/bin/holtos-hardware", "needed"],
+                capture_output=True, text=True, timeout=20,
+            )
+        except FileNotFoundError:
+            proc = None
+            result["error"] = "the hardware check (holtos-hardware) is not installed"
+        except (OSError, subprocess.SubprocessError) as exc:
+            proc = None
+            result["error"] = f"the hardware check did not finish ({exc.__class__.__name__})"
+        if proc is not None and proc.returncode != 0:
+            detail = (proc.stderr or "").strip().splitlines()
+            result["error"] = detail[-1] if detail else f"the hardware check stopped with code {proc.returncode}"
+        elif proc is not None:
+            for line in proc.stdout.splitlines():
+                pkg, _, what = line.partition("\t")
+                pkg = pkg.strip()
+                if not pkg:
+                    continue
+                try:
+                    query = subprocess.run(["pacman", "-Q", pkg], capture_output=True, text=True, timeout=10)
+                except (OSError, subprocess.SubprocessError):
+                    query = None
+                if query is None:
+                    status = "Could not check"
+                elif query.returncode == 0:
+                    status = "Installed " + query.stdout.split()[-1]
+                else:
+                    status = "Not installed yet: the next update adds it"
+                    result["missing"] += 1
+                result["rows"].append((pkg, what, status))
+        result["speakers"] = sound_devices("sinks")
+        result["microphones"] = sound_devices("sources")
+        try:
+            lspci = subprocess.run(["lspci", "-n"], capture_output=True, text=True, timeout=5).stdout
+            result["acp7"] = f" {ACP7_PCI_ID}" in lspci
+        except (OSError, subprocess.SubprocessError):
+            pass
+        self.done.emit(result)
+
+
 class HardwareTab(QWidget):
-    """The drivers holtos-hardware finds this computer needs, and whether each is installed."""
+    """The drivers holtos-hardware finds this computer needs, whether each is
+    installed, and the sound devices PipeWire can see."""
 
     def __init__(self):
         super().__init__()
+        self.check = None
+        self.checked_once = False
         layout = QVBoxLayout(self)
         intro = QLabel(
             "HoltOS checks this computer's hardware and installs the drivers it "
@@ -708,42 +803,103 @@ class HardwareTab(QWidget):
         self.table.verticalHeader().setVisible(False)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         layout.addWidget(self.table, 1)
+
+        layout.addWidget(QLabel("Sound devices"))
+        self.sound = QTableWidget(0, 2)
+        self.sound.setHorizontalHeaderLabels(["Device", "Found"])
+        self.sound.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.sound.verticalHeader().setVisible(False)
+        self.sound.setEditTriggers(QTableWidget.NoEditTriggers)
+        self.sound.setWordWrap(True)
+        layout.addWidget(self.sound)
+        self.show_sound(None, None, False, checking=True)
+
         footer = QHBoxLayout()
-        footer.addStretch(1)
-        again = QPushButton("Check again")
-        again.clicked.connect(self.refresh)
-        footer.addWidget(again)
+        self.status = QLabel("")
+        self.status.setWordWrap(True)
+        footer.addWidget(self.status, 1)
+        self.again = QPushButton("Check again")
+        self.again.clicked.connect(self.refresh)
+        footer.addWidget(self.again)
         layout.addLayout(footer)
+        QApplication.instance().aboutToQuit.connect(self.wait_for_check)
         self.refresh()
 
     def refresh(self):
-        rows = []
-        try:
-            out = subprocess.run(
-                ["/usr/local/bin/holtos-hardware", "needed"],
-                capture_output=True, text=True, timeout=15,
-            ).stdout
-        except (OSError, subprocess.SubprocessError):
-            out = None
-        if out is None:
-            rows.append(("-", "The hardware check is not available", ""))
-        else:
-            for line in out.splitlines():
-                pkg, _, what = line.partition("\t")
-                if not pkg:
-                    continue
-                query = subprocess.run(["pacman", "-Q", pkg], capture_output=True, text=True)
-                if query.returncode == 0:
-                    status = "Installed " + query.stdout.split()[-1]
-                else:
-                    status = "Not installed yet: the next update adds it"
-                rows.append((pkg, what, status))
-            if not rows:
-                rows.append(("None needed", "This computer needs no extra drivers", ""))
-        self.table.setRowCount(len(rows))
+        if self.check is not None and self.check.isRunning():
+            return
+        self.again.setEnabled(False)
+        self.again.setText("Checking...")
+        self.status.setText("Checking this computer's drivers and sound devices...")
+        self.check = HardwareCheck(self)
+        self.check.done.connect(self.show_result)
+        self.check.start()
+
+    def wait_for_check(self):
+        if self.check is not None and self.check.isRunning():
+            self.check.wait(30000)
+
+    def fill(self, table, rows):
+        table.setRowCount(len(rows))
         for row, cells in enumerate(rows):
             for column, text in enumerate(cells):
-                self.table.setItem(row, column, QTableWidgetItem(text))
+                item = QTableWidgetItem(text)
+                item.setToolTip(text)
+                table.setItem(row, column, item)
+        table.resizeRowsToContents()
+
+    def show_sound(self, speakers, microphones, acp7, checking=False):
+        rows = []
+        for label, names in (("Speakers and headphones", speakers), ("Microphones", microphones)):
+            if checking:
+                text = "Checking..."
+            elif names is None:
+                text = "Could not check: the sound service (PipeWire) is not answering"
+            elif names:
+                text = ", ".join(names)
+            elif label == "Microphones":
+                text = "None found. A USB, Bluetooth or headset microphone should appear here when plugged in."
+            else:
+                text = "None found"
+            rows.append((label, text))
+        if acp7 and not checking:
+            rows.append((
+                "Built-in microphone",
+                "Not supported on Linux yet: this computer's digital microphones sit on "
+                "AMD's audio coprocessor 7, which Linux does not drive yet. Any microphone "
+                "listed above may be silent. A USB, Bluetooth or headset microphone works.",
+            ))
+        self.fill(self.sound, rows)
+        self.sound.setFixedHeight(
+            self.sound.horizontalHeader().height()
+            + sum(self.sound.rowHeight(r) for r in range(self.sound.rowCount())) + 4
+        )
+
+    def show_result(self, result):
+        now = datetime.now().strftime("%H:%M")
+        self.again.setEnabled(True)
+        self.again.setText("Check again")
+        if result["error"]:
+            if self.checked_once:
+                self.status.setText(
+                    f"Check failed at {now}: {result['error']}. "
+                    "The list above is from the last check that worked."
+                )
+            else:
+                self.fill(self.table, [("-", "The hardware check failed", result["error"])])
+                self.status.setText(f"Check failed at {now}: {result['error']}.")
+        else:
+            self.checked_once = True
+            total, missing = len(result["rows"]), result["missing"]
+            self.fill(self.table, result["rows"] or [("None needed", "This computer needs no extra drivers", "")])
+            if total == 0:
+                summary = "no extra drivers needed"
+            elif missing == 0:
+                summary = f"{total} driver{'' if total == 1 else 's'}, all installed"
+            else:
+                summary = f"{missing} of {total} drivers not installed yet; the next update adds them"
+            self.status.setText(f"Checked at {now}: {summary}.")
+        self.show_sound(result["speakers"], result["microphones"], result["acp7"])
 
 
 class SettingsTab(QWidget):

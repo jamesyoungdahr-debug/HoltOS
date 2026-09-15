@@ -22,8 +22,8 @@ set -u
 # opacity 12 to match the 15 % window tint; 4: neon rebrand menu bar and dock;
 # 5: holtos-glass Plasma style, off removed stock themes; 6: the lock screen
 # shows its wallpaper; 7: magenta, amber and teal title bar buttons; 8: HoltOS
-# icons and cursor).
-STAMP="${XDG_STATE_HOME:-$HOME/.local/state}/holtos/glass-user-update-8"
+# icons and cursor; 9: translucent GTK 3 and GTK 4 styles).
+STAMP="${XDG_STATE_HOME:-$HOME/.local/state}/holtos/glass-user-update-9"
 [ -e "$STAMP" ] && exit 0
 [ -e /run/archiso ] && exit 0
 
@@ -192,6 +192,24 @@ case "$(kreadconfig6 --file "$CFG/kcminputrc" --group Mouse --key cursorTheme)" 
     ""|breeze_cursors)
         kwriteconfig6 --file "$CFG/kcminputrc" --group Mouse --key cursorTheme HoltOS ;;
 esac
+
+# Translucent GTK styles (2026-09-15): KWin blurs behind every window, so GTK
+# 3 and GTK 4 apps can be glass too. An account with no gtk.css of its own,
+# or one whose first line is still HoltOS's header, gets the current file
+# (the previous one kept as gtk.css.before-gtk-glass); a file the user wrote
+# is left alone.
+for ver in 3.0 4.0; do
+    css="$CFG/gtk-$ver/gtk.css"
+    skel="/etc/skel/.config/gtk-$ver/gtk.css"
+    [ -f "$skel" ] || continue
+    if [ ! -e "$css" ]; then
+        mkdir -p "$CFG/gtk-$ver"
+        cp "$skel" "$css"
+    elif head -n 1 "$css" | grep -q '^/\* HoltOS Glass' && ! cmp -s "$skel" "$css"; then
+        cp "$css" "$css.before-gtk-glass"
+        cp "$skel" "$css"
+    fi
+done
 
 qdbus6 org.kde.KWin /KWin reconfigure >/dev/null 2>&1 || true
 

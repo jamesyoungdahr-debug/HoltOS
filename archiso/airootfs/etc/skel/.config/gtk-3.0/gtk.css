@@ -1,17 +1,34 @@
-/* HoltOS Glass, opaque twin for GTK (GTK can't blur): brand tokens mapped
-   onto GTK's semantic colour names — the same mechanism KDE's own GTK-sync
-   uses, so it cascades through selection highlights, default buttons and
-   progress bars without targeting every widget by hand. */
-@define-color theme_bg_color #0D0B12;
-@define-color theme_base_color #171423;
+/* HoltOS Glass for GTK 3 (2026-09-15). KWin blurs behind every window
+   (holtos-kwin ForceBlur), so translucent GTK backgrounds show the same
+   frosted glass as Qt windows. Brand tokens are mapped onto GTK's semantic
+   colour names, the mechanism KDE's own GTK sync uses, so they cascade
+   through selection highlights, default buttons and progress bars.
+   holtos-glass-user-update replaces this file only while the first line
+   still starts with "HoltOS Glass"; edit that line to keep your own. */
+@define-color theme_bg_color rgba(13, 11, 18, 0.72);
+@define-color theme_base_color rgba(23, 20, 35, 0.55);
 @define-color theme_fg_color #FFFFFF;
 @define-color theme_text_color #FFFFFF;
 @define-color theme_selected_bg_color #B14DFF;
 @define-color theme_selected_fg_color #0D0B12;
-@define-color borders rgba(255,255,255,0.09);
+@define-color insensitive_bg_color rgba(13, 11, 18, 0.60);
+@define-color borders rgba(255, 255, 255, 0.09);
 @define-color warning_color #FFB84D;
 @define-color error_color #FFB84D;
 @define-color success_color #28E0C8;
+
+window, .background {
+    background-color: @theme_bg_color;
+}
+
+/* Menus, popovers and tooltips float over busy content: a denser layer. */
+menu, .menu, popover, popover.background {
+    background-color: rgba(23, 20, 35, 0.88);
+}
+
+tooltip, tooltip.background {
+    background-color: rgba(23, 20, 35, 0.90);
+}
 
 progressbar > trough > progress {
     background-color: #B14DFF;

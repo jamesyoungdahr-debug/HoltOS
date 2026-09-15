@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Welcome to HoltOS
+GenericName=First-run guide
+Comment=Pick a desktop layout, set how updates install, and find Stash, Network Shares and snapshots
+Exec=/usr/local/bin/holtos-welcome
+Icon=holtos-logo
+Terminal=false
+Categories=System;Settings;
+Keywords=welcome;setup;first run;getting started;layout;updates;

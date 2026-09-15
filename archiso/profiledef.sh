@@ -71,6 +71,7 @@ file_permissions=(
   ["/usr/lib/os-session-select"]="0:0:755"
   ["/usr/local/bin/holtos-shares"]="0:0:755"
   ["/usr/local/bin/holtos-gaming"]="0:0:755"
+  ["/usr/local/bin/holtos-welcome"]="0:0:755"
   ["/usr/local/bin/holtos-scrub"]="0:0:755"
   ["/usr/local/bin/holtos-disk-alert"]="0:0:755"
   ["/usr/local/bin/holtos-disk-alert-notice"]="0:0:755"

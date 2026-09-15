@@ -1,0 +1,33 @@
+/* HoltOS Glass for GTK 4 and libadwaita (2026-09-15). KWin blurs behind
+   every window (holtos-kwin ForceBlur), so translucent backgrounds show the
+   same frosted glass as Qt windows. libadwaita reads the named colours
+   below; plain GTK 4 apps get the window rule at the end.
+   holtos-glass-user-update replaces this file only while the first line
+   still starts with "HoltOS Glass"; edit that line to keep your own. */
+@define-color accent_color #B14DFF;
+@define-color accent_bg_color #B14DFF;
+@define-color accent_fg_color #0D0B12;
+@define-color window_bg_color rgba(13, 11, 18, 0.72);
+@define-color window_fg_color #FFFFFF;
+@define-color view_bg_color rgba(23, 20, 35, 0.55);
+@define-color view_fg_color #FFFFFF;
+@define-color headerbar_bg_color rgba(13, 11, 18, 0.55);
+@define-color headerbar_fg_color #FFFFFF;
+@define-color headerbar_backdrop_color rgba(13, 11, 18, 0.45);
+@define-color sidebar_bg_color rgba(23, 20, 35, 0.40);
+@define-color sidebar_fg_color #FFFFFF;
+@define-color card_bg_color rgba(255, 255, 255, 0.06);
+@define-color card_fg_color #FFFFFF;
+@define-color dialog_bg_color rgba(23, 20, 35, 0.88);
+@define-color dialog_fg_color #FFFFFF;
+@define-color popover_bg_color rgba(23, 20, 35, 0.88);
+@define-color popover_fg_color #FFFFFF;
+@define-color warning_color #FFB84D;
+@define-color error_color #FFB84D;
+@define-color destructive_color #FFB84D;
+@define-color success_color #28E0C8;
+
+window.background {
+    background-color: rgba(13, 11, 18, 0.72);
+    color: #FFFFFF;
+}

@@ -121,7 +121,16 @@ text.normal.color=white
 text.focus.color=#F4EBFF
 text.press.color=white
 text.toggle.color=white
-text.shadow=0
+# Text-shadow backstop for text over glass (glass plan G10, 2026-09-15): a
+# faint one-pixel drop shadow keeps white text readable where a bright,
+# busy wallpaper shows through. Every section that inherits this one gets it;
+# group boxes, tab bars and tooltips keep text.shadow=0.
+text.shadow=1
+text.shadow.xshift=0
+text.shadow.yshift=1
+text.shadow.color=#000000
+text.shadow.alpha=96
+text.shadow.depth=1
 text.margin=1
 text.iconspacing=4
 indicator.element=arrow
