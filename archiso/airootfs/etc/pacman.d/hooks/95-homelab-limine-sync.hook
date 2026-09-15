@@ -2,10 +2,21 @@
 # actually boots, via boot():) in sync whenever mkinitcpio regenerates them.
 # Named 95- so it sorts after mkinitcpio's own hook (90-mkinitcpio-install.hook)
 # and runs after the new initramfs actually exists.
+#
+# The targets are the ones mkinitcpio's own hook watches: Arch's linux package
+# installs usr/lib/modules/<version>/vmlinuz, and mkinitcpio then writes
+# /boot/vmlinuz-linux itself, so a trigger on boot/vmlinuz-linux alone never
+# fired on a kernel update. That left the ESP on the old kernel while its
+# modules were gone, and the ROG Flow Z13 booted into emergency mode (no vfat
+# module for /boot/efi) after 7.2.4 -> 7.2.6 (2026-09-15).
 [Trigger]
 Type = Path
 Operation = Install
 Operation = Upgrade
+Target = usr/lib/modules/*/vmlinuz
+Target = usr/lib/initcpio/*
+Target = usr/lib/firmware/*
+Target = usr/src/*/dkms.conf
 Target = boot/vmlinuz-linux
 Target = boot/initramfs-linux.img
 
