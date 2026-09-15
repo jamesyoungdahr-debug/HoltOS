@@ -294,6 +294,8 @@ update_config() {
         etc/xdg/ksplashrc
         etc/xdg/dolphinrc
         etc/xdg/plasmarc
+        etc/xdg/kscreenlockerrc
+        etc/xdg/Kvantum/kvantum.kvconfig
         etc/os-release
         'etc/pacman.d/hooks/*holtos*.hook'
         etc/pacman.d/holtos-mirrorlist
