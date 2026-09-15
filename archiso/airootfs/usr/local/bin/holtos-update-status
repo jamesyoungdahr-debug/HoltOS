@@ -36,6 +36,8 @@ mkdir -p "$(dirname "$STATUS")"
 # Settings the check itself needs (HoltOS Updates > Settings writes them through holtos-update-settings).
 SKIP_RELEASE=""
 HOLD_PACKAGES=""
+UPDATE_CHANNEL=stable
+DEV_BRANCH=neon-rebrand
 if [ -f "$CONF" ]; then
     while IFS='=' read -r key value; do
         value="${value%\"}"
@@ -43,6 +45,12 @@ if [ -f "$CONF" ]; then
         case "$key" in
             SKIP_RELEASE) SKIP_RELEASE="$value" ;;
             HOLD_PACKAGES) HOLD_PACKAGES="$value" ;;
+            UPDATE_CHANNEL) [[ "$value" =~ ^(stable|dev)$ ]] && UPDATE_CHANNEL="$value" ;;
+            DEV_BRANCH)
+                if [[ "$value" =~ ^[A-Za-z0-9][A-Za-z0-9._/-]{0,99}$ ]] && ! [[ "$value" =~ \.\.|//|/$|\.lock$ ]]; then
+                    DEV_BRANCH="$value"
+                fi
+                ;;
         esac
     done < "$CONF"
 fi
@@ -123,10 +131,36 @@ check_release() {
     add_update "$1" "$2" "$3" "${6:-unknown}" "$tag" "$(release_notes "$4" "$tag")" false
 }
 
+# check_dev <owner/repo> <branch> <installed commit> — the dev channel (Liam,
+# 2026-09-15): offers the branch's newest commit when it is not the installed
+# one, with the commit subjects since the installed commit as the notes.
+check_dev() {
+    local sha notes=""
+    sha="$(git ls-remote "https://github.com/$1.git" "refs/heads/$2" 2>/dev/null | awk 'NR == 1 {print $1}')"
+    if ! [[ "$sha" =~ ^[0-9a-f]{40}$ ]]; then
+        errors+=("could not find the $2 branch of HoltOS")
+        return
+    fi
+    [ "$sha" = "$3" ] && return
+    if [[ "$3" =~ ^[0-9a-f]{40}$ ]]; then
+        notes="$(curl -fsSL --max-time 15 "https://api.github.com/repos/$1/compare/$3...$sha" 2>/dev/null \
+            | jq -r '.commits[-25:] | reverse | .[] | "- " + (.commit.message | split("\n")[0])' 2>/dev/null)"
+    fi
+    if [ -z "$notes" ]; then
+        notes="$(curl -fsSL --max-time 15 "https://api.github.com/repos/$1/commits?sha=$2&per_page=15" 2>/dev/null \
+            | jq -r '.[] | "- " + (.commit.message | split("\n")[0])' 2>/dev/null)"
+    fi
+    add_update config "HoltOS (dev: $2)" holtos "${3:0:7}" "dev-${sha:0:7}" "$notes" false
+}
+
 VERSION_ID="$(. /etc/os-release 2>/dev/null; echo "${VERSION_ID:-}")"
 config_tag="$(installed_field config 3)"
-check_release config "HoltOS" holtos "$HOLTOS_REPO" \
-    "$(cat /var/lib/holtos/deployed-commit 2>/dev/null)" "${config_tag:-${VERSION_ID:+v$VERSION_ID}}"
+if [ "$UPDATE_CHANNEL" = dev ]; then
+    check_dev "$HOLTOS_REPO" "$DEV_BRANCH" "$(cat /var/lib/holtos/deployed-commit 2>/dev/null)"
+else
+    check_release config "HoltOS" holtos "$HOLTOS_REPO" \
+        "$(cat /var/lib/holtos/deployed-commit 2>/dev/null)" "${config_tag:-${VERSION_ID:+v$VERSION_ID}}"
+fi
 
 if [ -d /opt/the-den ]; then
     check_release the-den "The Den" app jamesyoungdahr-debug/the-den \

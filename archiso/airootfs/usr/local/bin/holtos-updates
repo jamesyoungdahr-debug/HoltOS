@@ -53,6 +53,8 @@ DEFAULTS = {
     "SNAPSHOT_KEEP": "5",
     "SKIP_RELEASE": "",
     "HOLD_PACKAGES": "",
+    "UPDATE_CHANNEL": "stable",
+    "DEV_BRANCH": "neon-rebrand",
 }
 INTERVALS = [
     ("1h", "Every hour"),
@@ -64,6 +66,10 @@ AUTO_INSTALL_CHOICES = [
     ("off", "Never, I'll install them myself"),
     ("apps", "HoltOS and apps (ask before system packages)"),
     ("all", "Everything, including system packages and firmware"),
+]
+CHANNEL_CHOICES = [
+    ("stable", "Stable: HoltOS releases"),
+    ("dev", "Dev: the newest work, straight from a branch"),
 ]
 NAMES = {
     "config": "HoltOS",
@@ -165,7 +171,7 @@ class UpdateRow(QFrame):
             size_label.setTextFormat(Qt.PlainText)
             top.addWidget(size_label)
         self.skip = None
-        if update.get("id") == "config" and new:
+        if update.get("id") == "config" and new and not new.startswith("dev-"):
             self.skip = QPushButton("Skip this version")
             self.skip.clicked.connect(lambda: on_skip(new))
             top.addWidget(self.skip)
@@ -749,6 +755,26 @@ class SettingsTab(QWidget):
         form.setFormAlignment(Qt.AlignLeft | Qt.AlignTop)
         form.setFieldGrowthPolicy(QFormLayout.AllNonFixedFieldsGrow)
 
+        # Update channel (first row)
+        channel_row = QHBoxLayout()
+        self.channel = QComboBox()
+        for value, text in CHANNEL_CHOICES:
+            self.channel.addItem(text, value)
+        channel_row.addWidget(self.channel, 1)
+        self.dev_branch = QLineEdit()
+        self.dev_branch.setPlaceholderText("neon-rebrand")
+        self.dev_branch.setMaximumWidth(200)
+        channel_row.addWidget(self.dev_branch)
+        form.addRow("Update channel:", channel_row)
+        self.channel_note = QLabel(
+            "The dev channel installs unfinished work from the HoltOS repository as soon as it is pushed. "
+            "It can break things; a snapshot is still taken before every update. "
+            "Switching back to Stable offers the latest release."
+        )
+        self.channel_note.setWordWrap(True)
+        form.addRow("", self.channel_note)
+        self.channel.currentIndexChanged.connect(self.update_channel_state)
+
         self.interval = QComboBox()
         for value, text in INTERVALS:
             self.interval.addItem(text, value)
@@ -812,6 +838,11 @@ class SettingsTab(QWidget):
         layout.addStretch()
         self.load()
 
+    def update_channel_state(self):
+        dev = self.channel.currentData() == "dev"
+        self.dev_branch.setEnabled(dev)
+        self.channel_note.setVisible(dev)
+
     def load(self):
         settings = read_settings()
         index = self.interval.findData(settings["CHECK_INTERVAL"])
@@ -828,6 +859,10 @@ class SettingsTab(QWidget):
         keep = settings["SNAPSHOT_KEEP"]
         self.snapshot_keep.setValue(int(keep) if keep.isdigit() and 2 <= int(keep) <= 10 else 5)
         self.holds.setText(settings["HOLD_PACKAGES"])
+        index = self.channel.findData(settings["UPDATE_CHANNEL"])
+        self.channel.setCurrentIndex(index if index >= 0 else 0)
+        self.dev_branch.setText(settings["DEV_BRANCH"])
+        self.update_channel_state()
 
     def fix_updates(self):
         RepairDialog(self).exec()
@@ -842,6 +877,8 @@ class SettingsTab(QWidget):
             f"CHECK_AFTER_GAMEMODE={'yes' if self.after_gamemode.isChecked() else 'no'}",
             f"SNAPSHOT_KEEP={self.snapshot_keep.value()}",
             f"HOLD_PACKAGES={' '.join(self.holds.text().split())}",
+            f"UPDATE_CHANNEL={self.channel.currentData()}",
+            f"DEV_BRANCH={self.dev_branch.text().strip() or 'neon-rebrand'}",
         ]
         proc = subprocess.run(
             ["pkexec", "/usr/local/bin/holtos-update-settings", *args],

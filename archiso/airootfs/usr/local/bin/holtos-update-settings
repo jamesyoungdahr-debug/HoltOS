@@ -25,6 +25,8 @@ declare -A setting=(
     [SNAPSHOT_KEEP]=5
     [SKIP_RELEASE]=""
     [HOLD_PACKAGES]=""
+    [UPDATE_CHANNEL]=stable
+    [DEV_BRANCH]=neon-rebrand
 )
 PACMAN_CONF=/etc/pacman.conf
 HOLD_MARKER="# HoltOS held packages (HoltOS Updates > Settings; edit them there)"
@@ -46,6 +48,17 @@ valid() {
             [[ "$2" =~ ^([a-z0-9@_+][a-z0-9@._+-]{0,99}( [a-z0-9@_+][a-z0-9@._+-]{0,99}){0,19})?$ ]] || return 1
             case " $2 " in
                 *" pacman "*|*" archlinux-keyring "*) return 1 ;;
+            esac
+            ;;
+        # Stable follows HoltOS release tags; dev follows the newest commit of
+        # DEV_BRANCH (Liam, 2026-09-15: the branch we are working on).
+        UPDATE_CHANNEL) [[ "$2" =~ ^(stable|dev)$ ]] ;;
+        # A branch of the HoltOS repo: git-safe characters, no "..", "//",
+        # trailing "/" or ".lock", never starting with "-".
+        DEV_BRANCH)
+            [[ "$2" =~ ^[A-Za-z0-9][A-Za-z0-9._/-]{0,99}$ ]] || return 1
+            case "$2" in
+                *..*|*//*|*/|*.lock) return 1 ;;
             esac
             ;;
         *) return 1 ;;
@@ -82,7 +95,7 @@ mkdir -p "$(dirname "$CONF")"
 tmp="$(mktemp "$CONF.XXXXXX")"
 {
     echo "# HoltOS updater settings. Edit them in HoltOS Updates > Settings."
-    for key in CHECK_INTERVAL AUTO_DOWNLOAD AUTO_INSTALL INSTALL_WINDOW CHECK_AFTER_GAMEMODE SNAPSHOT_KEEP SKIP_RELEASE HOLD_PACKAGES; do
+    for key in CHECK_INTERVAL AUTO_DOWNLOAD AUTO_INSTALL INSTALL_WINDOW CHECK_AFTER_GAMEMODE SNAPSHOT_KEEP SKIP_RELEASE HOLD_PACKAGES UPDATE_CHANNEL DEV_BRANCH; do
         printf '%s=%s\n' "$key" "${setting[$key]}"
     done
 } > "$tmp"

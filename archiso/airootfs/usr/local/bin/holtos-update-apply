@@ -88,6 +88,41 @@ already_current() {
     progress "$1" skip 100
 }
 
+# update_setting <KEY> — a value from /etc/holtos/updates.conf (parsed, never
+# sourced), checked the way holtos-update-settings checks it; empty when
+# missing or invalid. Written by hand: it decides what root installs.
+update_setting() {
+    local value
+    [ -f /etc/holtos/updates.conf ] || return 0
+    value="$(sed -n "s/^$1=\(.*\)$/\1/p" /etc/holtos/updates.conf | tail -n 1)"
+    value="${value%\"}"
+    value="${value#\"}"
+    case "$1" in
+        UPDATE_CHANNEL)
+            [[ "$value" =~ ^(stable|dev)$ ]] || value=""
+            ;;
+        DEV_BRANCH)
+            [[ "$value" =~ ^[A-Za-z0-9][A-Za-z0-9._/-]{0,99}$ ]] || value=""
+            case "$value" in
+                *..*|*//*|*/|*.lock) value="" ;;
+            esac
+            ;;
+        *) value="" ;;
+    esac
+    printf '%s' "$value"
+}
+
+# resolve_dev <owner/repo> <branch> — prints "<commit>\tdev-<commit>" for the
+# newest commit of a branch (the dev update channel, Liam 2026-09-15). The
+# full commit id is the label, so a hand-over or rollback can install exactly
+# that commit again. Returns 1 if the branch is not found.
+resolve_dev() {
+    local sha
+    sha="$(git ls-remote "https://github.com/$1.git" "refs/heads/$2" 2>/dev/null | awk 'NR == 1 {print $1}')"
+    [[ "$sha" =~ ^[0-9a-f]{40}$ ]] || return 1
+    printf '%s\tdev-%s\n' "$sha" "$sha"
+}
+
 # resolve_release <owner/repo> [target_tag] — prints "<commit>\t<tag>" for
 # either the latest v* tag (no target_tag given) or that exact tag
 # (verifying it actually exists on the remote). Returns 1 if nothing found.
@@ -130,7 +165,12 @@ resolve_release() {
 download_release() {
     local repo="$1" tag="$2" dest="$3" item="${4:-}" tmp_tar url total size pct pid
     tmp_tar="$(mktemp)"
-    url="https://github.com/$repo/archive/refs/tags/${tag}.tar.gz"
+    # A dev-channel update is a commit snapshot; a release is a tag's.
+    if [[ "$tag" =~ ^dev-([0-9a-f]{40})$ ]]; then
+        url="https://github.com/$repo/archive/${BASH_REMATCH[1]}.tar.gz"
+    else
+        url="https://github.com/$repo/archive/refs/tags/${tag}.tar.gz"
+    fi
     total="$(curl -fsSIL --max-time 20 "$url" 2>/dev/null \
         | tr -d '\r' | awk 'tolower($1)=="content-length:"{n=$2} END{print n+0}')"
     curl -fsSL "$url" -o "$tmp_tar" &
@@ -170,7 +210,21 @@ update_config() {
 
     echo "==> Looking up the release..."
     progress config check -1
-    if ! IFS=$'\t' read -r new_commit latest_tag < <(resolve_release "$repo" "$target_tag"); then
+    local dev_branch=""
+    if [[ "$target_tag" =~ ^dev-([0-9a-f]{40})$ ]]; then
+        # A dev commit named by the updater hand-over or by a rollback.
+        new_commit="${BASH_REMATCH[1]}"
+        latest_tag="$target_tag"
+    elif [ -z "$target_tag" ] && [ "$(update_setting UPDATE_CHANNEL)" = dev ]; then
+        # Dev channel (Liam, 2026-09-15): the newest commit of the working branch.
+        dev_branch="$(update_setting DEV_BRANCH)"
+        dev_branch="${dev_branch:-neon-rebrand}"
+        echo "==> Dev channel: following the $dev_branch branch"
+        if ! IFS=$'\t' read -r new_commit latest_tag < <(resolve_dev "$repo" "$dev_branch"); then
+            echo "The $dev_branch branch was not found in the HoltOS repo." >&2
+            return 1
+        fi
+    elif ! IFS=$'\t' read -r new_commit latest_tag < <(resolve_release "$repo" "$target_tag"); then
         echo "No tagged HoltOS release found${target_tag:+ ($target_tag)}." >&2
         return 1
     fi
@@ -891,7 +945,7 @@ for arg in "$@"; do
                 targets+=("")
             done < <(jq -r '.updates[].id' /var/lib/holtos/update-status.json 2>/dev/null)
             ;;
-        v[0-9]*)
+        v[0-9]*|dev-*)
             # A release tag right after "config" is that item's target: the
             # updater hand-over runs `holtos-update-apply config <tag>`, and
             # older updaters hand over to this one the same way. It used to be
