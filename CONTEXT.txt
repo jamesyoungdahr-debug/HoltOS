@@ -23,11 +23,17 @@ holtos.db; publish-packages.sh uploads homelab.db copies too; the update
 renames the pacman.conf section and removes old files); dual boot alongside
 Windows (EFI minimum 64MiB, notesqml@dualboot "Notes" page, snapshot
 kernel copies and kernel updates that fit a small ESP).
-Next: detach the old ISO from the holtos-rebrand VM (it locks
-out/holtos-0.0.7c-alpha-x86_64.iso, so build.sh cannot back it up), rebuild,
-VM-install and test the installer drivers path and glass installer; the live
-pacman -Sy against holtos.db once packages are published; dual boot on real
-hardware; Liam picks the major version number.
+Also done: HoltOS Updates Hardware tab (holtos-hardware needed + installed
+status). ISO rebuilt 2026-09-14 21:11 (out/holtos-0.0.7d-alpha-x86_64.iso:
+opaque installer, 11 staged driver packages, renames, Notes page).
+PAUSED HERE (Liam, 2026-09-14). The holtos-rebrand VM is booted from that
+ISO and waits on the installer's Users page (Erase disk already chosen) for
+Liam to type the account. A Hyper-V VM holding the ISO locks it: turn the VM
+off before build.sh. Still open: first boot checks on that VM (splash,
+login, menu bar and dock, Classic switching, Hardware tab, hardware.log);
+the live pacman -Sy against holtos.db once packages are published; dual
+boot with Windows, the NVIDIA install path and the parked glass installer
+on bare metal; Liam picks the major version number.
 
 WHAT HOLTOS IS
 --------------
