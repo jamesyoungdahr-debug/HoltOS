@@ -434,6 +434,63 @@ class HistoryTab(QWidget):
                 self.table.setItem(row, column, QTableWidgetItem(text))
 
 
+class HardwareTab(QWidget):
+    """The drivers holtos-hardware finds this computer needs, and whether each is installed."""
+
+    def __init__(self):
+        super().__init__()
+        layout = QVBoxLayout(self)
+        intro = QLabel(
+            "HoltOS checks this computer's hardware and installs the drivers it "
+            "needs, when you install and with every update. Graphics for AMD and "
+            "Intel, firmware, audio and Bluetooth are built in for everyone."
+        )
+        intro.setWordWrap(True)
+        layout.addWidget(intro)
+        self.table = QTableWidget(0, 3)
+        self.table.setHorizontalHeaderLabels(["Driver", "For", "Status"])
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table.verticalHeader().setVisible(False)
+        self.table.setEditTriggers(QTableWidget.NoEditTriggers)
+        layout.addWidget(self.table, 1)
+        footer = QHBoxLayout()
+        footer.addStretch(1)
+        again = QPushButton("Check again")
+        again.clicked.connect(self.refresh)
+        footer.addWidget(again)
+        layout.addLayout(footer)
+        self.refresh()
+
+    def refresh(self):
+        rows = []
+        try:
+            out = subprocess.run(
+                ["/usr/local/bin/holtos-hardware", "needed"],
+                capture_output=True, text=True, timeout=15,
+            ).stdout
+        except (OSError, subprocess.SubprocessError):
+            out = None
+        if out is None:
+            rows.append(("-", "The hardware check is not available", ""))
+        else:
+            for line in out.splitlines():
+                pkg, _, what = line.partition("\t")
+                if not pkg:
+                    continue
+                query = subprocess.run(["pacman", "-Q", pkg], capture_output=True, text=True)
+                if query.returncode == 0:
+                    status = "Installed " + query.stdout.split()[-1]
+                else:
+                    status = "Not installed yet: the next update adds it"
+                rows.append((pkg, what, status))
+            if not rows:
+                rows.append(("None needed", "This computer needs no extra drivers", ""))
+        self.table.setRowCount(len(rows))
+        for row, cells in enumerate(rows):
+            for column, text in enumerate(cells):
+                self.table.setItem(row, column, QTableWidgetItem(text))
+
+
 class SettingsTab(QWidget):
     def __init__(self):
         super().__init__()
@@ -521,6 +578,7 @@ class UpdatesWindow(QTabWidget):
         self.resize(660, 580)
         self.addTab(UpdatesTab(), "Updates")
         self.addTab(HistoryTab(), "History")
+        self.addTab(HardwareTab(), "Hardware")
         self.addTab(SettingsTab(), "Settings")
 
 
@@ -530,7 +588,7 @@ def main():
     app.setDesktopFileName("holtos-updater")
     window = UpdatesWindow()
     if "--settings" in sys.argv:
-        window.setCurrentIndex(2)
+        window.setCurrentIndex(3)
     window.show()
     sys.exit(app.exec())
 

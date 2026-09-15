@@ -38,7 +38,8 @@ Neon rebrand (next major release):
   installing gets its driver (NVIDIA also gets its boot settings), the
   drivers then update with the system, and HoltOS asks for a restart when a
   new driver needs one. What was found is logged in
-  `/var/lib/holtos/hardware.log`.
+  `/var/lib/holtos/hardware.log`, and HoltOS Updates has a **Hardware** tab
+  listing the drivers this computer needs and whether each is installed.
 - **Every HoltOS tool uses the new otter logo** (Updates, Apps, Gaming,
   Network Shares, the snapshot and rollback tools, notices). The old
   hand-drawn logos are removed from installed systems, so the old otter can no
