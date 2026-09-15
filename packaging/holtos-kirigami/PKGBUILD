@@ -1,0 +1,32 @@
+# HoltOS Kirigami — KDE's Kirigami 6.30.0 with HoltOS glass (G7, glass plan):
+# the application window is transparent and pages paint a translucent
+# background, so Kirigami apps (System Settings, Discover) show KWin's blur.
+# Source vendored in forks/holtos-kirigami (tag v6.30.0); the HoltOS changes
+# are marked "HoltOS glass (G7)". Dependencies copied from Arch's kirigami.
+pkgname=holtos-kirigami
+pkgver=6.30.0.r${HOLTOS_REV:-0}
+pkgrel=1
+pkgdesc="Kirigami with HoltOS glass (translucent windows and pages)"
+arch=(x86_64)
+url="https://invent.kde.org/frameworks/kirigami"
+license=(LGPL-2.0-only LGPL-3.0-only)
+provides=(kirigami=6.30.0)
+conflicts=(kirigami)
+replaces=(kirigami)
+depends=(glibc libgomp libstdc++ qt6-base qt6-declarative qt6-svg)
+makedepends=(doxygen extra-cmake-modules qt6-shadertools qt6-tools)
+options=(!debug)
+source=("${pkgname}.tar")
+sha256sums=('SKIP')
+
+build() {
+    cmake -B build -S "${pkgname}" \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_TESTING=OFF
+    cmake --build build
+}
+
+package() {
+    DESTDIR="${pkgdir}" cmake --install build
+}

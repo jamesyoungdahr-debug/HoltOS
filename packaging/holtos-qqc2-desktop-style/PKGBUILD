@@ -1,0 +1,32 @@
+# HoltOS qqc2-desktop-style — KDE's Qt Quick Controls style 6.30.0 with HoltOS
+# glass (G7, glass plan): Page, Pane and Drawer backgrounds are translucent so
+# Kirigami apps show KWin's blur. Source vendored in
+# forks/holtos-qqc2-desktop-style (tag v6.30.0); the HoltOS changes are marked
+# "HoltOS glass (G7)". Dependencies copied from Arch's qqc2-desktop-style.
+pkgname=holtos-qqc2-desktop-style
+pkgver=6.30.0.r${HOLTOS_REV:-0}
+pkgrel=1
+pkgdesc="Qt Quick Controls desktop style with HoltOS glass (translucent pages and panes)"
+arch=(x86_64)
+url="https://invent.kde.org/frameworks/qqc2-desktop-style"
+license=(LGPL-2.0-only LGPL-3.0-only)
+provides=(qqc2-desktop-style=6.30.0)
+conflicts=(qqc2-desktop-style)
+replaces=(qqc2-desktop-style)
+depends=(libstdc++ glibc kcolorscheme kconfig kiconthemes kirigami qt6-base qt6-declarative sonnet)
+makedepends=(extra-cmake-modules qt6-tools)
+options=(!debug)
+source=("${pkgname}.tar")
+sha256sums=('SKIP')
+
+build() {
+    cmake -B build -S "${pkgname}" \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_TESTING=OFF
+    cmake --build build
+}
+
+package() {
+    DESTDIR="${pkgdir}" cmake --install build
+}
