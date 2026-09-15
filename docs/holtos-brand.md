@@ -46,6 +46,9 @@ Files (all derived, never edited by hand):
 - Login otter and glow, boot watermark and glow, the lockups, the Plasma
   splash mark and the installer's `logo-icon.png`, from
   `tools/brand/derive_splash_art.py`.
+- `usr/share/holtos/brand/holtos-lockup-horizontal.png` and
+  `-horizontal-light.png` (1080 × 312), `holtos-lockup-stacked.png` and
+  `-stacked-light.png` (640 × 760), from `tools/brand/derive_lockups.py`.
 
 ### Lockup
 
@@ -53,6 +56,10 @@ Files (all derived, never edited by hand):
   white, on a transparent background; 360 × 104 px in the boot splash, login
   card and Plasma splash.
 - The mark fills 80 % of the height; the gap is 16 % of the height.
+- **Stacked:** the mark centred above the name, the mark 62 % of the height,
+  the name 4 % of the height below it.
+- **Light backgrounds:** the same layouts with the name in holt-night
+  `#0D0B12`; the mark is unchanged.
 - The name is set in the font, not rendered by an image model, so it is
   always spelled right.
 
@@ -244,14 +251,20 @@ clamp so white text keeps 4.5:1 (milestones G8 and G9 in
 
 ## 9. Known gaps
 
-- **Plasma style covers panels and task buttons only:** `holtos-glass` draws
-  the menu bar, the dock and its task buttons; popups, tooltips and widgets
-  still fall back to Plasma's default style. The dock's rounded ends show
-  faint seams where they meet the straight edges in the test VM (software
-  rendering); to be judged on real hardware.
-- **Views outside Dolphin still add a layer:** Kvantum's Base and AltBase carry
-  40 % on top of the 30 % window fill, so file dialogs, Kate and other list
-  views look darker than Dolphin.
+- **Plasma style covers panels, popups and tooltips:** `holtos-glass` (and
+  Classic) draw the menu bar, the dock, task buttons, popups (45 % glass,
+  10 px corners) and tooltips (8 px corners); other widgets (buttons,
+  sliders, switches inside popups) still fall back to Plasma's default style.
+  The frame generator used to fill only part of each stretched centre tile,
+  which left popups half untinted; fixed 2026-09-15, and the same fix may
+  remove the faint seams seen where the dock's rounded ends meet its straight
+  edges. To be judged on real hardware.
+- **List views are as clear as their window (by choice):** since 0.0.7a
+  Kvantum's Base and AltBase are fully transparent, so file dialogs, Kate and
+  other list views show the same single window tint as Dolphin (Liam: clearer
+  glass). Darker list backgrounds would undo that decision; revisit only if
+  text over a bright wallpaper proves hard to read on real hardware, and then
+  with adaptive contrast (G8, G9) rather than a darker Base.
 - **Old numbers in history:** the glass plan's early tables (70 / 60 % for the
   title bar) are kept as history; everything that ships and every tool
   default use the current values.
@@ -265,9 +278,9 @@ clamp so white text keeps 4.5:1 (milestones G8 and G9 in
   `#5FF0DC`, inactive header text `180,180,180`. (The Calamares sidebar text
   and the SDDM and installer hover colours now use the tokens.)
 - **Eyebrow weight:** the tokens say 400; the typography page shows 600.
-- **Missing logo files:** no stacked (mark above name) or light-background
-  lockup, and no vector version of the mark (the icons are PNGs derived from
-  the render, 16–1024 px). The otter's expressions (happy, idle, alert) exist
+- **Missing logo files:** no vector version of the mark (the icons and the
+  lockups are PNGs derived from the render, 16–1024 px). The stacked and
+  light-background lockups exist since 2026-09-15. The otter's expressions (happy, idle, alert) exist
   only as The Den's React components and have not been rendered for the new
   mark. The old hand-drawn SVG logos are deleted from the image and removed
   from installed systems by `holtos-system-extras`.

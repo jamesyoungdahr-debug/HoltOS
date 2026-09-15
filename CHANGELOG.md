@@ -22,6 +22,14 @@ Neon rebrand (next major release):
   the kernel-update hook and the installer shortcut carry the HoltOS name.
   Updating removes the old homelab files once the renamed ones are in place,
   so the boot menu still refreshes exactly once per kernel update.
+- **Glass popups and tooltips:** the calendar, tray, launcher and other Plasma
+  popups and all tooltips now use HoltOS glass with rounded corners instead of
+  Plasma's default look, in both HoltOS and HoltOS Classic. A fix in the
+  panel frames comes with it (the middle of a stretched frame was only
+  partly filled).
+- **Logo lockups:** horizontal and stacked HoltOS lockups for dark and light
+  backgrounds in `/usr/share/holtos/brand/`, made from the rendered otter mark
+  and Nunito ExtraBold (`tools/brand/derive_lockups.py`).
 - **Network Shares finds servers for you:** "Browse..." in the Add dialog
   lists the SMB and NFS servers on your network (announced over mDNS, or
   Windows PCs found over NetBIOS) and the shares each one offers, so nothing

@@ -80,6 +80,11 @@ def size(name, c, m):
         return c, c
     elif idx in (1, 7):
         return m, c
+    elif idx == 4:
+        # The centre tile is m by m. It used to get c by m, so only part of a
+        # stretched centre was filled: popups showed an untinted, unblurred
+        # right half (seen in the VM, 2026-09-15).
+        return m, m
     else:
         return c, m
 

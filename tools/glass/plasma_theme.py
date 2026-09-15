@@ -2,7 +2,7 @@
 
 holtos-glass is the default: a glass menu bar on top and a smoked-glass dock
 with a neon rim at the bottom. holtos-glass-classic is plain glass for the
-HoltOS Classic global theme (single bottom panel). Run from the repo root:
+HoltOS Classic global theme (single bottom panel). Both styles also draw Plasma's popups and tooltips as glass. Run from the repo root:
     python tools/glass/plasma_theme.py --root archiso/airootfs
 """
 
@@ -14,9 +14,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from plasma_panel_svg import panel_background_svg
 from plasma_tasks_svg import tasks_svg
+from plasma_dialog_svg import dialog_background_svg, tooltip_svg
 
 OPAQUE_ALPHA = 0.85
 GLASS_ALPHA = 0.30
+# Popups and tooltips sit over busy windows as well as the wallpaper, so their
+# glass is one step deeper: the glass plan's dialog depth.
+POPUP_GLASS_ALPHA = 0.45
 THEMES = [
     ("holtos-glass", "HoltOS Glass", "Glass menu bar and neon-rim dock for HoltOS", "dock"),
     ("holtos-glass-classic", "HoltOS Glass Classic", "Plain glass panel for HoltOS Classic", "classic")
@@ -56,6 +60,10 @@ def build(root: Path) -> None:
         # Plasma uses solid/ for opaque panels; without it the default theme's panel is drawn.
         write(base / "solid/widgets/panel-background.svg", panel_background_svg(variant, OPAQUE_ALPHA))
         write(base / "widgets/tasks.svg", tasks_svg())
+        # Popups and tooltips: translucent/ with blur, solid/ and the base file when compositing is off.
+        for folder, alpha in (("", OPAQUE_ALPHA), ("translucent/", POPUP_GLASS_ALPHA), ("solid/", OPAQUE_ALPHA)):
+            write(base / f"{folder}dialogs/background.svg", dialog_background_svg(alpha))
+            write(base / f"{folder}widgets/tooltip.svg", tooltip_svg(alpha))
 
 def main() -> None:
     parser = argparse.ArgumentParser()
