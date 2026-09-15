@@ -44,6 +44,8 @@ systemctl enable holtos-btrfs-restore-cleanup.service
 systemctl enable smartd.service holtos-scrub.timer
 # Update checks on a schedule (holtos-update-status; HoltOS Updates > Settings).
 systemctl enable holtos-update-check.timer
+# Undo an update that stops the desktop from starting (holtos-boot-guard).
+systemctl enable holtos-boot-guard.service holtos-boot-guard-check.timer
 # Create Flatpak's system repository now, which also adds Flathub from
 # /etc/flatpak/remotes.d. Flatpak only does that on first use by root, so
 # without this HoltOS Apps' search finds nothing until something runs as

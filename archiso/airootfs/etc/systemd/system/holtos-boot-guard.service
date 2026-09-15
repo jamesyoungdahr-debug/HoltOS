@@ -1,0 +1,15 @@
+# Counts boots after an update until a graphical session confirms it, and
+# rolls the update back after two boots that never reached one
+# (holtos-boot-guard). Runs before the display manager.
+[Unit]
+Description=HoltOS: undo an update that stops the desktop from starting
+ConditionPathExists=!/run/archiso
+After=local-fs.target
+Before=display-manager.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/holtos-boot-guard --boot
+
+[Install]
+WantedBy=multi-user.target

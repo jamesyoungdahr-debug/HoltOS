@@ -22,6 +22,11 @@ Neon rebrand (next major release):
   the kernel-update hook and the installer shortcut carry the HoltOS name.
   Updating removes the old homelab files once the renamed ones are in place,
   so the boot menu still refreshes exactly once per kernel update.
+- **Updates that break the desktop undo themselves:** if the desktop (or the
+  login screen) does not come up on two boots in a row after an update,
+  HoltOS restores the snapshot taken just before that update and restarts,
+  then tells you at the next login. The system as it was is kept as a
+  snapshot too, and your home folder is never touched.
 - **Choose how many snapshots to keep:** HoltOS Updates > Settings > "Keep
   before updates" (2 to 10, default 5). Older snapshots, their kernel
   copies and boot entries are removed beyond that number.

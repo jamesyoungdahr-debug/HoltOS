@@ -96,6 +96,11 @@ if [ "$REGEN_ONLY" -eq 0 ]; then
     mkdir -p "$(dirname "$SNAP_LOG")"
     printf '%s\t%s\t%s\n' "$(date -u +%FT%TZ)" "$LABEL" "$NAME" >> "$SNAP_LOG"
     chmod 644 "$SNAP_LOG"
+    # Snapshots taken right before an update arm the rollback guard: if the
+    # desktop then fails to start twice, the next boot restores this snapshot.
+    case "$LABEL" in
+        config|system) /usr/local/bin/holtos-boot-guard --arm "$NAME" || true ;;
+    esac
 fi
 [ -f "$SNAP_LOG" ] || : > "$SNAP_LOG"
 

@@ -1,0 +1,158 @@
+#!/usr/bin/env bash
+# Undoes an update that stops the desktop from starting.
+#
+# holtos-btrfs-snapshot takes a snapshot right before every HoltOS or system
+# update and arms this guard with it (--arm). While armed, every boot counts
+# as unconfirmed until a graphical session appears (the login screen or a
+# desktop); --check, run a few minutes after boot, confirms it and disarms.
+# If two boots in row after an update never reach a graphical session, the
+# third boot restores the snapshot taken before the update
+# (holtos-btrfs-restore, which keeps a pre-restore snapshot, so this can be
+# undone too) and reboots. Home folders are untouched.
+#
+# State lives in /var/log/holtos-boot-guard/ because /var/log is the @log
+# subvolume, which a rollback does not replace.
+#
+#   holtos-boot-guard --arm <snapshot>   arm after taking a pre-update snapshot
+#   holtos-boot-guard --boot             early at every boot (holtos-boot-guard.service)
+#   holtos-boot-guard --check            a few minutes after boot (holtos-boot-guard-check.timer)
+#   holtos-boot-guard --status           print the state
+#
+# Liam, 2026-09-14: auto-rollback if the desktop fails to come up twice
+# (docs/holtos-must-haves-and-plan.md, section 4).
+
+set -uo pipefail
+
+STATE=/var/log/holtos-boot-guard
+ARMED="$STATE/armed"
+FAILED="$STATE/unconfirmed-boots"
+ROLLED="$STATE/rolled-back"
+LOG="$STATE/guard.log"
+LIMIT=2
+SNAP_LOG=/var/lib/holtos/snapshots.log
+
+need_root() {
+    if [ "$(id -u)" -ne 0 ]; then
+        echo "holtos-boot-guard must run as root" >&2
+        exit 1
+    fi
+}
+
+say() {
+    local MSG="$1"
+    mkdir -p "$STATE"
+    echo "$(date -u +%FT%TZ) $MSG" >> "$LOG"
+    logger -t holtos-boot-guard -- "$MSG" 2>/dev/null || true
+    echo "==> $MSG"
+}
+
+valid_name() {
+    local NAME="$1"
+    [[ "$NAME" =~ ^[0-9]{8}T[0-9]{6}Z-[a-z-]+$ ]]
+}
+
+graphical_session() {
+    local sessions
+    sessions=$(loginctl list-sessions --no-legend) || return 1
+    while IFS= read -r line; do
+        [ -z "$line" ] && continue
+        local sid
+        sid=$(echo "$line" | awk '{print $1}')
+        local type_val state_val
+        type_val=$(loginctl show-session "$sid" -p Type --value 2>/dev/null) || continue
+        state_val=$(loginctl show-session "$sid" -p State --value 2>/dev/null) || continue
+        if [[ "$type_val" == "wayland" || "$type_val" == "x11" ]] && \
+           [[ "$state_val" == "active" || "$state_val" == "online" ]]; then
+            return 0
+        fi
+    done <<< "$sessions"
+    return 1
+}
+
+case "${1:-}" in
+    --arm)
+        need_root
+        if ! valid_name "${2:-}"; then
+            echo "invalid snapshot name" >&2
+            exit 2
+        fi
+        if [ ! -f "$SNAP_LOG" ] || ! grep -q -F -- "$2" "$SNAP_LOG"; then
+            echo "snapshot $2 not found in $SNAP_LOG" >&2
+            exit 2
+        fi
+        mkdir -p "$STATE"
+        chmod 755 "$STATE"
+        echo "$2" > "$ARMED"
+        echo 0 > "$FAILED"
+        say "armed with $2"
+        exit 0
+        ;;
+
+    --boot)
+        need_root
+        [ ! -f "$ARMED" ] && exit 0
+        [ -e /run/archiso ] && exit 0
+
+        local_name=$(cat "$ARMED")
+        count=$(cat "$FAILED" 2>/dev/null || echo 0)
+        if ! [[ "$count" =~ ^[0-9]+$ ]]; then
+            count=0
+        fi
+
+        if [ "$count" -ge "$LIMIT" ]; then
+            say "desktop did not start on $count boots after an update; restoring $local_name"
+            if /usr/local/bin/holtos-btrfs-restore "$local_name" >> "$LOG" 2>&1; then
+                {
+                    echo "SNAPSHOT=$local_name"
+                    echo "WHEN=$(date -u +%FT%TZ)"
+                    echo "BOOTS=$count"
+                } > "$ROLLED"
+                chmod 644 "$ROLLED"
+                rm -f "$ARMED" "$FAILED"
+                say "restored $local_name; rebooting"
+                systemctl reboot
+                exit 0
+            else
+                say "restoring $local_name failed; disarming so the machine does not loop"
+                rm -f "$ARMED" "$FAILED"
+                exit 1
+            fi
+        else
+            count=$((count + 1))
+            echo "$count" > "$FAILED"
+            say "boot $count after an update, waiting for a graphical session"
+            exit 0
+        fi
+        ;;
+
+    --check)
+        need_root
+        [ ! -f "$ARMED" ] && exit 0
+        if graphical_session; then
+            say "graphical session found; update confirmed, disarming"
+            rm -f "$ARMED" "$FAILED"
+            exit 0
+        else
+            say "no graphical session yet on this boot"
+            exit 0
+        fi
+        ;;
+
+    --status)
+        if [ -f "$ARMED" ]; then
+            echo "armed: $(cat "$ARMED"), unconfirmed boots: $(cat "$FAILED" 2>/dev/null || echo 0)"
+        else
+            echo "not armed"
+        fi
+        if [ -f "$ROLLED" ]; then
+            echo "last rollback:"
+            cat "$ROLLED"
+        fi
+        exit 0
+        ;;
+
+    *)
+        sed -n '15,19p' "$0" >&2
+        exit 2
+        ;;
+esac

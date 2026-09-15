@@ -1,0 +1,15 @@
+# Shortly after every boot, check whether a graphical session came up
+# (holtos-boot-guard-check.service), and again later for slow machines. The
+# early check matters: a machine switched off within minutes of every boot
+# must not look like a desktop that never started.
+[Unit]
+Description=HoltOS: check that the desktop started after an update
+ConditionPathExists=!/run/archiso
+
+[Timer]
+OnBootSec=90s
+OnBootSec=4min
+OnBootSec=12min
+
+[Install]
+WantedBy=timers.target

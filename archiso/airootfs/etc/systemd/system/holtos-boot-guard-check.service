@@ -1,0 +1,9 @@
+# Confirms an update once a graphical session (login screen or desktop) is up
+# (holtos-boot-guard --check). Started by holtos-boot-guard-check.timer.
+[Unit]
+Description=HoltOS: confirm the desktop started after an update
+ConditionPathExists=!/run/archiso
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/holtos-boot-guard --check

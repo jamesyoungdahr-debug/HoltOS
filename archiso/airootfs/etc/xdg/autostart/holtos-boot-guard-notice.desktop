@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=HoltOS update rollback notice
+Comment=Says so once when HoltOS undid an update because the desktop did not start
+Exec=/usr/local/bin/holtos-boot-guard-notice
+OnlyShowIn=KDE;
+NoDisplay=true
+X-KDE-autostart-phase=2
