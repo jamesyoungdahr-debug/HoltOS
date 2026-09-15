@@ -189,7 +189,7 @@ Each one is a small unit, built and checked before the next.
   glass")**, screenshots of every surface in the VM:
   - Glass already: windows and title bars (Kvantum + org.holtos.glass), menu
     bar and dock, KRunner, notifications, volume OSD, tray popups, tooltips,
-    Qt/KDE file dialogs, HoltOS Apps, Updates, Network Shares, Gaming.
+    Qt/KDE file dialogs, Stash, Updates, Network Shares, Gaming.
   - Fixed: menus (the Kvantum SVG had no `menu-*` elements, so `[Menu]` drew
     the opaque button element; `tools/glass/kvantum_glass.py` now adds a glass
     menu at 45 %); the lock screen (accounts from older images still showed
@@ -206,7 +206,7 @@ Each one is a small unit, built and checked before the next.
   widget is a plain `QWidget` (tested in the VM with four windows: a plain
   top-level `QWidget` and a `QMainWindow` holding a `QScrollArea` were glass;
   `QMainWindow`s holding a plain `QWidget`, with or without a child
-  stylesheet, were solid). HoltOS Apps was opaque for this reason and is now
+  stylesheet, were solid). Stash was opaque for this reason and is now
   a top-level `QWidget`. Rule for HoltOS tools: use a top-level `QWidget`
   (or `QTabWidget`), or give a `QMainWindow` a tab or scroll widget as its
   central widget. Network Shares (central `QTabWidget`) was already glass.

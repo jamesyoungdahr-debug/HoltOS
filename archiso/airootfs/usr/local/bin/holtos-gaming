@@ -17,13 +17,16 @@ import sys
 from PySide6.QtCore import QObject, Qt, QThread, Signal
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
-    QApplication, QCheckBox, QDialog, QFormLayout, QGroupBox, QHBoxLayout,
-    QLabel, QPushButton, QVBoxLayout,
+    QApplication, QCheckBox, QComboBox, QDialog, QFormLayout, QGroupBox,
+    QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout,
 )
 
 ICON_PATH = "/usr/share/icons/hicolor/256x256/apps/holtos-logo.png"
 PROTON_GE = "/usr/local/bin/holtos-proton-ge"
 SESSION_CONF = "/etc/holtos/session.conf"
+GAMEMODE_CONF = "/etc/holtos/gamemode.conf"
+GAMEMODE_RESOLUTION = "/etc/holtos/gamemode-resolution"
+SESSION_APPLY = "/usr/local/bin/holtos-session-apply"
 
 
 def package_version(name):
@@ -46,6 +49,30 @@ def game_mode_default():
             return any(line.strip() == "DEFAULT=gamemode" for line in f)
     except OSError:
         return False
+
+
+def gamemode_setting(key, fallback="auto"):
+    # holtos-session-apply writes HOLTOS_GAMEMODE_HDR / _VRR here and the Game
+    # Mode session sources the file. Read-only, so it needs no root.
+    try:
+        with open(GAMEMODE_CONF) as f:
+            for line in f:
+                if line.startswith(f"HOLTOS_GAMEMODE_{key}="):
+                    value = line.split("=", 1)[1].strip()
+                    if value in ("auto", "on", "off"):
+                        return value
+    except OSError:
+        pass
+    return fallback
+
+
+def gamemode_resolution():
+    try:
+        with open(GAMEMODE_RESOLUTION) as f:
+            value = f.read().strip()
+        return value or "auto"
+    except OSError:
+        return "auto"
 
 
 def left_aligned(form):
@@ -109,6 +136,30 @@ class GamingWindow(QDialog):
         switch = QPushButton("Switch to Game Mode now")
         switch.clicked.connect(lambda: subprocess.Popen(["/usr/local/bin/steamos-session-select", "gamescope"]))
         sform.addWidget(switch)
+
+        living = QGroupBox("Living room (TV) preset")
+        lform = left_aligned(QFormLayout(living))
+        self.hdr_combo = QComboBox()
+        self.hdr_combo.addItems(["auto", "on", "off"])
+        self.hdr_combo.setCurrentText(gamemode_setting("HDR"))
+        self.hdr_combo.currentTextChanged.connect(
+            lambda v: self.set_gamemode("--hdr", "HDR", v, self.hdr_combo))
+        lform.addRow("HDR:", self.hdr_combo)
+        self.vrr_combo = QComboBox()
+        self.vrr_combo.addItems(["auto", "on", "off"])
+        self.vrr_combo.setCurrentText(gamemode_setting("VRR"))
+        self.vrr_combo.currentTextChanged.connect(
+            lambda v: self.set_gamemode("--vrr", "VRR", v, self.vrr_combo))
+        lform.addRow("Adaptive sync:", self.vrr_combo)
+        self.res_edit = QLineEdit(gamemode_resolution())
+        self.res_edit.setPlaceholderText("auto or 1920x1080")
+        self.res_edit.editingFinished.connect(self.set_resolution)
+        lform.addRow("Resolution:", self.res_edit)
+        hint = QLabel("HDR and adaptive sync are handed to gamescope in Game Mode. "
+                      "Leave Resolution on auto unless the TV picks a mode you do not want.")
+        hint.setWordWrap(True)
+        lform.addRow(hint)
+        sform.addWidget(living)
         layout.addWidget(session)
 
         close = QHBoxLayout()
@@ -146,6 +197,25 @@ class GamingWindow(QDialog):
             self.default_toggle.blockSignals(True)
             self.default_toggle.setChecked(not checked)
             self.default_toggle.blockSignals(False)
+
+    def set_gamemode(self, option, key, value, widget):
+        # holtos-session-apply validates the value and writes the file; if it
+        # refuses, put the control back where it was.
+        proc = subprocess.run(["pkexec", SESSION_APPLY, option, value],
+                              capture_output=True, text=True)
+        if proc.returncode != 0:
+            widget.blockSignals(True)
+            widget.setCurrentText(gamemode_setting(key))
+            widget.blockSignals(False)
+
+    def set_resolution(self):
+        value = self.res_edit.text().strip() or "auto"
+        if value == gamemode_resolution():
+            return
+        proc = subprocess.run(["pkexec", SESSION_APPLY, "--resolution", value],
+                              capture_output=True, text=True)
+        if proc.returncode != 0:
+            self.res_edit.setText(gamemode_resolution())
 
     def closeEvent(self, event):
         if self.thread.isRunning():

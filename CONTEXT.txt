@@ -405,7 +405,7 @@ AFTERNOON 2026-09-12 (unreleased, builds 12-15, all VM-verified)
   check hardware.log (vainfo/vulkaninfo) and Display page HDR/VRR there.
 - FOCUS: media + gaming/entertainment. Roadmap in
   docs/holtos-must-haves-and-plan.md (gaming base -> Game Mode session ->
-  HoltOS Apps store over Flathub -> controllers/CEC -> media player +
+  Stash store over Flathub -> controllers/CEC -> media player +
   storage wizard). Network Shares tool done (holtos-share/holtos-shares).
 
 FORKS (holtos-glass-effect, holtos-window-decoration)

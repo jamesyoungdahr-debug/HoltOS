@@ -14,8 +14,15 @@ Neon rebrand (next major release):
 - **New desktop layout:** a thin glass menu bar across the top (app launcher,
   the active app's menus, system tray, clock) and a floating dock at the
   bottom centre that is only as wide as its apps (Dolphin, Chromium, Steam,
-  HoltOS Apps, Konsole, System Settings). Existing accounts switch at their
-  next login; their old panels are kept as `*.before-neon-layout`.
+  Stash, Konsole, System Settings). Existing accounts switch at their next
+  login; their old panels are kept as `*.before-neon-layout`.
+- **The app store is now called Stash** (Liam, 2026-09-15). The window, the
+  tray entry and the app menu say Stash; the program and package name
+  (`holtos-apps`) is unchanged.
+- **A "Living room" preset for Game Mode.** The Gaming page can hand a TV
+  its HDR, adaptive sync and resolution; HDR and adaptive sync stay off by
+  default (`auto`), and the resolution stays gamescope's own choice unless a
+  mode is pinned.
 - GTK apps show their menus in the top bar (`appmenu-gtk-module`).
 - **Smaller title bar buttons and dock icons** for a less cluttered look.
 - **"homelab" is now HoltOS everywhere:** the installer and boot menu scripts,
@@ -119,12 +126,12 @@ Neon rebrand (next major release):
     (clears a stuck update, repairs the package keys, picks fast mirrors,
     repairs Flatpak).
   - The tray tooltip shows an install in progress.
-- **HoltOS Apps, rebuilt:**
+- **Stash (the app store), rebuilt:**
   - Every app has its own page: screenshots, description, developer and
     verified badge, download and installed size, licence, release notes and
     links.
   - Before an app that asks for broad access installs (all your files, your
-    saved passwords, programs outside its sandbox), HoltOS Apps lists what it
+    saved passwords, programs outside its sandbox), Stash lists what it
     wants and asks first.
   - Browse Flathub's categories and its Popular, Trending, New and Recently
     updated rows next to the HoltOS picks, which grow to 43 apps with a new
@@ -135,7 +142,7 @@ Neon rebrand (next major release):
     settings and data along with it, and cleans up runtimes no app uses.
   - The Updates page updates one app or everything.
   - "Install" links on flathub.org and downloaded .flatpakref files open the
-    app's page in HoltOS Apps (Flathub only).
+    app's page in Stash (Flathub only).
   - The store window is HoltOS glass (it was drawn opaque before).
 - **Glass popups and tooltips:** the calendar, tray, launcher and other Plasma
   popups and all tooltips now use HoltOS glass with rounded corners instead of

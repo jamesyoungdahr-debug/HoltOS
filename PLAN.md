@@ -153,8 +153,12 @@ in this step can be done before that decision; only this check waits.
   performance defaults, then the media player decision and storage
   wizard. Network Shares (SMB/NFS with automount, GUI) is done.
 
-**Open cosmetic:** Plasma's Disks & Devices popup opens over the
+**Fixed (2026-09-15):** Plasma's Disks & Devices popup opened over the
 installer in the live session for the live medium's own optical disc.
+`etc/udev/rules.d/90-holtos-live-media.rules` sets `UDISKS_IGNORE` on the
+`HOLTOS_*` and `ARCHISO_EFI` filesystems, so udisks never announces them;
+`holtos-cleanup-live.sh` removes the rule from the installed system, so real
+sticks carrying those labels still appear.
 
 ## Step 6 — Real hardware
 

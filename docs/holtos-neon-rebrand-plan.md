@@ -56,7 +56,7 @@ Deliberately not done in the backlog run (need Liam): darker list views
 ask KWin for blur, so text would sit on the bare wallpaper), title bar
 button colours, media player and storage decisions, first-run wizard
 choices, otter expression renders, icons and cursor, adaptive contrast, The
-Den client, the HoltOS Apps name, the Xbox wireless dongle, the version
+Den client, the Stash name, the Xbox wireless dongle, the version
 number and publishing packages.
 
 ## Left to do

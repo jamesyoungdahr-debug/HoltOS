@@ -12,10 +12,20 @@
 # file is removed and the login screen behaves normally. Autologin is the
 # price of a seamless switch; it is what SteamOS/Bazzite do too.
 #
+# It also writes the Game Mode display settings behind the "Living room"
+# preset in holtos-gaming: HOLTOS_GAMEMODE_HDR and HOLTOS_GAMEMODE_VRR in
+# /etc/holtos/gamemode.conf, and the resolution in
+# /etc/holtos/gamemode-resolution. holtos-gamemode-session SOURCES the
+# first file, so only those two keys are ever written and only after
+# validation; every other line (comments, GAMESCOPE_ARGS) is preserved.
+#
 #   --next <plasma|gamemode>     one-shot: the next relogin uses this session
 #   --next-done                  clear the one-shot (session scripts call it)
 #   --default <plasma|gamemode>  persistent choice ("Start in Game Mode")
 #   --user <name>                whose session (default: the pkexec caller)
+#   --hdr <auto|on|off>          Game Mode HDR (Living room preset)
+#   --vrr <auto|on|off>          Game Mode adaptive sync (Living room preset)
+#   --resolution <auto|WxH>      Game Mode resolution; auto removes the file
 #   --show                       print the config
 # Written by hand (security-relevant): it decides who is logged in without
 # a password.
@@ -23,10 +33,17 @@ set -euo pipefail
 
 CONF=/etc/holtos/session.conf
 SDDM_CONF=/etc/sddm.conf.d/zz-holtos-session.conf
+GM_CONF=/etc/holtos/gamemode.conf
+GM_RES_FILE=/etc/holtos/gamemode-resolution
 
 [ "$(id -u)" -eq 0 ] || { echo "holtos-session-apply must run as root (pkexec)" >&2; exit 1; }
 
 DEFAULT=plasma; NEXT=""; USER_=""
+# Empty means "leave this Game Mode setting alone".
+GM_HDR=""; GM_VRR=""; GM_RES=""
+# Set by --next/--next-done/--default: a display-only call must not touch
+# the session state or SDDM's autologin.
+session_changed=0
 # shellcheck disable=SC1090
 [ -f "$CONF" ] && . "$CONF"
 
@@ -37,18 +54,77 @@ fi
 
 valid_session() { case "$1" in plasma|gamemode) return 0 ;; *) return 1 ;; esac; }
 valid_user() { [[ "$1" =~ ^[a-z_][a-z0-9_-]*$ ]] && getent passwd "$1" >/dev/null; }
+valid_toggle() { case "$1" in auto|on|off) return 0 ;; *) return 1 ;; esac; }
+# Either the literal "auto" or <3-4 digits>x<3-4 digits>. The value is
+# written verbatim into the file gamescope reads, so its shape is pinned
+# here and nothing downstream has to trust it.
+valid_resolution() { [ "$1" = auto ] || [[ "$1" =~ ^[0-9]{3,4}x[0-9]{3,4}$ ]]; }
 
 while [ $# -gt 0 ]; do
     case "$1" in
-        --next)      valid_session "${2:-}" || { echo "bad session: ${2:-}" >&2; exit 2; }; NEXT="$2"; shift ;;
-        --next-done) NEXT="" ;;
-        --default)   valid_session "${2:-}" || { echo "bad session: ${2:-}" >&2; exit 2; }; DEFAULT="$2"; shift ;;
+        --next)      valid_session "${2:-}" || { echo "bad session: ${2:-}" >&2; exit 2; }; NEXT="$2"; session_changed=1; shift ;;
+        --next-done) NEXT=""; session_changed=1 ;;
+        --default)   valid_session "${2:-}" || { echo "bad session: ${2:-}" >&2; exit 2; }; DEFAULT="$2"; session_changed=1; shift ;;
         --user)      valid_user "${2:-}" || { echo "bad user: ${2:-}" >&2; exit 2; }; USER_="$2"; shift ;;
-        --show)      printf 'DEFAULT=%s\nNEXT=%s\nUSER=%s\n' "$DEFAULT" "$NEXT" "$USER_"; exit 0 ;;
+        --hdr)       valid_toggle "${2:-}" || { echo "bad --hdr value: ${2:-} (auto|on|off)" >&2; exit 2; }; GM_HDR="$2"; shift ;;
+        --vrr)       valid_toggle "${2:-}" || { echo "bad --vrr value: ${2:-} (auto|on|off)" >&2; exit 2; }; GM_VRR="$2"; shift ;;
+        --resolution) valid_resolution "${2:-}" || { echo "bad --resolution value: ${2:-} (auto or WxH)" >&2; exit 2; }; GM_RES="$2"; shift ;;
+        --show)      printf 'DEFAULT=%s\nNEXT=%s\nUSER=%s\n' "$DEFAULT" "$NEXT" "$USER_"
+                     printf 'HDR=%s\n' "$(sed -n 's/^HOLTOS_GAMEMODE_HDR=//p' "$GM_CONF" 2>/dev/null | tail -n 1)"
+                     printf 'VRR=%s\n' "$(sed -n 's/^HOLTOS_GAMEMODE_VRR=//p' "$GM_CONF" 2>/dev/null | tail -n 1)"
+                     printf 'RESOLUTION=%s\n' "$(cat "$GM_RES_FILE" 2>/dev/null || echo auto)"
+                     exit 0 ;;
         *) echo "unknown option: $1" >&2; exit 2 ;;
     esac
     shift
 done
+
+# --- Game Mode display settings (the "Living room" preset) --------------
+# holtos-gamemode-session sources $GM_CONF, so only the two keys managed
+# here are rewritten, each already validated above; every other line
+# (comments, GAMESCOPE_ARGS) is carried over untouched.
+if [ -n "$GM_HDR" ] || [ -n "$GM_VRR" ]; then
+    # The file is rewritten from scratch, so carry over whichever of the two
+    # keys this call does not change. A value that is already there but is
+    # not one we would have written ourselves is dropped rather than kept.
+    if [ -f "$GM_CONF" ]; then
+        if [ -z "$GM_HDR" ]; then
+            GM_HDR="$(sed -n 's/^HOLTOS_GAMEMODE_HDR=//p' "$GM_CONF" | tail -n 1)"
+            valid_toggle "$GM_HDR" || GM_HDR=""
+        fi
+        if [ -z "$GM_VRR" ]; then
+            GM_VRR="$(sed -n 's/^HOLTOS_GAMEMODE_VRR=//p' "$GM_CONF" | tail -n 1)"
+            valid_toggle "$GM_VRR" || GM_VRR=""
+        fi
+    fi
+    mkdir -p "$(dirname "$GM_CONF")"
+    tmp="$(mktemp "$GM_CONF.XXXXXX")"
+    if [ -f "$GM_CONF" ]; then
+        grep -v -E '^HOLTOS_GAMEMODE_(HDR|VRR)=' "$GM_CONF" > "$tmp" || true
+    fi
+    if [ -n "$GM_HDR" ]; then printf 'HOLTOS_GAMEMODE_HDR=%s\n' "$GM_HDR" >> "$tmp"; fi
+    if [ -n "$GM_VRR" ]; then printf 'HOLTOS_GAMEMODE_VRR=%s\n' "$GM_VRR" >> "$tmp"; fi
+    chmod 644 "$tmp"
+    mv -f "$tmp" "$GM_CONF"
+    echo "==> Game Mode display: HDR=${GM_HDR:-auto} VRR=${GM_VRR:-auto}"
+fi
+if [ -n "$GM_RES" ]; then
+    mkdir -p "$(dirname "$GM_RES_FILE")"
+    if [ "$GM_RES" = auto ]; then
+        rm -f "$GM_RES_FILE"
+        echo "==> Game Mode resolution: automatic (gamescope's own choice)"
+    else
+        printf '%s\n' "$GM_RES" > "$GM_RES_FILE"
+        chmod 644 "$GM_RES_FILE"
+        echo "==> Game Mode resolution: $GM_RES"
+    fi
+fi
+# A call that only set display options is finished here: leave the session
+# and the login screen exactly as they are.
+if [ "$session_changed" -eq 0 ] &&
+   { [ -n "$GM_HDR" ] || [ -n "$GM_VRR" ] || [ -n "$GM_RES" ]; }; then
+    exit 0
+fi
 
 # The autologin user is the one who asked, unless set explicitly. A caller
 # may only act for their own account (a wheel member could still edit the

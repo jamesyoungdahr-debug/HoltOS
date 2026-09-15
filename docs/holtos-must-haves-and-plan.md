@@ -88,8 +88,19 @@ Not written to disk yet -- waiting on decky-loader's own build verification firs
   `xone-dongle-firmware` package downloads Microsoft's driver, which the
   image cannot redistribute; if wanted, it has to be an opt-in download on
   the user's own machine.
-- **Still planned**: audio passthrough defaults for an AVR, and a "Living
-  room" preset in Game Mode (TV resolution, HDR on, 4K@120 where possible).
+- **"Living room" preset — built (2026-09-15).** The Gaming page has an
+  HDR / adaptive-sync / resolution group; it writes the Game Mode display
+  settings through `holtos-session-apply --hdr/--vrr/--resolution`, which
+  validates every value, and `holtos-gamemode-session` already reads them.
+  Resolution stays on `auto` (gamescope's own choice) unless a mode is
+  pinned. Set it from a desktop session; it applies at the next Game Mode
+  start. Needs a TV to verify on.
+- **Still planned**: audio passthrough defaults for an AVR. The image ships
+  stock PipeWire/WirePlumber and no HoltOS audio config, so what an AVR
+  actually needs is unmeasured: a blind PipeWire profile change would alter
+  audio on every machine. Test with an AVR over HDMI first (does
+  `pactl list sinks` offer the IEC958/AC3 profile, and does an AC3/DTS
+  source pass through), then add a WirePlumber drop-in for what is missing.
 
 ### 1.4 Performance defaults — done (2026-09-13, branch `defaults`)
 
@@ -111,7 +122,7 @@ Not written to disk yet -- waiting on decky-loader's own build verification firs
 
 ### 2.1 A HoltOS app store — built (2026-09-13, branch `apps`)
 
-- **Status**: HoltOS Apps (`holtos-apps`): 27 curated Flathub apps in five
+- **Status**: Stash (`holtos-apps`): 27 curated Flathub apps in five
   categories (`usr/share/holtos/apps.json`), search, and an Installed tab,
   each with Install / Open / Remove; system-wide installs with no password
   through Flatpak's own polkit rule; Flathub from `etc/flatpak/remotes.d`.
@@ -140,10 +151,9 @@ Not written to disk yet -- waiting on decky-loader's own build verification firs
   Curation is a JSON list in the HoltOS repo (name, Flathub id, blurb,
   category, icon), updatable through the config update like everything
   else.
-- **Name**: to decide. Candidates that fit the otter/holt branding: *The
-  Holt* (an otter's den — but "Den" is taken by The Den), *Otter Shop*,
-  *HoltOS Apps*. Plain **"HoltOS Apps"** is the safe default until Liam
-  picks.
+- **Name**: **Stash** (Liam, 2026-09-15). It shipped as "HoltOS Apps" while
+  the name was open; the window, the tray entry and the app menu now say
+  Stash, and the program and package name (`holtos-apps`) is unchanged.
 - Base: `flatpak` + `flatpak-kcm` + the Flathub remote added at image
   build (`flatpak remote-add --if-not-exists flathub`), portals already in.
 - Verification: VM installs a Flathub app from the store and it appears
@@ -167,8 +177,12 @@ smb + wsdd run only while something is shared. VM-tested: refusals, guest
 read/no write, symlink escape blocked, mDNS announce, services stop when the
 last share goes. Not tested: opening a share with a network password (needs a
 password set on real hardware), WS-Discovery from a Windows PC. Still open:
-WS-Discovery browsing of Windows PCs that do not answer NetBIOS (wsdd 0.9's
-discovery socket), and the media-pool export decision (2.3).
+WS-Discovery *browsing* of Windows PCs that do not answer NetBIOS. `wsdd` is a
+server — it advertises this machine, it cannot discover others — so this needs
+a WSD client library that is in neither Arch nor our own repos, plus a Windows
+machine that ignores NetBIOS to test against. Not a config change; take it up
+again with that dependency in hand. Also still open: the media-pool export
+decision (2.3).
 
 ### 2.3 Media stack — see `docs/media-server-must-haves.md`
 
@@ -190,15 +204,21 @@ Samba export of the pool; Tailscale for remote access.
 
 ## 4. System
 
-- Snapshots with one-click restore — done. Add: scheduled snapshots of
-  the media pool (deleted-file insurance), retention setting in the tray.
+- Snapshots with one-click restore — done. Retention is settable: HoltOS
+  Updates > Settings writes `SNAPSHOT_KEEP` (2-10) to
+  `/etc/holtos/updates.conf` and `holtos-btrfs-snapshot` reads it. Still to
+  add: scheduled snapshots of the media pool (deleted-file insurance),
+  which needs the storage decision in 2.3.
 - Updates from HoltOS' own sources — done (component whitelist + package
   repo). **Windows-style updater (2026-09-13, branch `updater`):** automatic
   checks on a timer and after Game Mode, version-aware installs, the HoltOS
   Updates window with live progress and settings (interval, auto-download,
   auto-install, install window), system packages including the kernel,
   Flatpak, fwupd firmware, and Steam's own Software Updates page in Game
-  Mode. Still to add: auto-rollback if the desktop fails to come up twice.
+  Mode. Auto-rollback when the desktop fails to come up is built
+  (`holtos-boot-guard`): the pre-update snapshot is armed, every boot counts
+  as unconfirmed until a graphical session appears, and two unconfirmed
+  boots restore that snapshot and reboot (systemd service + check timer).
 - Disk health — done (plasma-disks). **SMART notification + monthly scrub
   added (2026-09-13):** `etc/smartd.conf` (DEVICESCAN, no spin-up of
   sleeping disks, `-M exec`) has smartd call `holtos-disk-alert`, which
@@ -214,8 +234,11 @@ Samba export of the pool; Tailscale for remote access.
   `customize_airootfs.sh`; the updater's enable loop now covers
   `holtos-*.timer` too. Syntax/shellcheck clean, not yet run on a live
   install.
-- Support bundle — planned: `holtos-support-bundle` tars journal,
-  hardware.log, history.log, disk health, for pasting into an issue.
+- Support bundle — done: `holtos-support-bundle` tars the journal,
+  hardware.log, update history and disk health into
+  `~/holtos-support-<date>.tar.gz`, replacing the user and computer names
+  with USER and HOSTNAME; runs as the user, no root needed. Reachable from
+  the tray and HoltOS Updates.
 - First-run wizard — first version built 2026-09-15 on `neon-rebrand`
   (`holtos-welcome`): desktop layout, how updates install, Stash and Network
   Shares, snapshots. Autostarts once for new accounts only. Still to add
@@ -229,7 +252,7 @@ Samba export of the pool; Tailscale for remote access.
    play.
 2. **Game Mode session** (1.2) with the switch both ways and "start in
    Game Mode".
-3. **HoltOS Apps** (2.1) over Flathub with the curated front page.
+3. **Stash** (2.1) over Flathub with the curated front page.
 4. Controllers/CEC (1.3) and performance defaults (1.4).
 5. Media player decision + storage wizard + Samba export (2.3).
 6. Update window / auto-rollback / scheduled snapshots (4).
