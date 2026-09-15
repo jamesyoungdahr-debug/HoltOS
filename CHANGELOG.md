@@ -22,6 +22,25 @@ Neon rebrand (next major release):
   the kernel-update hook and the installer shortcut carry the HoltOS name.
   Updating removes the old homelab files once the renamed ones are in place,
   so the boot menu still refreshes exactly once per kernel update.
+- **HoltOS Updates, more complete:**
+  - Tick which updates to install; "Skip this version" leaves a HoltOS
+    release out (newer ones are still offered).
+  - Each update shows its download size, and system updates list every
+    package with its installed and new version.
+  - Before installing, HoltOS Updates warns about a low battery, a nearly
+    full disk or a metered connection. Automatic updates wait in those cases
+    and the window says why; a system update refuses to start without room
+    to finish.
+  - "Restart when finished" restarts after a 60-second countdown you can
+    cancel.
+  - When an update fails: the install log, Retry for just the failed
+    updates, and a support bundle, one click each.
+  - A Snapshots tab lists the snapshots HoltOS keeps, and creates, restores
+    and deletes them.
+  - Settings: hold packages at their current version, and "Fix updates"
+    (clears a stuck update, repairs the package keys, picks fast mirrors,
+    repairs Flatpak).
+  - The tray tooltip shows an install in progress.
 - **HoltOS Apps, rebuilt:**
   - Every app has its own page: screenshots, description, developer and
     verified badge, download and installed size, licence, release notes and

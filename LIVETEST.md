@@ -78,6 +78,30 @@ Do section 1 first; most of the rest depends on it.
 - [ ] Updates: "Update all" and per-app Update, with progress.
 - [ ] On flathub.org, click Install on any app: HoltOS Apps opens that app's
   page. A downloaded .flatpakref file opens the same way.
+- [ ] **HoltOS Updates, choose what installs:** with more than one update
+  waiting, untick one and press "Install selected": only the ticked ones
+  install, with no password prompt. The System packages row shows the
+  download size, and "Show details" lists each package with its installed
+  and new version.
+- [ ] "Skip this version" on a HoltOS release: it disappears after the check
+  and is not offered again.
+- [ ] Settings > Hold packages: hold a package that has an update (for
+  example `nano`), Save, Check for updates: it is no longer listed.
+  Clear the field and save again: it comes back.
+- [ ] On battery below 30 %, or with the network set to metered, "Install
+  selected" warns first, and the Updates page says automatic updates are
+  waiting and why.
+- [ ] Tick "Restart when finished", install: after it finishes a 60-second
+  countdown appears; Cancel works, and letting it run restarts.
+- [ ] If an update fails (for example unplug the network during a system
+  download): the red-free failure panel names it, "Show log" shows the
+  install log, "Retry" runs just that update again, "Create support bundle"
+  saves a bundle.
+- [ ] Snapshots tab: Create snapshot now, then Delete it; Restore an older
+  snapshot and restart: the system is back at that point, your files are kept.
+- [ ] Settings > Fix updates...: the steps run and end with "Done".
+- [ ] While updates install, the HoltOS tray tooltip shows what is
+  installing and the percentage.
 
 ## 0.0.7d-alpha: Switch to Desktop through SteamOS Manager (Z13 first, then 4090)
 

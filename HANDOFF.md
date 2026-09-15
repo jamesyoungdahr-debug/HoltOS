@@ -749,6 +749,47 @@ Commits 7d54e88 (store) and 3705497 (icon), pushed; VM-tested on
   (Kirigami apps need the qqc2-desktop-style fork; HoltOS yad notices to Qt;
   widgets inside popups; lock and logout screens).
 
+## HoltOS Updates upgrade (2026-09-15, branch `neon-rebrand`)
+
+Liam chose the updater plan (the glass-everywhere audit is on hold).
+Backend commit 5d01342; window work committed after this section was written.
+
+- **Choose what installs:** `holtos-update-install@.service`; the instance
+  name is item ids joined by `_`. `51-holtos-updates.rules` allows exactly
+  that pattern, and `holtos-update-install --selection` accepts only the seven
+  known items that the last check found (malformed names, `rollback` and
+  unknown items are refused; tested). Security-relevant parts were written by
+  Claude, not a local model.
+- **Settings helper:** `SKIP_RELEASE` and `HOLD_PACKAGES` (pacman and
+  archlinux-keyring refused), holds as a marked `IgnorePkg` line under
+  `[options]`.
+- **Status:** skips the chosen release, leaves held packages out, records
+  `download_size` (checkupdates at `/var/lib/holtos/checkup-db`), and writes
+  `deferred` when automatic updates wait (battery < 30 %, metered, < 2 GB).
+  `update_system` refuses to start without twice the download plus 1 GB.
+- **Snapshots:** `holtos-btrfs-snapshot --delete <name>` (strict name, must be
+  in the log, not the running snapshot; disarms the boot guard if needed).
+  The window's Snapshots tab is `usr/share/holtos/updates/snapshots.py`.
+- **Fix updates:** `holtos-update-repair` (lock, partial downloads, keys,
+  reflector mirrors with the old list kept, database and keyring, Flatpak
+  repair, new check); dialog in `usr/share/holtos/updates/repair.py`.
+- **Window:** tick boxes, download sizes, package table, Skip this version,
+  install warnings, deferred note, Restart when finished (60 s countdown),
+  failure panel (log, Retry for failed items, support bundle), Hold packages
+  and Fix updates in Settings, Snapshots tab. Tray tooltip shows install
+  progress.
+- **Handoffs:** local models wrote the status changes, the tray tooltip, the
+  Snapshots and repair modules and most window edits. Two window units hit the
+  step limit half-way; Claude finished them with literal edits (the missing
+  methods, a broken loop, the Settings wiring).
+- **Tested on the VM:** settings validation and IgnorePkg, selection refusals,
+  snapshot delete, a full repair run, checkupdates at the new database path
+  and the size command, polkit loading the rule; the window's tabs with a test
+  update list.
+- **Not tested:** a real selected install from the window (polkit in the
+  active session), Retry after a real failure, the restart countdown, a
+  metered connection, bare metal.
+
 ## Still open
 
 - **Milestone 2 crash: root-caused, fixed and verified on a fresh ISO (build 23).**

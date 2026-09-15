@@ -17,18 +17,25 @@ are saved with pkexec holtos-update-settings, which validates every value.
 import html
 import json
 import os
+import shutil
 import subprocess
 import sys
 from datetime import datetime, timezone
 
-from PySide6.QtCore import Qt, QTime, QTimer
-from PySide6.QtGui import QIcon
+from PySide6.QtCore import QProcess, Qt, QTime, QTimer
+from PySide6.QtGui import QFontDatabase, QIcon
 from PySide6.QtWidgets import (
-    QApplication, QCheckBox, QComboBox, QFormLayout, QFrame, QHBoxLayout,
-    QHeaderView, QLabel, QMessageBox, QProgressBar, QPushButton, QScrollArea,
-    QSpinBox, QTableWidget, QTableWidgetItem, QTabWidget, QTimeEdit, QToolButton,
-    QVBoxLayout, QWidget,
+    QApplication, QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFormLayout,
+    QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMessageBox, QPlainTextEdit,
+    QProgressBar, QPushButton, QScrollArea, QSpinBox, QTableWidget,
+    QTableWidgetItem, QTabWidget, QTimeEdit, QToolButton, QVBoxLayout, QWidget,
 )
+
+# The Snapshots tab and the Fix updates dialog live beside the other HoltOS
+# Updates parts in /usr/share/holtos/updates.
+sys.path.insert(0, "/usr/share/holtos/updates")
+from repair import RepairDialog  # noqa: E402
+from snapshots import SnapshotsTab  # noqa: E402
 
 ICON_PATH = "/usr/share/icons/hicolor/256x256/apps/holtos-logo.png"
 STATUS_PATH = "/var/lib/holtos/update-status.json"
@@ -44,6 +51,8 @@ DEFAULTS = {
     "INSTALL_WINDOW": "",
     "CHECK_AFTER_GAMEMODE": "yes",
     "SNAPSHOT_KEEP": "5",
+    "SKIP_RELEASE": "",
+    "HOLD_PACKAGES": "",
 }
 INTERVALS = [
     ("1h", "Every hour"),
@@ -132,13 +141,17 @@ def start_unit(unit):
 
 
 class UpdateRow(QFrame):
-    def __init__(self, update):
+    def __init__(self, update, on_skip=None):
         super().__init__()
         self.setFrameShape(QFrame.StyledPanel)
         layout = QVBoxLayout(self)
 
         top = QHBoxLayout()
         name = update.get("name") or NAMES.get(update.get("id", ""), update.get("id", "?"))
+        self.pick = QCheckBox()
+        self.pick.setChecked(True)
+        self.pick.setToolTip("Install this update")
+        top.addWidget(self.pick)
         top.addWidget(QLabel(f"<b>{html.escape(name)}</b>"))
         top.addStretch()
         current = update.get("current") or ""
@@ -146,6 +159,16 @@ class UpdateRow(QFrame):
         version = QLabel(f"{current} \u2192 {new}" if current else new)
         version.setTextFormat(Qt.PlainText)
         top.addWidget(version)
+        ds = update.get("download_size")
+        if ds and ds > 0:
+            size_label = QLabel(human_bytes(ds))
+            size_label.setTextFormat(Qt.PlainText)
+            top.addWidget(size_label)
+        self.skip = None
+        if update.get("id") == "config" and new:
+            self.skip = QPushButton("Skip this version")
+            self.skip.clicked.connect(lambda: on_skip(new))
+            top.addWidget(self.skip)
         layout.addLayout(top)
 
         if update.get("restart"):
@@ -160,15 +183,33 @@ class UpdateRow(QFrame):
 
         self.notes = None
         notes = (update.get("notes") or "").strip()
-        if notes:
-            self.toggle = QToolButton()
-            self.toggle.setText("Show details")
-            self.toggle.setCheckable(True)
-            self.toggle.toggled.connect(self.show_notes)
+        if update.get("id") == "system" and notes:
+            lines = [l for l in notes.splitlines() if l.strip()]
+            table = QTableWidget(0, 3)
+            table.setHorizontalHeaderLabels(["Package", "Installed", "New"])
+            table.verticalHeader().setVisible(False)
+            table.setEditTriggers(QTableWidget.NoEditTriggers)
+            table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+            table.setMaximumHeight(260)
+            for line in lines:
+                parts = line.split()
+                if len(parts) >= 4:
+                    row = table.rowCount()
+                    table.insertRow(row)
+                    table.setItem(row, 0, QTableWidgetItem(parts[0]))
+                    table.setItem(row, 1, QTableWidgetItem(parts[1]))
+                    table.setItem(row, 2, QTableWidgetItem(parts[3]))
+            self.notes = table
+        elif notes:
             self.notes = QLabel(notes)
             self.notes.setTextFormat(Qt.PlainText)
             self.notes.setWordWrap(True)
             self.notes.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        if self.notes is not None:
+            self.toggle = QToolButton()
+            self.toggle.setText("Show details")
+            self.toggle.setCheckable(True)
+            self.toggle.toggled.connect(self.show_notes)
             self.notes.setVisible(False)
             layout.addWidget(self.toggle, alignment=Qt.AlignLeft)
             layout.addWidget(self.notes)
@@ -176,6 +217,9 @@ class UpdateRow(QFrame):
     def show_notes(self, shown):
         self.notes.setVisible(shown)
         self.toggle.setText("Hide details" if shown else "Show details")
+
+    def picked(self):
+        return self.pick.isChecked()
 
     def set_progress(self, stage, pct, received):
         text = STAGE_TEXT.get(stage, stage)
@@ -186,6 +230,7 @@ class UpdateRow(QFrame):
                 text = f"Downloading... {human_bytes(received)}"
         self.status.setText(text)
         busy = stage in BUSY_STAGES
+        self.pick.setEnabled(not busy)
         self.bar.setVisible(busy)
         if stage == "download" and pct >= 0:
             self.bar.setRange(0, 100)
@@ -194,10 +239,37 @@ class UpdateRow(QFrame):
             self.bar.setRange(0, 0)
 
 
+class RestartCountdown(QMessageBox):
+    """Restarts after a short countdown unless cancelled."""
+
+    def __init__(self, parent, seconds=60):
+        super().__init__(parent)
+        self.setWindowTitle("HoltOS Updates")
+        self.seconds = seconds
+        self.restart_button = self.addButton("Restart now", QMessageBox.AcceptRole)
+        self.addButton("Cancel", QMessageBox.RejectRole)
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.tick)
+        self.timer.start(1000)
+        self.update_text()
+
+    def update_text(self):
+        self.setText(f"Updates are installed. Restarting in {self.seconds} seconds.\n\nSave your work in other apps.")
+
+    def tick(self):
+        self.seconds -= 1
+        if self.seconds <= 0:
+            self.timer.stop()
+            self.restart_button.click()
+            return
+        self.update_text()
+
+
 class UpdatesTab(QWidget):
     def __init__(self):
         super().__init__()
         self.rows = {}
+        self.failed_items = set()
         self.installing = False
         self.shown_updates = None
         self.result_note = ""
@@ -233,6 +305,20 @@ class UpdatesTab(QWidget):
         self.restart_banner.setVisible(False)
         layout.addWidget(self.restart_banner)
 
+        self.failure_banner = QFrame()
+        self.failure_banner.setFrameShape(QFrame.StyledPanel)
+        failure = QHBoxLayout(self.failure_banner)
+        self.failure_text = QLabel()
+        self.failure_text.setWordWrap(True)
+        failure.addWidget(self.failure_text, 1)
+        for text, slot in (("Show log", self.show_log), ("Retry", self.retry), ("Create support bundle", self.support_bundle)):
+            button = QPushButton(text)
+            button.clicked.connect(slot)
+            failure.addWidget(button)
+        self.bundle_proc = None
+        self.failure_banner.setVisible(False)
+        layout.addWidget(self.failure_banner)
+
         self.list_host = QWidget()
         self.list_layout = QVBoxLayout(self.list_host)
         self.list_layout.addStretch()
@@ -243,8 +329,10 @@ class UpdatesTab(QWidget):
 
         footer = QHBoxLayout()
         footer.addStretch()
-        self.install_button = QPushButton("Install now")
+        self.install_button = QPushButton("Install selected")
         self.install_button.clicked.connect(self.install_now)
+        self.restart_after = QCheckBox("Restart when finished")
+        footer.addWidget(self.restart_after)
         footer.addWidget(self.install_button)
         layout.addLayout(footer)
 
@@ -287,7 +375,7 @@ class UpdatesTab(QWidget):
             row.deleteLater()
         self.rows = {}
         for update in updates:
-            row = UpdateRow(update)
+            row = UpdateRow(update, self.skip_release)
             self.rows[update.get("id", "")] = row
             self.list_layout.insertWidget(self.list_layout.count() - 1, row)
 
@@ -313,10 +401,18 @@ class UpdatesTab(QWidget):
         elif state == "available":
             count = len(updates)
             self.title.setText(f"{count} update{'s' if count != 1 else ''} available")
-            self.subtitle.setText(f"Last checked {checked}.{note}")
+            subtitle_text = f"Last checked {checked}.{note}"
+            deferred = status.get("deferred")
+            if deferred and not self.installing:
+                subtitle_text += f" Automatic updates are waiting because {deferred}."
+            self.subtitle.setText(subtitle_text)
         elif state == "up_to_date":
             self.title.setText("You're up to date")
-            self.subtitle.setText(f"Last checked {checked}.{note}")
+            subtitle_text = f"Last checked {checked}.{note}"
+            deferred = status.get("deferred")
+            if deferred and not self.installing:
+                subtitle_text += f" Automatic updates are waiting because {deferred}."
+            self.subtitle.setText(subtitle_text)
         elif state == "error":
             self.title.setText("Couldn't check for updates")
             self.subtitle.setText(f"{status.get('error') or 'Unknown error'} (last attempt {checked}).")
@@ -349,6 +445,8 @@ class UpdatesTab(QWidget):
                 self.installing = True
             row = self.rows.get(item)
             if row:
+                if stage == "fail":
+                    self.failed_items.add(item)
                 row.set_progress(stage, pct, received)
 
     def finish_install(self, code):
@@ -356,8 +454,77 @@ class UpdatesTab(QWidget):
         self.shown_updates = None
         if code == "0":
             self.result_note = "The last install finished."
+            self.failure_banner.setVisible(False)
+            if self.restart_after.isChecked():
+                self.restart_after.setChecked(False)
+                box = RestartCountdown(self)
+                box.exec()
+                if box.clickedButton() is box.restart_button:
+                    subprocess.Popen(["systemctl", "reboot"])
         else:
             self.result_note = f"The last install had errors (exit {code}); the History tab shows what was applied."
+            self.show_failure()
+
+    @staticmethod
+    def read_text(path):
+        try:
+            with open(path) as f:
+                return f.read().strip()
+        except OSError:
+            return ""
+
+    def install_warnings(self):
+        """Reasons to wait before installing, checked without root."""
+        warnings = []
+        base = "/sys/class/power_supply"
+        on_ac = False
+        capacity = None
+        try:
+            supplies = os.listdir(base)
+        except OSError:
+            supplies = []
+        for name in supplies:
+            kind = self.read_text(os.path.join(base, name, "type"))
+            if kind in ("Mains", "USB") and self.read_text(os.path.join(base, name, "online")) == "1":
+                on_ac = True
+            elif kind == "Battery":
+                value = self.read_text(os.path.join(base, name, "capacity"))
+                if value.isdigit():
+                    capacity = int(value) if capacity is None else min(capacity, int(value))
+        if capacity is not None and not on_ac and capacity < 30:
+            warnings.append(f"The battery is at {capacity} %. Plug in the charger so the update is not interrupted.")
+        try:
+            free = shutil.disk_usage("/").free
+            if free < 2 * 1024 ** 3:
+                warnings.append(f"Only {human_bytes(free)} is free on the system disk.")
+        except OSError:
+            pass
+        try:
+            metered = subprocess.run(
+                ["nmcli", "-t", "-g", "GENERAL.METERED", "device", "show"],
+                capture_output=True, text=True, timeout=5,
+            ).stdout
+            if any(line.startswith("yes") for line in metered.splitlines()):
+                warnings.append("The network connection is metered, so this download may cost data.")
+        except (OSError, subprocess.SubprocessError):
+            pass
+        return warnings
+
+    def skip_release(self, tag):
+        answer = QMessageBox.question(
+            self, "HoltOS Updates",
+            f"Skip HoltOS {tag}? It will not be offered again; newer releases still will.",
+        )
+        if answer != QMessageBox.Yes:
+            return
+        proc = subprocess.run(
+            ["pkexec", "/usr/local/bin/holtos-update-settings", f"SKIP_RELEASE={tag}"],
+            capture_output=True, text=True,
+        )
+        if proc.returncode == 0:
+            start_unit("holtos-update-check.service")
+        elif proc.returncode not in (126, 127):
+            QMessageBox.warning(self, "HoltOS Updates", f"Could not skip {tag}:\n{proc.stderr.strip()}")
 
     def check_now(self):
         error = start_unit("holtos-update-check.service")
@@ -365,14 +532,95 @@ class UpdatesTab(QWidget):
             QMessageBox.warning(self, "HoltOS Updates", f"Could not start the update check:\n{error}")
 
     def install_now(self):
-        error = start_unit("holtos-update-install.service")
+        ids = [uid for uid, row in self.rows.items() if row.picked()]
+        if not ids:
+            QMessageBox.information(self, "HoltOS Updates", "Tick at least one update to install.")
+            return
+        warnings = self.install_warnings()
+        if warnings and QMessageBox.question(
+                self, "HoltOS Updates",
+                "Install now anyway?\n\n" + "\n".join("• " + w for w in warnings)
+        ) != QMessageBox.Yes:
+            return
+        unit = ("holtos-update-install.service"
+                if len(ids) == len(self.rows)
+                else f"holtos-update-install@{'_'.join(ids)}.service")
+        error = start_unit(unit)
         if error:
             QMessageBox.warning(self, "HoltOS Updates", f"Could not start the install:\n{error}")
             return
         self.installing = True
         self.result_note = ""
+        self.failed_items = set()
+        self.failure_banner.setVisible(False)
         for row in self.rows.values():
-            row.set_progress("queued", -1, 0)
+            if row.picked():
+                row.set_progress("queued", -1, 0)
+
+    def show_failure(self):
+        names = [NAMES.get(item, item) for item in self.rows if item in self.failed_items]
+        if names:
+            self.failure_text.setText(f"These updates did not finish: {', '.join(names)}.")
+        else:
+            self.failure_text.setText("The last install did not finish.")
+        self.failure_banner.setVisible(True)
+
+    def show_log(self):
+        try:
+            with open(PROGRESS_PATH) as f:
+                lines = [line for line in f.read().splitlines() if not line.startswith("@@ ")]
+        except OSError:
+            lines = ["The install log is not available (it is cleared when the computer restarts)."]
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Install log")
+        dialog.resize(720, 480)
+        box = QVBoxLayout(dialog)
+        text = QPlainTextEdit("\n".join(lines[-400:]))
+        text.setReadOnly(True)
+        text.setFont(QFontDatabase.systemFont(QFontDatabase.FixedFont))
+        box.addWidget(text)
+        buttons = QDialogButtonBox(QDialogButtonBox.Close)
+        buttons.rejected.connect(dialog.reject)
+        box.addWidget(buttons)
+        dialog.exec()
+
+    def retry(self):
+        # Only the updates that failed, in the order the check lists them.
+        ids = [item for item in self.rows if item in self.failed_items]
+        unit = f"holtos-update-install@{'_'.join(ids)}.service" if ids else "holtos-update-install.service"
+        error = start_unit(unit)
+        if error:
+            QMessageBox.warning(self, "HoltOS Updates", f"Could not start the install:\n{error}")
+            return
+        self.installing = True
+        self.result_note = ""
+        self.failure_banner.setVisible(False)
+        for item, row in self.rows.items():
+            if not ids or item in ids:
+                row.set_progress("queued", -1, 0)
+        self.failed_items = set()
+
+    def support_bundle(self):
+        if self.bundle_proc is not None:
+            return
+        proc = QProcess(self)
+        proc.setProcessChannelMode(QProcess.MergedChannels)
+        proc.finished.connect(lambda code, _status, p=proc: self.bundle_done(p, code))
+        self.bundle_proc = proc
+        self.failure_text.setText(self.failure_text.text() + " Creating a support bundle...")
+        proc.start("/usr/local/bin/holtos-support-bundle", [])
+
+    def bundle_done(self, proc, code):
+        output = bytes(proc.readAll()).decode(errors="replace").strip().splitlines()
+        proc.deleteLater()
+        self.bundle_proc = None
+        self.show_failure()
+        saved = [line for line in output if line.startswith("Support bundle saved: ")]
+        if code == 0 and saved:
+            path = saved[-1].replace("Support bundle saved: ", "")
+            QMessageBox.information(self, "HoltOS Updates", f"Support bundle saved:\n{path}\n\nAttach it to your bug report.")
+        else:
+            QMessageBox.warning(self, "HoltOS Updates", "The support bundle could not be created:\n" + "\n".join(output[-5:]))
 
     def show_restart(self):
         try:
@@ -535,7 +783,25 @@ class SettingsTab(QWidget):
                            "Older snapshots are removed beyond this number.")
         keep_note.setWordWrap(True)
         form.addRow("", keep_note)
+
+        self.holds = QLineEdit()
+        self.holds.setPlaceholderText("Package names, separated by spaces")
+        form.addRow("Hold packages:", self.holds)
+        holds_note = QLabel("Held packages stay at their current version during system updates. "
+                            "Holding one for long can break other updates, so release it when you can.")
+        holds_note.setWordWrap(True)
+        form.addRow("", holds_note)
         layout.addLayout(form)
+
+        repair_row = QHBoxLayout()
+        repair_note = QLabel("Updates keep failing? Fix updates clears a stuck update, repairs the "
+                             "package keys and picks fast mirrors.")
+        repair_note.setWordWrap(True)
+        repair_row.addWidget(repair_note, 1)
+        fix = QPushButton("Fix updates...")
+        fix.clicked.connect(self.fix_updates)
+        repair_row.addWidget(fix)
+        layout.addLayout(repair_row)
 
         buttons = QHBoxLayout()
         buttons.addStretch()
@@ -561,6 +827,10 @@ class SettingsTab(QWidget):
         self.after_gamemode.setChecked(settings["CHECK_AFTER_GAMEMODE"] != "no")
         keep = settings["SNAPSHOT_KEEP"]
         self.snapshot_keep.setValue(int(keep) if keep.isdigit() and 2 <= int(keep) <= 10 else 5)
+        self.holds.setText(settings["HOLD_PACKAGES"])
+
+    def fix_updates(self):
+        RepairDialog(self).exec()
 
     def save(self):
         window = f"{self.window_time.time().hour():02d}:00" if self.use_window.isChecked() else ""
@@ -571,6 +841,7 @@ class SettingsTab(QWidget):
             f"INSTALL_WINDOW={window}",
             f"CHECK_AFTER_GAMEMODE={'yes' if self.after_gamemode.isChecked() else 'no'}",
             f"SNAPSHOT_KEEP={self.snapshot_keep.value()}",
+            f"HOLD_PACKAGES={' '.join(self.holds.text().split())}",
         ]
         proc = subprocess.run(
             ["pkexec", "/usr/local/bin/holtos-update-settings", *args],
@@ -591,6 +862,7 @@ class UpdatesWindow(QTabWidget):
         self.resize(660, 580)
         self.addTab(UpdatesTab(), "Updates")
         self.addTab(HistoryTab(), "History")
+        self.addTab(SnapshotsTab(), "Snapshots")
         self.addTab(HardwareTab(), "Hardware")
         self.addTab(SettingsTab(), "Settings")
 
@@ -601,7 +873,7 @@ def main():
     app.setDesktopFileName("holtos-updater")
     window = UpdatesWindow()
     if "--settings" in sys.argv:
-        window.setCurrentIndex(3)
+        window.setCurrentIndex(4)
     window.show()
     sys.exit(app.exec())
 
