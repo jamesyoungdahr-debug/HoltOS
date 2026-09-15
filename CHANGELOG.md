@@ -22,6 +22,9 @@ Neon rebrand (next major release):
   the kernel-update hook and the installer shortcut carry the HoltOS name.
   Updating removes the old homelab files once the renamed ones are in place,
   so the boot menu still refreshes exactly once per kernel update.
+- **Otter expressions:** the new otter now comes in Happy, Idle and Alert, rendered
+  on ComfyUI to match the mark, as transparent files in `/usr/share/holtos/brand/`
+  for success, waiting and warning states.
 - **Glass everywhere, audited:** every desktop surface was checked on screen.
   - Menus (the desktop's right-click menu and every app menu) are glass;
     they were drawn as flat grey buttons.

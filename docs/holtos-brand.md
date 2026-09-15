@@ -41,6 +41,17 @@ by scripts, and shown next to it for review.
   (`docs/design-references/holtos-apps-icon-B1-seed5201.png`); icon files
   `holtos-apps.png` from `tools/brand/derive_app_icon.py`. The store had used
   the head mark, which reads as a teddy bear at dock size.
+- **Otter expressions** (2026-09-15, Liam's picks): the mark's head with the
+  feeling in its eyes and mouth, same flat purple, low ears, lilac whisker pad
+  and neon rim. **Happy** (closed smiling eyes, smile, lime sparks; seed 6101,
+  image 2) for success and "all done"; **Idle** (sleepy closed eyes and a lime
+  "z"; seed 6201, image 1) for waiting, empty and nothing-to-do states;
+  **Alert** (big round eyes, open mouth, amber sparks, since amber means "needs
+  you"; seed 6301, image 2) for warnings. Renders in
+  `docs/design-references/holtos-otter-*-seed*.png`; transparent files
+  `usr/share/holtos/brand/holtos-otter-{happy,idle,alert}-{1024,512}.png` from
+  `tools/brand/derive_expressions.py`. They replace The Den's hand-drawn React
+  expressions, which still show the old otter.
 - **Full-body otter**, for the login screen and illustration: standing, long
   slender body, webbed feet, long tapered tail, the same neon rim. Render:
   seed 7301 #2. Otters have wide flat heads, ears low on the sides and long
@@ -288,9 +299,9 @@ clamp so white text keeps 4.5:1 (milestones G8 and G9 in
 - **Eyebrow weight:** the tokens say 400; the typography page shows 600.
 - **Missing logo files:** no vector version of the mark (the icons and the
   lockups are PNGs derived from the render, 16–1024 px). The stacked and
-  light-background lockups exist since 2026-09-15. The otter's expressions (happy, idle, alert) exist
-  only as The Den's React components and have not been rendered for the new
-  mark. The old hand-drawn SVG logos are deleted from the image and removed
+  light-background lockups exist since 2026-09-15. The otter's expressions (happy, idle, alert) are
+  rendered for the new mark (2026-09-15); The Den still uses its old React
+  versions until its client is rebranded. The old hand-drawn SVG logos are deleted from the image and removed
   from installed systems by `holtos-system-extras`.
 - **Not built yet:** GTK glass (G6), Kirigami and Qt Quick glass (G7), adaptive
   contrast (G8 and G9), installer glass (G11), The Den client's live blur, a
