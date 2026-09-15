@@ -5,6 +5,16 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.0.7h-alpha] - 2026-09-15
+
+- **Fixed: a kernel update could leave HoltOS unable to start.** HoltOS keeps
+  a copy of the kernel on the EFI partition, which is what the boot menu
+  starts, but that copy was never refreshed when the kernel updated. The next
+  start then ran the old kernel without its drivers and stopped in emergency
+  mode (seen on the ROG Flow Z13 after kernel 7.2.6). The copy is now
+  refreshed on every kernel update. Install this HoltOS update before the
+  next system update.
+
 ## [0.0.7g-alpha] - 2026-09-15
 
 - **Fixed (second try): the built-in microphones on the ASUS ROG Flow Z13
