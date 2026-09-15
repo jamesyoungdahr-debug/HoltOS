@@ -6,12 +6,13 @@
 // translucent panels. holtos-glass-user-update applies this layout to accounts
 // made before the rebrand, after backing up their panels.
 
-// Menu bar
+// Menu bar, floating like the dock (Liam, 2026-09-15): a small gap from the
+// screen edges and rounded glass ends.
 var bar = new Panel;
 bar.location = "top";
 bar.height = Math.round(gridUnit * 1.8);
 bar.opacity = "translucent";
-bar.floating = false;
+bar.floating = true;
 bar.hiding = "none";
 
 var launcher = bar.addWidget("org.kde.plasma.kickoff");

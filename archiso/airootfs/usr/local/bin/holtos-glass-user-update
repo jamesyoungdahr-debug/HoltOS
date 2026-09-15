@@ -22,8 +22,9 @@ set -u
 # opacity 12 to match the 15 % window tint; 4: neon rebrand menu bar and dock;
 # 5: holtos-glass Plasma style, off removed stock themes; 6: the lock screen
 # shows its wallpaper; 7: magenta, amber and teal title bar buttons; 8: HoltOS
-# icons and cursor; 9: translucent GTK 3 and GTK 4 styles).
-STAMP="${XDG_STATE_HOME:-$HOME/.local/state}/holtos/glass-user-update-9"
+# icons and cursor; 9: translucent GTK 3 and GTK 4 styles; 10: floating menu
+# bar).
+STAMP="${XDG_STATE_HOME:-$HOME/.local/state}/holtos/glass-user-update-10"
 [ -e "$STAMP" ] && exit 0
 [ -e /run/archiso ] && exit 0
 
@@ -144,6 +145,21 @@ if [ ! -e "$LAYOUT_STAMP" ] && [ -f "$LAYOUT_JS" ]; then
         if qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript "$layout" >/dev/null 2>&1; then
             date -u +%FT%TZ > "$LAYOUT_STAMP"
         fi
+    fi
+fi
+
+# Floating menu bar (Liam, 2026-09-15): the top bar floats like the dock. Only
+# top panels change, so HoltOS Classic's single bottom panel is left alone.
+FLOAT_STAMP="${XDG_STATE_HOME:-$HOME/.local/state}/holtos/menu-bar-floating-1"
+if [ ! -e "$FLOAT_STAMP" ]; then
+    mkdir -p "$(dirname "$FLOAT_STAMP")"
+    for _ in $(seq 1 30); do
+        qdbus6 org.kde.plasmashell /PlasmaShell >/dev/null 2>&1 && break
+        sleep 2
+    done
+    if qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript \
+        'panels().forEach(function (p) { if (p.location == "top") { p.floating = true; } });' >/dev/null 2>&1; then
+        date -u +%FT%TZ > "$FLOAT_STAMP"
     fi
 fi
 

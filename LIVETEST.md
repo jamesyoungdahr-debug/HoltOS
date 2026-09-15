@@ -53,6 +53,25 @@ Do section 1 first; most of the rest depends on it.
   view. With "Anyone on the network can open it" ticked, a guest can open
   files but not change them. Stop sharing: `systemctl is-active smb` says
   inactive once nothing is shared.
+- [ ] **HoltOS Updates > Hardware:** press Check again. The button reads
+  "Checking..." and greys out, then a line says when the check finished and
+  how many drivers are installed. The Sound devices list shows your
+  speakers and microphones. On the Z13 it also shows a "Built-in
+  microphone: not supported on Linux yet" row; plug in a USB or headset
+  microphone and press Check again: it appears in the list.
+- [ ] **Welcome to HoltOS:** make a new user account and log in: the guide
+  opens once. Step through all five pages; Apply layout switches between
+  HoltOS and HoltOS Classic; Save update setting asks for your password.
+  Log out and in: it does not open again. Your existing account never gets
+  it automatically (it is in the app menu).
+- [ ] **GTK glass:** open a GTK app (for example a Flatpak GNOME app, or
+  zenity): its window is translucent with the blur behind it, text is
+  readable, and menus and popovers are denser glass.
+- [ ] **Text shadow:** buttons, tabs and menu text over a bright wallpaper
+  have a faint shadow and stay readable; nothing looks blurry or doubled.
+- [ ] **Floating menu bar:** after the update and a fresh login the top bar
+  floats like the dock, with a small gap from the screen edges. HoltOS
+  Classic's bottom panel is unchanged.
 - [ ] Tray > Create Support Bundle saves `~/holtos-support-<date>.tar.gz`, and
   your user and computer names do not appear in it.
 - [ ] HoltOS Updates > Settings > "Keep before updates": set 3, run an update

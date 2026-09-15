@@ -25,6 +25,24 @@ Neon rebrand (next major release):
 - **Title bar buttons in HoltOS traffic-light colours:** magenta close, amber
   minimise and teal maximise, so close and minimise no longer share the same
   amber. Existing accounts get them at their next login.
+- **Hardware tab tells you what it is doing:** "Check again" now shows
+  "Checking...", then when it finished and how many drivers are installed.
+  A check that fails says so instead of showing "None needed". A new Sound
+  devices list shows the speakers and microphones HoltOS can see.
+- **Built-in microphones on AMD Strix Halo and Strix Point laptops** (such
+  as the ROG Flow Z13): Linux does not support these digital microphones
+  yet, and the Hardware tab now says so. A USB, Bluetooth or headset
+  microphone works.
+- **Welcome to HoltOS:** a short first-run guide for new accounts: desktop
+  layout, how updates install, Stash and Network Shares, and snapshots. It
+  is also in the app menu.
+- **GTK apps are glass too:** GTK 3, GTK 4 and libadwaita apps get
+  translucent HoltOS Glass backgrounds with the blur behind them. A gtk.css
+  you wrote yourself is kept.
+- **Easier-to-read text over glass:** a faint shadow under labels, buttons
+  and menu text keeps white text readable over bright wallpapers.
+- **Floating menu bar:** the top bar now floats like the dock, with a small
+  gap from the screen edges. Existing accounts switch at their next login.
 - **Dev update channel:** HoltOS Updates > Settings > Update channel. Stable
   installs HoltOS releases, as before; Dev installs the newest work straight
   from a branch of the HoltOS repository (the branch in progress, currently

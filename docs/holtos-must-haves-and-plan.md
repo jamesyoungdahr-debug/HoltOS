@@ -216,8 +216,11 @@ Samba export of the pool; Tailscale for remote access.
   install.
 - Support bundle — planned: `holtos-support-bundle` tars journal,
   hardware.log, history.log, disk health, for pasting into an issue.
-- First-run wizard — planned: storage, media folders, shares, remote
-  access, Game Mode on/off, store picks.
+- First-run wizard — first version built 2026-09-15 on `neon-rebrand`
+  (`holtos-welcome`): desktop layout, how updates install, Stash and Network
+  Shares, snapshots. Autostarts once for new accounts only. Still to add
+  when those parts exist: storage and media folders, remote access, Game
+  Mode on/off (media server and gaming skipped for now, Liam 2026-09-15).
 
 ## Order of work (proposal)
 
