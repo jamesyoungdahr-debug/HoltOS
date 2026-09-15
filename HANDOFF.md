@@ -819,6 +819,37 @@ scratchpad, `audit/`).
   generator change, the lock-screen migration and the mechanical yad
   replacements (search-and-replace scripts, reviewed with `bash -n`).
 
+## Brand completion, G7 glass forks and the dev channel (2026-09-15)
+
+Liam: "complete everything on our lists, then test"; testing (VM, then bare
+metal) waits for his go. ISOs are built only for major updates (Liam,
+2026-09-15): new packages and updater features ship through the updater and
+the [holtos] package repo, not packages.x86_64.
+
+- **Brand:** title bar buttons magenta/amber/teal (klassyrc overrides); otter
+  expressions; HoltOS icon theme and cursor theme from ComfyUI renders
+  (`tools/brand/derive_icon_theme.py`, `derive_cursor_theme.py`, renders in
+  `docs/design-references/`); store renamed **Stash** (user-visible text
+  only); vector mark `holtos-mark.svg` (`tools/brand/trace_mark.py`);
+  holtos-glass-user-update steps 7-8. The Den client (ac32dc3) and theden web
+  sign-in (e5f87f9) use the new otter.
+- **G7 glass for Kirigami apps:** forks `holtos-kirigami` 6.30.0,
+  `holtos-qqc2-desktop-style` 6.30.0 and `holtos-plasma-integration` 6.7.5
+  in `forks/` with PKGBUILDs in `packaging/`; changes marked
+  `HoltOS glass (G7)` and listed in each README-HOLTOS.md. Built with
+  `AUR_PKGS=none HOLTOS_PKGS="holtos-kirigami holtos-qqc2-desktop-style
+  holtos-plasma-integration" ./build-local-repo.sh` (all three OK, r190).
+  Not run yet; they need publishing to the packages release to reach
+  installs. Rebase each at KF6 / Plasma releases.
+- **Dev update channel:** `UPDATE_CHANNEL=stable|dev` and `DEV_BRANCH`
+  (default `neon-rebrand`) in updates.conf via holtos-update-settings.
+  holtos-update-apply resolves the branch head (`resolve_dev`), downloads
+  that commit's snapshot and records `dev-<full sha>` (hand-over and rollback
+  reuse it); holtos-update-status's `check_dev` offers the newest commit with
+  commit subjects as notes; Settings tab has the channel and branch. Root
+  parts written by Claude. Update DEV_BRANCH's default when the working
+  branch changes.
+
 ## Still open
 
 - **Milestone 2 crash: root-caused, fixed and verified on a fresh ISO (build 23).**

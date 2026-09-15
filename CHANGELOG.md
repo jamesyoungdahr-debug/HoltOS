@@ -25,6 +25,17 @@ Neon rebrand (next major release):
 - **Title bar buttons in HoltOS traffic-light colours:** magenta close, amber
   minimise and teal maximise, so close and minimise no longer share the same
   amber. Existing accounts get them at their next login.
+- **Dev update channel:** HoltOS Updates > Settings > Update channel. Stable
+  installs HoltOS releases, as before; Dev installs the newest work straight
+  from a branch of the HoltOS repository (the branch in progress, currently
+  `neon-rebrand`), with the commit messages since your version as the update
+  notes. A snapshot is still taken before each update; switching back to
+  Stable offers the latest release.
+- **Glass System Settings and Kirigami apps:** System Settings, Discover and
+  other Kirigami apps get translucent windows with blur behind them, like the
+  rest of the desktop. Buttons, fields and text stay solid, fullscreen windows
+  stay opaque, and `HOLTOS_GLASS=0` turns it off for an app. Arrives as
+  HoltOS builds of Kirigami, qqc2-desktop-style and plasma-integration.
 - **Vector otter mark:** `/usr/share/holtos/brand/holtos-mark.svg`, traced
   from the ComfyUI render, for places that need a scalable logo.
 - **HoltOS icons:** folders, places (home, desktop, documents, downloads, music,
