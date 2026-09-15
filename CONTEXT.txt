@@ -442,3 +442,21 @@ A screenshot that looks frozen (stale panel clock, a closed window still
 drawn) is usually KWin on llvmpipe sitting on its last frame until input
 arrives: send move=x,y and shoot again before calling it a hang (seen
 2026-09-13; KWin was answering D-Bus the whole time).
+
+2026-09-15 backlog run (neon-rebrand), notes for the next session:
+- vmctl.ps1 runs from Git Bash as
+  powershell.exe -File <vmctl.ps1> -ActionsFile <file> -Out <file>
+  (one action per line), so SSH steps and screenshots chain in one call.
+- A GUI started over SSH needs XDG_RUNTIME_DIR=/run/user/<uid>,
+  WAYLAND_DISPLAY=wayland-0, QT_QPA_PLATFORM=wayland and the session bus; it
+  shows without the Kvantum style and can take a few seconds to appear.
+- Never `pkill -f <name>` over SSH when the SSH command line contains that
+  name: it kills its own session (exit 255). Use a bracket pattern such as
+  "[p]ython3 /usr/local/bin/holtos-share[s]".
+- Root helpers that expect pkexec can be tested with
+  `sudo PKEXEC_UID=$(id -u) <helper> ...`.
+- Plasma style changes: copy the desktoptheme folders, unlink
+  ~/.cache/plasma*svg* and plasma_theme_*, then
+  `systemctl --user restart plasma-plasmashell.service`.
+- mDNS can be tested inside the NAT'd VM with
+  `avahi-publish -s '<name>' _smb._tcp 445`; nothing on the LAN reaches it.

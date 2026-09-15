@@ -46,6 +46,15 @@ what is done and what is left.
 | 10 | Rebuild the ISO and test it in a VM | ISO built 2026-09-14 21:11 and boots: installer pages (Welcome, Notes, Partitions) checked. The install itself needs a user account, which Claude may not create, so it moves to bare metal. Tested instead through the upgrade path on `holtos-test` (see below) |
 | 11 | Bare-metal tests (LIVETEST.md "Neon rebrand" section) | Open |
 | 12 | Release: version number, merge to master, publish packages, tag | Open |
+| 13 | Backlog run (2026-09-15, Liam: everything that is not Game Mode and does not need him): support bundle, snapshot retention setting, automatic rollback after two failed boots (`holtos-boot-guard`), Network Shares LAN browsing and "Share from this computer" (`holtos-samba`), glass popups and tooltips, stacked and light lockups | Done, VM-tested (commits 879b5f0, fc57103, 6e277ff, b7f0126, 2856ed4) |
+
+Deliberately not done in the backlog run (need Liam): darker list views
+(would undo the 0.0.7a clearer-glass decision), GTK rgba glass (GTK cannot
+ask KWin for blur, so text would sit on the bare wallpaper), title bar
+button colours, media player and storage decisions, first-run wizard
+choices, otter expression renders, icons and cursor, adaptive contrast, The
+Den client, the HoltOS Apps name, the Xbox wireless dongle, the version
+number and publishing packages.
 
 ## Left to do
 
@@ -59,7 +68,14 @@ what is done and what is left.
 2. **Bare metal (Z13, 4090):**
    - dual boot next to Windows;
    - the installer's NVIDIA driver path on the 4090;
-   - faint seams at the dock's rounded ends (seen only in the VM);
+   - faint seams at the dock's rounded ends (seen only in the VM; the
+     centre-tile fix of 2026-09-15 may have removed them);
+   - Network Shares: set a network password, share a folder and open it
+     from Windows (it should also appear in Windows' Network view through
+     wsdd) and from another Linux or Mac machine; browse a real NAS;
+   - glass popups and tooltips over bright wallpaper: readable?
+   - automatic rollback: only if an update ever breaks the desktop (it was
+     forced in the VM);
    - the parked glass installer (try the root installer on Wayland, or a
      non-QML top bar).
 3. **Package repository:** publish packages with `tools/publish-packages.sh`

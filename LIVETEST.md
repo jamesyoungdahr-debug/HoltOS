@@ -42,6 +42,28 @@ Do section 1 first; most of the rest depends on it.
   env); removing QtQuick Controls from calamares-navigation.qml did not fix
   it. The glass stylesheet is in git (commit 7584599). To try on bare
   metal: the root installer on Wayland, or a non-QML top bar.
+- [ ] **Network Shares > Add > Browse...** lists the NAS or other SMB/NFS
+  servers on your network, and picking one lists its shares. Windows PCs
+  appear only if they answer NetBIOS. A server that needs a login: enter the
+  username and password first, then browse.
+- [ ] **Network Shares > Share from this computer:** Set network password,
+  then Share a folder (for example ~/Videos). From a Windows PC open
+  `\\<computer name>\<share>` with your user name and that password: files
+  open and can be changed. The computer also appears in Windows' Network
+  view. With "Anyone on the network can open it" ticked, a guest can open
+  files but not change them. Stop sharing: `systemctl is-active smb` says
+  inactive once nothing is shared.
+- [ ] Tray > Create Support Bundle saves `~/holtos-support-<date>.tar.gz`, and
+  your user and computer names do not appear in it.
+- [ ] HoltOS Updates > Settings > "Keep before updates": set 3, run an update
+  twice more; only the newest 3 snapshots stay in the boot menu.
+- [ ] The calendar, tray popups and tooltips are glass with rounded corners,
+  evenly tinted, and readable over a bright wallpaper and over busy windows.
+- [ ] The dock's rounded ends meet its straight edges with no seam (the frame
+  fix of 2026-09-15 may have removed the seams seen in the VM).
+- [ ] Only if an update ever stops the desktop from starting: after two such
+  boots HoltOS restores the snapshot from before the update, restarts, and
+  says "HoltOS undid the last update" at login.
 
 ## 0.0.7d-alpha: Switch to Desktop through SteamOS Manager (Z13 first, then 4090)
 

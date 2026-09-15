@@ -679,6 +679,43 @@ at 1.0:
 - The key handling and the root helper are security-sensitive: Claude writes
   them, not a local model.
 
+## Backlog run on `neon-rebrand` (2026-09-15, unattended)
+
+Liam: "complete anything that isn't related to Game Mode and doesn't require
+me", without checking in. All on branch `neon-rebrand`, pushed, VM-tested on
+`holtos-test` (SSH holtos@172.17.196.41, key in the session scratchpad).
+
+- **Support bundle** (879b5f0): `holtos-support-bundle` and the tray's
+  "Create Support Bundle"; user and computer names redacted.
+- **Snapshot retention** (fc57103): `SNAPSHOT_KEEP` 2-10 in HoltOS Updates >
+  Settings, validated by `holtos-update-settings`, read by
+  `holtos-btrfs-snapshot`.
+- **Automatic rollback** (6e277ff): `holtos-btrfs-snapshot` arms
+  `holtos-boot-guard` for config/system snapshots; two boots with no Wayland
+  or X11 session restore the pre-update snapshot and reboot; a one-time login
+  notice explains it. State in `/var/log/holtos-boot-guard/` (the @log
+  subvolume survives a rollback). A forced rollback was run in the VM.
+- **Network Shares** (b7f0126): `holtos-share browse` / `shares` (avahi,
+  nmblookup, smbclient -L, showmount -e; as the user) behind a Browse
+  dialog; "Share from this computer" tab over `holtos-samba` (root, written
+  by hand; path rules, LAN-only, SMB2+, guests read-only, testparm before
+  use, smb + wsdd only while something is shared). avahi, nss-mdns,
+  smbclient, samba and wsdd are in packages.x86_64 and required-packages;
+  `holtos-system-extras` enables avahi and mdns in nsswitch on updated
+  systems. Found and fixed while testing: avahi's decimal name escapes,
+  bash 5.2's `&` in pattern replacement, loopback duplicates, a guest listing
+  sent with an empty auth file, "Can't load smb.conf" noise.
+- **Glass popups and tooltips, lockups:** `tools/glass/plasma_dialog_svg.py`;
+  the frame generator's centre tile was only partly filled (fixed, panels
+  included). `tools/brand/derive_lockups.py` writes horizontal and stacked
+  lockups for dark and light backgrounds.
+- **Handoffs:** local models wrote the support bundle, the boot guard, the
+  shares GUI and backend branches, the dialog SVG module and the lockup
+  script. Claude wrote `holtos-samba` (security-sensitive) and finished
+  `derive_lockups.py` after two failed handoff rounds.
+- **Not tested:** opening a share with a network password (no password may be
+  set by Claude), Windows discovery, real NAS browsing.
+
 ## Still open
 
 - **Milestone 2 crash: root-caused, fixed and verified on a fresh ISO (build 23).**
