@@ -1,5 +1,17 @@
 # holtos-acp-mic-dkms
 
+**Withdrawn 2026-09-15.** The 2.1 clock test on the Z13 recorded a flat line
+(3-18 distinct values, pinned at -32768) for every combination:
+`holtos_clk_ctrl` 0-7 and `holtos_clkdiv` 0-64. The chip's own values before
+the driver runs were CLK_CTRL 0x1, CLKDIV 0xc0, MISC_CTRL 0x0, and the driver
+set CLK_CTRL 0x7 and MISC_CTRL 0x18 as upstream does. The microphones get a
+running clock but send no data: something Windows enables (microphone power
+or pin routing through AMD's driver or DSP firmware) is missing on Linux. The
+package was removed from both HoltOS package repositories, the dev hardware
+rule and the stable model-extras switch were turned off, and the sources stay
+here for when AMD or the kernel supports these microphones. Remove it with
+`pacman -R holtos-acp-mic-dkms` and restart.
+
 Built-in microphones on the ASUS ROG Flow Z13 (GZ302EA, GZ302EAC) for HoltOS.
 
 ## The problem
