@@ -39,7 +39,7 @@ LOG="out/build-$(date +%Y%m%d-%H%M%S).log"
 export MSYS_NO_PATHCONV=1
 wsl -d Ubuntu -- sudo podman run --privileged --rm \
     -v "${WSL_ROOT}/archiso:/profile:Z" \
-    -v "${WSL_ROOT}/local-repo:/homelab-local-repo:Z" \
+    -v "${WSL_ROOT}/local-repo:/holtos-local-repo:Z" \
     -v "${WSL_ROOT}/out:/tmp/out:Z" \
     archiso-image \
     bash -c "mkarchiso -v -w /tmp/work -o /tmp/out /profile" | tee "$LOG"

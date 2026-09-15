@@ -19,7 +19,7 @@
 # NOPASSWD is safe here, this container never runs anything but our own
 # trusted build script. `pacman-contrib`: provides `repo-add`, which
 # build-aur-packages.sh uses to generate local-repo/'s actual repo
-# database (homelab.db*) — pacman won't treat a directory of loose
+# database (holtos.db*) — pacman won't treat a directory of loose
 # .pkg.tar.zst files as a repo without one, another step that used to
 # happen by hand and isn't scripted anywhere.
 #

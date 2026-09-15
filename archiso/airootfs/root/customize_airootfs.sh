@@ -57,10 +57,11 @@ sed -i '/^#\[multilib\]/,/^#Include = \/etc\/pacman.d\/mirrorlist/ s/^#//' /etc/
 # The HoltOS package repository for the live AND installed system: the
 # profile's pacman.conf (with its build-time file:// server) is only used
 # by mkarchiso itself; the rootfs carries the pacman package's stock
-# /etc/pacman.conf, so the installed system never had [homelab] until
+# /etc/pacman.conf, so the installed system never had the repository until
 # now (found 2026-09-12 when pointing an install at the published repo).
-if ! grep -q '^\[homelab\]' /etc/pacman.conf; then
-    cat /usr/share/holtos/pacman-homelab.conf >> /etc/pacman.conf
+# Called [homelab] until the rename to HoltOS (2026-09-14).
+if ! grep -q '^\[holtos\]' /etc/pacman.conf; then
+    cat /usr/share/holtos/pacman-holtos.conf >> /etc/pacman.conf
 fi
 
 # Only HoltOS wallpapers: pacman never unpacks another package's wallpapers
@@ -108,7 +109,7 @@ install -m 644 /etc/os-release /usr/lib/os-release
 # their dependencies offline. holtos-detect-hardware.sh installs only the
 # ones the install target's hardware needs (holtos-hardware). The
 # dependency set is resolved against THIS image, so nothing already in
-# packages.x86_64 is duplicated. The [homelab] local repo is only
+# packages.x86_64 is duplicated. The [holtos] local repo is only
 # reachable at build time from the host, so the download uses a
 # pacman.conf without it — and with signature checking off: the chroot
 # has no pacman keyring (creating one here proved unreliable — see
@@ -120,7 +121,7 @@ install -m 644 /etc/os-release /usr/lib/os-release
 # DownloadUser goes with it so the download runs as root and can write
 # to the root-owned staging dir.
 echo "==> Staging hardware driver packages for install-time detection..."
-sed -e '/^\[homelab\]/,$d' \
+sed -e '/^\[holtos\]/,$d' \
     -e 's/^SigLevel .*/SigLevel = Never/' \
     -e 's/^LocalFileSigLevel .*/LocalFileSigLevel = Never/' \
     -e '/^CheckSpace/d' \

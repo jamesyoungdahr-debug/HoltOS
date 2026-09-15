@@ -192,7 +192,7 @@ Limine, rescans other OSes and regenerates the snapshot menu. HoltOS-built
 packages (the glass forks, Calamares, Limine tools, ZFS) come from the
 HoltOS pacman repository — the GitHub release tagged `packages`,
 published by `tools/publish-packages.sh` from `local-repo/` — which
-`[homelab]` in `pacman.conf` points at, so `pacman -Syu` updates them
+`[holtos]` in `pacman.conf` points at, so `pacman -Syu` updates them
 from HoltOS. Arch's own packages come from Arch mirrors.
 
 ## Building the ISO

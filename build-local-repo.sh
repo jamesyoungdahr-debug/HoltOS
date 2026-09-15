@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Builds local-repo/ — the AUR packages (calamares, zfs-dkms, zfs-utils,
 # limine-mkinitcpio-hook, limine-entry-tool) and HoltOS' own packages
-# (packaging/*, sources in forks/) that archiso/pacman.conf's [homelab]
+# (packaging/*, sources in forks/) that archiso/pacman.conf's [holtos]
 # repo serves during the actual ISO build (build.sh). Run this once before
 # the first build.sh, and again any time those packages need updating —
 # it's safe to rerun, repo-add just refreshes the database.

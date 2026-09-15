@@ -91,13 +91,13 @@ if [ -d /pkgbuilds ]; then
     fi
 fi
 
-# pacman.conf's [homelab] repo needs an actual repo database, not just a
-# directory of loose packages — repo-add builds/updates homelab.db(.tar.gz)
-# and homelab.files(.tar.gz) (+ the .db/.files symlinks pacman expects) from
+# pacman.conf's [holtos] repo needs an actual repo database, not just a
+# directory of loose packages — repo-add builds/updates holtos.db(.tar.gz)
+# and holtos.files(.tar.gz) (+ the .db/.files symlinks pacman expects) from
 # whatever .pkg.tar.zst files are already sitting in /tmp/pkgout. Safe to
 # rerun: adding a package that's already in the database just updates it.
 chown builder:builder /tmp/pkgout/*.pkg.tar.zst
-su - builder -c "cd /tmp/pkgout && repo-add -R homelab.db.tar.gz *.pkg.tar.zst"
+su - builder -c "cd /tmp/pkgout && repo-add -R holtos.db.tar.gz *.pkg.tar.zst"
 
 echo "=== Done, packages in /tmp/pkgout ==="
 ls -la /tmp/pkgout/

@@ -22,6 +22,10 @@ Neon rebrand (next major release):
   the kernel-update hook and the installer shortcut carry the HoltOS name.
   Updating removes the old homelab files once the renamed ones are in place,
   so the boot menu still refreshes exactly once per kernel update.
+- **The HoltOS package repository is called `[holtos]`** (was `[homelab]`).
+  Updating renames the section in `pacman.conf`; the repository is published
+  under both names for a while, so installs that have not updated yet keep
+  getting HoltOS packages.
 - **Glass installer:** the installer window is frosted glass like the rest of
   HoltOS; its top bar and step list stay solid so they stay readable.
 - **Drivers for hardware added later:** every update checks the machine's

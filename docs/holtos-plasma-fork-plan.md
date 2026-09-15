@@ -70,7 +70,7 @@ Got there through 17 rounds of real dependency-name fixes across both PKGBUILDs 
 
 - Point `packages.x86_64` / the local package repo at our built
   `kwin`/`plasma-workspace` instead of `extra`'s, via the same
-  `[homelab]` local-repo mechanism already used for other HoltOS-built
+  `[holtos]` local-repo mechanism already used for other HoltOS-built
   packages
 - **Mechanism (2026-09-13): `provides=()`/`conflicts=()`/`replaces=()` on both PKGBUILDs, plus explicit `packages.x86_64` entries.** Both PKGBUILDs now carry all three: `provides=(kwin=6.7.5) conflicts=(kwin) replaces=(kwin)` and the plasma-workspace equivalent. `holtos-kwin`/`holtos-plasma-workspace` were added as their own lines in `packages.x86_64` (same pattern as `holtos-glass-effect`/`holtos-window-decoration`), so pacman satisfies `plasma-desktop`'s (and `powerdevil`/`plasma-nm`/`plasma-pa`/`holtos-glass-effect`'s) dependency on the real package name via our `provides=` instead of pulling in the stock `extra/` one.
 

@@ -67,9 +67,9 @@ This builds a small `aur-builder` container (see
   matching `forks/<name>` tree, versioned by the HoltOS commit count.
   Subset rebuilds: `AUR_PKGS=none HOLTOS_PKGS=holtos-glass-effect
   ./build-local-repo.sh`,
-- runs `repo-add` over the results to produce `local-repo/homelab.db*`
-  and `homelab.files*` — **this step existed nowhere before**; without a
-  real repo database, `archiso/pacman.conf`'s `[homelab]` repo is just a
+- runs `repo-add` over the results to produce `local-repo/holtos.db*`
+  and `holtos.files*` — **this step existed nowhere before**; without a
+  real repo database, `archiso/pacman.conf`'s `[holtos]` repo is just a
   directory of files pacman won't recognize as a repo at all.
 
 Expect this to take a while — calamares alone pulls in a real Qt6/KF6
@@ -120,7 +120,7 @@ could be built and pre-installed into an image *before*
 **remaining** AUR packages" — implying calamares was already handled by
 something else, with no record of what.
 
-`archiso/pacman.conf`'s own comment already described `[homelab]` as
+`archiso/pacman.conf`'s own comment already described `[holtos]` as
 carrying calamares alongside the other four — the uniform, one-script,
 one-image treatment below is what that comment always implied; the extra
 images were never actually necessary, just how it happened to get built
@@ -129,7 +129,7 @@ the first time. `build-aur-packages.sh` now builds all the AUR packages
 
 ## Common failure: "it built something, but the ISO won't boot / won't install"
 
-- **`local-repo/homelab.db` missing or stale.** If you copied
+- **`local-repo/holtos.db` missing or stale.** If you copied
   `.pkg.tar.zst` files into `local-repo/` some other way (or ran an older
   version of `build-aur-packages.sh` from before `repo-add` was added),
   pacman won't see them as a repo at all — `mkarchiso` will just silently
