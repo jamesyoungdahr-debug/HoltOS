@@ -183,6 +183,16 @@ Neon rebrand (next major release):
 - **Five-colour neon palette** in the brand guide and Konsole: purple, teal,
   electric blue, magenta and lime, with amber still meaning "needs you".
 
+## [0.0.7e-alpha] - 2026-09-15
+
+- **New: dev update channel.** HoltOS Updates > Settings > Update channel.
+  Stable installs HoltOS releases, as before. Dev installs the newest work
+  straight from a branch of the HoltOS repository (default `neon-rebrand`,
+  the next major release in progress), with the commit messages since your
+  version as the update notes. Dev can break things: a snapshot is still
+  taken before each update, and switching back to Stable offers the latest
+  release.
+
 ## [0.0.7d-alpha] - 2026-09-14
 
 - **Fixed: "Switch to Desktop" in Game Mode stayed on "Switching to Desktop"
