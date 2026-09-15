@@ -5,8 +5,8 @@
 # (package holtos-kwin, src/plugins/blur): it blurs behind EVERY window,
 # tints the result towards the ink colour when TintStrength > 0, and
 # rounds the blur to the window corners. The old out-of-tree "holtosglass"
-# effect (package holtos-glass-effect) stays disabled until the in-tree
-# one is verified on a fresh install — never enable both.
+# effect (package holtos-glass-effect) is no longer shipped; it stays
+# disabled here for installs that still have it — never enable both.
 [Plugins]
 blurEnabled=true
 holtosglassEnabled=false

@@ -45,7 +45,7 @@ Rectangle {
     readonly property color hoverColor: "#2a2438"
     readonly property color disabledTextColor: "#5a5568"
     readonly property color nextIdleColor: Branding.styleString( Branding.SidebarBackgroundCurrent )
-    readonly property color nextHoverColor: "#c46eff"
+    readonly property color nextHoverColor: "#c77dff"
 
     // HoltOS Glass: hairline under the bar.
     Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Qt.rgba(1, 1, 1, 0.09); z: 5 }

@@ -22,6 +22,18 @@ dressed as glass, with a menu bar and a floating dock, and ships:
   hardware, and **HoltOS Updates**, which keeps HoltOS, its drivers, apps
   and firmware up to date.
 
+## Screenshots
+
+**HoltOS:** a glass menu bar across the top and a floating dock with a neon
+rim.
+
+![The HoltOS desktop: glass menu bar, floating neon-rim dock and a glass Dolphin window over the Neon Otter Night wallpaper](docs/screenshots/holtos-desktop.png)
+
+**HoltOS Classic:** the single bottom panel, for anyone who prefers it
+(System Settings > Global Theme).
+
+![The HoltOS Classic desktop: one glass panel along the bottom and a glass Dolphin window](docs/screenshots/holtos-classic.png)
+
 ## Credits
 
 HoltOS stands on other people's work. What it forks or ships:

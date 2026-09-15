@@ -27,7 +27,7 @@ library=org.holtos.glass
 theme=HoltOS Glass
 
 # HoltOS Glass: the panel, Kickoff and other Plasma popups become glass
-# (translucent over the pool-rings wallpaper) only if KWin's Blur and
+# (translucent over the neon wallpapers) only if KWin's Blur and
 # Background Contrast effects are on — with them off, "translucent" is
 # just see-through, which is worse than opaque.
 [kwinrc][Plugins]

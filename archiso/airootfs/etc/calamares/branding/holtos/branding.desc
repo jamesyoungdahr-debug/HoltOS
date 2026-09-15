@@ -46,6 +46,6 @@ style:
    # colour onto a grey backing instead of the glass window (tested
    # 2026-09-14), so only the page area between them is glass.
    SidebarBackground:        "#171423"
-   SidebarText:               "#8C8C8C"
+   SidebarText:               "#8CFFFFFF"
    SidebarBackgroundCurrent:  "#B14DFF"
    SidebarTextCurrent:        "#FFFFFF"

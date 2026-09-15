@@ -306,7 +306,7 @@ Item {
                     radius: 10
                     color: !loginButton.enabled ? root.raised
                          : loginButton.down ? "#8F2FE0"
-                         : loginButton.hovered ? "#C46EFF" : root.current
+                         : loginButton.hovered ? "#C77DFF" : root.current
                 }
                 contentItem: Text {
                     text: loginButton.text

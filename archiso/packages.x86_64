@@ -212,7 +212,9 @@ kvantum
 # see build-aur-packages.sh) can make the title bar translucent and blurred;
 # Breeze cannot. Configured in etc/skel/.config/klassy/klassyrc.
 holtos-window-decoration
-holtos-glass-effect
+# holtos-glass-effect (the old out-of-tree KWin blur plugin) is no longer
+# shipped: holtos-kwin's in-tree blur replaced it and it was only ever
+# installed disabled. etc/xdg/kwinrc keeps it off on installs that still have it.
 
 # HoltOS's own full builds of KWin and plasma-workspace (Milestone 1 of docs/holtos-plasma-fork-plan.md) -- provides=()/conflicts=() in their PKGBUILDs replace the stock extra/ versions; no HoltOS customization in them yet, this just proves the build pipeline works.
 holtos-kwin

@@ -243,6 +243,26 @@ class UpdateWatcher:
         self.notified_restart = restart
 
 
+def create_support_bundle(tray):
+    """Collect logs for a bug report (holtos-support-bundle) and say where the file is."""
+    tray.showMessage("Creating support bundle", "Collecting logs; this takes a few seconds.",
+                     QIcon(ICON_PATH), 5000)
+    try:
+        proc = subprocess.run(["/usr/local/bin/holtos-support-bundle"],
+                              capture_output=True, text=True, timeout=180)
+    except (OSError, subprocess.SubprocessError) as exc:
+        log(f"holtos-tray: support bundle failed: {exc}")
+        tray.showMessage("Support bundle failed", str(exc), QIcon(ICON_PATH), 10000)
+        return
+    lines = (proc.stdout or "").strip().splitlines()
+    if proc.returncode == 0 and lines:
+        tray.showMessage("Support bundle saved", lines[-1].replace("Support bundle saved: ", "")
+                         + "\nAttach it to your bug report.", QIcon(ICON_PATH), 15000)
+    else:
+        tray.showMessage("Support bundle failed", (proc.stderr or "unknown error").strip()[:200],
+                         QIcon(ICON_PATH), 10000)
+
+
 def main():
     log(f"=== holtos-tray started {time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())} ===")
 
@@ -266,6 +286,7 @@ def main():
     menu.addAction("Create Snapshot Now", lambda: run("/usr/local/bin/holtos-snapshot-now"))
     menu.addAction("Restore Snapshot...", lambda: run("/usr/local/bin/holtos-restore-snapshot"))
     menu.addAction("Rescan Boot Menu", lambda: run("/usr/local/bin/holtos-rescan-bootmenu"))
+    menu.addAction("Create Support Bundle", lambda: create_support_bundle(tray))
     menu.addSeparator()
     menu.addAction("Network Shares...", lambda: run("/usr/local/bin/holtos-shares"))
     menu.addAction("Gaming...", lambda: run("/usr/local/bin/holtos-gaming"))

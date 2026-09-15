@@ -101,8 +101,9 @@ def apply(text, eid, props, children_accent=None):
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--svg", required=True)
-    parser.add_argument("--window-alpha", type=float, default=0.40)
-    parser.add_argument("--dialog-alpha", type=float, default=0.55)
+    # Defaults match what ships since 0.0.7a (clearer glass).
+    parser.add_argument("--window-alpha", type=float, default=0.15)
+    parser.add_argument("--dialog-alpha", type=float, default=0.30)
     parser.add_argument("--dock-alpha", type=float, default=0.0)
     parser.add_argument("--toolbar-alpha", type=float, default=0.0)
     parser.add_argument("--edge-alpha", type=float, default=0.0)

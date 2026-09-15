@@ -252,10 +252,9 @@ clamp so white text keeps 4.5:1 (milestones G8 and G9 in
 - **Views outside Dolphin still add a layer:** Kvantum's Base and AltBase carry
   40 % on top of the 30 % window fill, so file dialogs, Kate and other list
   views look darker than Dolphin.
-- **Stale numbers in comments:** the HoltOSGlass.kvconfig header,
-  `kvantum_glass.py`'s defaults and `tools/wallpapers/preview.py` still say
-  40 / 55 %; `BRANDING-STATUS.md` says 70 / 84 % and blur 11; the glass plan's
-  early tables say 70 / 60 % for the title bar.
+- **Old numbers in history:** the glass plan's early tables (70 / 60 % for the
+  title bar) are kept as history; everything that ships and every tool
+  default use the current values.
 - **Title bar button colours:** the plan asked for red, yellow and green; the
   scheme gives amber, amber and teal, so close and minimise may look alike on
   real hardware (checked in LIVETEST.md).
@@ -263,8 +262,8 @@ clamp so white text keeps 4.5:1 (milestones G8 and G9 in
   70 / 84 %, SDDM 84 %, Konsole 75 %.
 - **Colours outside the tokens:** logo blush `#FF7ABE`, disabled grey
   `#6B6B6B`, Kvantum `#2A2438`, `#262033` and `#221D2F`, Limine bright teal
-  `#5FF0DC`, Calamares sidebar text `#8C8C8C`, SDDM hover `#C46EFF` (the token
-  is `#C77DFF`), inactive header text `180,180,180`.
+  `#5FF0DC`, inactive header text `180,180,180`. (The Calamares sidebar text
+  and the SDDM and installer hover colours now use the tokens.)
 - **Eyebrow weight:** the tokens say 400; the typography page shows 600.
 - **Missing logo files:** no stacked (mark above name) or light-background
   lockup, and no vector version of the mark (the icons are PNGs derived from
@@ -272,8 +271,6 @@ clamp so white text keeps 4.5:1 (milestones G8 and G9 in
   only as The Den's React components and have not been rendered for the new
   mark. The old hand-drawn SVG logos are deleted from the image and removed
   from installed systems by `holtos-system-extras`.
-- **Stale wallpaper name:** Kvantum's comment and the look-and-feel defaults
-  still name the old pool-rings wallpaper.
 - **Not built yet:** GTK glass (G6), Kirigami and Qt Quick glass (G7), adaptive
   contrast (G8 and G9), installer glass (G11), The Den client's live blur, a
   HoltOS Plasma theme. Icons and cursor are stock Breeze.

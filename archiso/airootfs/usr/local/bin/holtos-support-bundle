@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+# HoltOS support bundle: collects the logs and facts needed to look into a
+# problem into one file to attach to a bug report
+# (docs/holtos-must-haves-and-plan.md, section 4). Runs as the user; nothing
+# needs root, and parts that need it are skipped. The user name and the
+# computer name are replaced with USER and HOSTNAME in every text file.
+#
+#   holtos-support-bundle            writes ~/holtos-support-<date>.tar.gz
+#   holtos-support-bundle <dir>      writes the bundle into <dir>
+
+set -uo pipefail
+
+OUT_DIR="${1:-$HOME}"
+STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+WORK="$(mktemp -d)"
+B="$WORK/holtos-support-$STAMP"
+mkdir -p "$B"
+trap 'rm -rf "$WORK"' EXIT
+
+run() {
+    local name="$1"; shift
+    if ! command -v "$1" &>/dev/null; then
+        echo "not available" > "$B/${name}.txt"
+        return 0
+    fi
+    timeout 20 "$@" >"$B/${name}.txt" 2>&1 || true
+}
+
+copy() {
+    local name="$1"; shift
+    if [ -r "$1" ]; then
+        cp -- "$1" "$B/$name"
+    else
+        echo "not present" > "$B/${name}.txt"
+    fi
+}
+
+# --- Collect with run ---
+run system uname -a
+run os-release cat /etc/os-release
+run uptime uptime
+run cpu lscpu
+run memory free -h
+run pci lspci -nn
+run usb lsusb
+run disks lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINTS,MODEL
+run disk-usage df -h
+run btrfs-subvolumes btrfs subvolume list /
+run holtos-packages sh -c "pacman -Q | grep -E '^(holtos-|linux |linux-firmware|mesa |nvidia|plasma-workspace|kwin|calamares|limine|z13)'"
+run graphics glxinfo -B
+run vulkan vulkaninfo --summary
+run video-decode vainfo
+run flatpaks flatpak list --columns=application,version
+run session loginctl show-session "${XDG_SESSION_ID:-}"
+run journal-this-boot journalctl -b --no-pager -n 3000
+run journal-previous-boot journalctl -b -1 --no-pager -n 1500
+run journal-errors journalctl -b -p err --no-pager -n 500
+run user-journal journalctl --user -b --no-pager -n 1500
+run failed-units systemctl --failed --no-pager
+run user-failed-units systemctl --user --failed --no-pager
+run hardware-drivers /usr/local/bin/holtos-hardware needed
+
+# --- Collect with copy ---
+copy history.log /var/lib/holtos/history.log
+copy update-status.json /var/lib/holtos/update-status.json
+copy hardware.log /var/lib/holtos/hardware.log
+copy snapshots.log /var/lib/holtos/snapshots.log
+copy scrub.log /var/lib/holtos/scrub.log
+copy disk-alert /var/lib/holtos/disk-alert
+copy session.conf /etc/holtos/session.conf
+copy updates.conf /etc/holtos/updates.conf
+copy holtos-tray.log /tmp/holtos-tray.log
+
+mkdir -p "$B/user-state"
+if [ -d "$HOME/.local/state/holtos/" ]; then
+    for f in "$HOME/.local/state/holtos/"*.log; do
+        [ -e "$f" ] || continue
+        copy "user-state/$(basename "$f")" "$f"
+    done
+fi
+
+# --- Redact user name and hostname ---
+# Only where they identify someone: home paths, "user@host", journal line
+# prefixes ("Sep 14 19:57:09 host process[pid]:") and uname's second field.
+# A blanket replacement would also rewrite words such as holtos-kwin when
+# someone names their account or computer "holtos".
+host="$(hostname 2>/dev/null || cat /etc/hostname 2>/dev/null)"
+find "$B" -type f | while IFS= read -r file; do
+    [ -n "${USER:-}" ] && sed -i "s|/home/${USER}\b|/home/USER|g; s|\b${USER}@|USER@|g" "$file"
+    if [ -n "$host" ]; then
+        sed -i -E "s|^([A-Z][a-z]{2} [ 0-9][0-9] [0-9:]{8}) ${host} |\1 HOSTNAME |; s|@${host}\b|@HOSTNAME|g" "$file"
+    fi
+done
+[ -n "$host" ] && sed -i -E "s|^(\S+) ${host} |\1 HOSTNAME |" "$B/system.txt" 2>/dev/null
+
+# --- README ---
+cat > "$B/README.txt" <<EOF
+HoltOS support bundle created $(date -u). Attach this file to your bug report. User and computer names are replaced with USER and HOSTNAME; nothing else leaves this computer unless you send it.
+EOF
+
+# --- Archive ---
+if tar -czf "$OUT_DIR/holtos-support-$STAMP.tar.gz" -C "$WORK" "holtos-support-$STAMP"; then
+    echo "Support bundle saved: $OUT_DIR/holtos-support-$STAMP.tar.gz"
+    exit 0
+else
+    echo "Error: failed to create support bundle archive" >&2
+    exit 1
+fi

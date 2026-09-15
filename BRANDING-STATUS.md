@@ -39,12 +39,14 @@ or a bug as it is checked, in boot order:
 - Updater copy ("Everything's fine.") — not yet seen.
 - **Glass application windows** (added on request, beyond the brief):
   Kvantum theme `HoltOSGlass` (KvSimplicityDark's SVG with window/dialog
-  backgrounds at holt-surface 70% / 84%, blur on, palette mapped to the
+  backgrounds at holt-surface 70% / 84% at the time (since 0.0.7a the desktop
+  uses 15% windows / 30% dialogs, blur strength 8), blur on, palette mapped to the
   tokens), selected via skel `Kvantum/kvantum.kvconfig` and
   `widgetStyle=kvantum`. **Confirmed on screen** on the installed VM:
   Dolphin and Konsole translucent with the blurred pool rings behind.
   **Title bars are glass too**: Klassy (AUR, in local-repo/) with
-  etc/skel/.config/klassy/klassyrc — 70%/60% opacity, blur behind, bold
+  etc/skel/.config/klassy/klassyrc — 70%/60% opacity at the time (since
+  0.0.7a: title bar opacity 12, small glyph-free buttons), blur behind, bold
   centred title, poor-contrast guard on; **confirmed on screen** on the
   VM (Konsole's title visible through Dolphin's). KWin blur strength
   raised to 11 via etc/xdg/kwinrc. The "dim Dolphin labels" seen earlier

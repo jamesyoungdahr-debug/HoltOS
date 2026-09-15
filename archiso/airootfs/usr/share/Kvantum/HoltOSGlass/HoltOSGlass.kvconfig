@@ -1,6 +1,6 @@
 # HoltOS Glass Kvantum theme. Derived from KvSimplicityDark (Tsu Jan, GPL-3):
 # the same SVG with the window/dialog backgrounds recoloured to holt-surface
-# at 40% / 55% alpha (Glass v2, tuned live against Liam's reference photo:
+# at 15% / 30% alpha (clearer glass since 0.0.7a; Glass v2 used 40% / 55%, tuned live against Liam's reference photo:
 # a lighter fill lets the blurred wallpaper show through), translucent_windows +
 # blurring on (KWin blurs behind
 # Qt windows that request it), and [GeneralColors] mapped to the brand
@@ -8,7 +8,7 @@
 # widgetStyle=kvantum in kdeglobals.
 [%General]
 author=HoltOS (derived from KvSimplicityDark by Tsu Jan)
-comment=HoltOS Glass: translucent, blurred holt-surface windows over the pool-rings wallpaper
+comment=HoltOS Glass: translucent, blurred holt-surface windows over the HoltOS neon wallpapers
 x11drag=true
 alt_mnemonic=true
 left_tabs=false
