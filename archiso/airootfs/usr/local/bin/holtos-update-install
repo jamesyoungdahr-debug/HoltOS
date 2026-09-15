@@ -4,9 +4,17 @@
 # receives holtos-update-apply's output, including its "@@" progress lines,
 # and ends with "@@ all finished <exit code>". Started by
 # holtos-update-install.service (the update window's "Install now") with no
-# arguments, meaning everything holtos-update-status found, or by
-# holtos-update-status --auto with the items it may install on its own.
+# arguments, meaning everything holtos-update-status found; by
+# holtos-update-install@<items>.service (the window's chosen updates) with
+# --selection <items>; or by holtos-update-status --auto with the items it
+# may install on its own. Written by hand: --selection comes from a unit
+# name a desktop user may start (51-holtos-updates.rules).
 set -uo pipefail
+
+STATUS=/var/lib/holtos/update-status.json
+# The only items a selection may name (holtos-update-apply's update items;
+# rollback and vendor are never offered as updates).
+ALLOWED_ITEMS="config the-den the-den-client system flatpak firmware extras"
 
 LOG_DIR=/run/holtos-update
 LOG="$LOG_DIR/progress.log"
@@ -24,6 +32,43 @@ mkdir -p "$LOG_DIR"
 chmod 755 "$LOG_DIR"
 : > "$LOG"
 chmod 644 "$LOG"
+
+if [ "${1:-}" = "--selection" ]; then
+    selection="${2:-}"
+    if ! [[ "$selection" =~ ^[a-z]+(-[a-z]+)*(_[a-z]+(-[a-z]+)*)*$ ]]; then
+        echo "==> Not a valid update selection: ${selection}" >> "$LOG"
+        echo "@@ all finished 2" >> "$LOG"
+        exit 2
+    fi
+    IFS=_ read -ra wanted <<< "$selection"
+    for item in "${wanted[@]}"; do
+        case " $ALLOWED_ITEMS " in
+            *" $item "*) ;;
+            *)
+                echo "==> Not an update item: ${item}" >> "$LOG"
+                echo "@@ all finished 2" >> "$LOG"
+                exit 2
+                ;;
+        esac
+    done
+    # Only what the last check found, in the order it lists them (system
+    # packages before Flatpak apps, and so on), each once.
+    chosen=()
+    while read -r found; do
+        for item in "${wanted[@]}"; do
+            if [ "$item" = "$found" ]; then
+                chosen+=("$found")
+                break
+            fi
+        done
+    done < <(jq -r '.updates[].id' "$STATUS" 2>/dev/null)
+    if [ "${#chosen[@]}" -eq 0 ]; then
+        echo "==> None of the chosen updates are still pending; check for updates again." >> "$LOG"
+        echo "@@ all finished 0" >> "$LOG"
+        exit 0
+    fi
+    set -- "${chosen[@]}"
+fi
 
 [ "$#" -gt 0 ] || set -- available
 /usr/local/bin/holtos-update-apply "$@" >> "$LOG" 2>&1

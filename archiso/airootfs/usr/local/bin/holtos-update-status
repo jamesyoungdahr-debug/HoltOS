@@ -33,6 +33,20 @@ fi
 
 mkdir -p "$(dirname "$STATUS")"
 
+# Settings the check itself needs (HoltOS Updates > Settings writes them through holtos-update-settings).
+SKIP_RELEASE=""
+HOLD_PACKAGES=""
+if [ -f "$CONF" ]; then
+    while IFS='=' read -r key value; do
+        value="${value%\"}"
+        value="${value#\"}"
+        case "$key" in
+            SKIP_RELEASE) SKIP_RELEASE="$value" ;;
+            HOLD_PACKAGES) HOLD_PACKAGES="$value" ;;
+        esac
+    done < "$CONF"
+fi
+
 # The timer, the update window and Steam can all ask at once.
 exec 9> /run/holtos-update-status.lock
 flock -w 900 9 || { echo "another update check is still running" >&2; exit 1; }
@@ -83,11 +97,11 @@ release_notes() {
 updates=()
 errors=()
 
-# add_update <id> <name> <kind> <current> <new> <notes> <restart: true|false>
+# add_update <id> <name> <kind> <current> <new> <notes> <restart: true|false> [download bytes]
 add_update() {
     updates+=("$(jq -cn --arg id "$1" --arg name "$2" --arg kind "$3" --arg current "$4" \
-        --arg new "$5" --arg notes "$6" --argjson restart "$7" \
-        '{id:$id, name:$name, kind:$kind, current:$current, new:$new, notes:$notes, restart:$restart}')")
+        --arg new "$5" --arg notes "$6" --argjson restart "$7" --argjson size "${8:-0}" \
+        '{id:$id, name:$name, kind:$kind, current:$current, new:$new, notes:$notes, restart:$restart, download_size:$size}')")
 }
 
 # check_release <id> <name> <kind> <owner/repo> <installed commit> <installed tag>
@@ -100,6 +114,10 @@ check_release() {
     # The same release is not an update, even when the installed commit
     # differs (an image built from an untagged commit of that version).
     if [ "$commit" = "$5" ] || { [ -n "$6" ] && [ "$tag" = "$6" ]; }; then
+        return
+    fi
+    # Liam chose to skip this HoltOS release (HoltOS Updates: "Skip this version").
+    if [ "$1" = config ] && [ -n "$SKIP_RELEASE" ] && [ "$tag" = "$SKIP_RELEASE" ]; then
         return
     fi
     add_update "$1" "$2" "$3" "${6:-unknown}" "$tag" "$(release_notes "$4" "$tag")" false
@@ -134,19 +152,31 @@ if command -v fwupdmgr >/dev/null 2>&1; then
     fi
 fi
 
+# checkupdates keeps its own copy of the sync database; a fixed location lets
+# the download size below be read from that copy.
+export CHECKUPDATES_DB=/var/lib/holtos/checkup-db
+
 if command -v checkupdates >/dev/null 2>&1; then
     package_list="$(checkupdates 2>/dev/null)"
     rc=$?
     if [ "$rc" -eq 0 ] && [ -n "$package_list" ]; then
-        restart=false
-        if grep -qE '^(linux|linux-lts|linux-zen|linux-firmware|systemd|mesa|amd-ucode|intel-ucode|nvidia[a-z0-9-]*|holtos-kwin|holtos-plasma-workspace|sddm) ' <<< "$package_list"; then
-            restart=true
+        # Packages held in HoltOS Updates > Settings are not offered.
+        if [ -n "$HOLD_PACKAGES" ]; then
+            package_list="$(awk -v held=" $HOLD_PACKAGES " 'index(held, " " $1 " ") == 0' <<< "$package_list")"
         fi
-        label="$(wc -l <<< "$package_list") package(s)"
-        if grep -qE '^(linux|linux-lts|linux-zen) ' <<< "$package_list"; then
-            label="$label, new kernel"
+        if [ -n "$package_list" ]; then
+            restart=false
+            if grep -qE '^(linux|linux-lts|linux-zen|linux-firmware|systemd|mesa|amd-ucode|intel-ucode|nvidia[a-z0-9-]*|holtos-kwin|holtos-plasma-workspace|sddm) ' <<< "$package_list"; then
+                restart=true
+            fi
+            label="$(wc -l <<< "$package_list") package(s)"
+            if grep -qE '^(linux|linux-lts|linux-zen) ' <<< "$package_list"; then
+                label="$label, new kernel"
+            fi
+            size="$(pacman -Sp --dbpath "$CHECKUPDATES_DB" --logfile /dev/null --print-format '%s' $(awk '{print $1}' <<< "$package_list") 2>/dev/null | awk '{s+=$1} END{print s+0}')"
+            [[ "$size" =~ ^[0-9]+$ ]] || size=0
+            add_update system "System packages" system "" "$label" "$package_list" "$restart" "$size"
         fi
-        add_update system "System packages" system "" "$label" "$package_list" "$restart"
     elif [ "$rc" -ne 2 ]; then
         errors+=("could not check system packages")
     fi
@@ -196,6 +226,45 @@ fi
 in_window=1
 if [ -n "$INSTALL_WINDOW" ] && [ "$(date +%H)" != "${INSTALL_WINDOW%%:*}" ]; then
     in_window=0
+fi
+
+# Automatic downloads and installs wait when they could hurt: on battery below
+# 30 %, on a metered connection, or with under 2 GB free on /. Installing by
+# hand from HoltOS Updates is still possible.
+on_low_battery() {
+    local supply online=0 low=1 found=0
+    for supply in /sys/class/power_supply/*; do
+        case "$(cat "$supply/type" 2>/dev/null)" in
+            Mains|USB) [ "$(cat "$supply/online" 2>/dev/null)" = 1 ] && online=1 ;;
+            Battery)
+                found=1
+                [ "$(cat "$supply/capacity" 2>/dev/null || echo 100)" -ge 30 ] && low=0
+                ;;
+        esac
+    done
+    [ "$found" -eq 1 ] && [ "$online" -eq 0 ] && [ "$low" -eq 1 ]
+}
+on_metered() {
+    local dev
+    command -v nmcli >/dev/null 2>&1 || return 1
+    dev="$(ip route show default 2>/dev/null | awk '{print $5; exit}')"
+    [ -n "$dev" ] || return 1
+    nmcli -t -g GENERAL.METERED device show "$dev" 2>/dev/null | grep -q '^yes'
+}
+low_disk() {
+    [ "$(df -Pk / | awk 'NR == 2 {print $4}')" -lt 2097152 ]
+}
+deferred=""
+if on_low_battery; then
+    deferred="the battery is below 30 %"
+elif on_metered; then
+    deferred="the network connection is metered"
+elif low_disk; then
+    deferred="there is less than 2 GB free"
+fi
+if [ -n "$deferred" ]; then
+    jq --arg why "$deferred" '.deferred = $why' "$STATUS" | write_status
+    exit 0
 fi
 
 install_ids=()

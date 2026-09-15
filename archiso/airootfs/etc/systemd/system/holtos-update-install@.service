@@ -1,0 +1,13 @@
+[Unit]
+Description=HoltOS: install the chosen updates (%i)
+Documentation=file:///usr/local/bin/holtos-update-install
+Wants=network-online.target
+After=network-online.target
+ConditionPathExists=!/run/archiso
+
+# The instance name is the update window's selection, item ids joined by "_"
+# (config_flatpak). holtos-update-install accepts only known items that the
+# last check found (51-holtos-updates.rules lets the desktop user start it).
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/holtos-update-install --selection %i

@@ -1,0 +1,86 @@
+#!/bin/bash
+# "Fix updates" in HoltOS Updates: repairs the usual reasons updates stop
+# working, as root through pkexec, reporting each step as an "==>" line:
+#   1. a pacman lock left behind by an interrupted update (only when no
+#      update is running);
+#   2. half-finished downloads in the package cache;
+#   3. the package signing keys (re-populated from the installed keyrings);
+#   4. slow or dead mirrors (reflector picks recent HTTPS mirrors; the old
+#      list is kept as mirrorlist.before-repair);
+#   5. a fresh package database and keyring, then Flatpak's own repair;
+#   6. a new update check, so HoltOS Updates shows the result.
+# It takes no input. Written by hand: a root helper started from the desktop.
+set -uo pipefail
+
+if [ "$(id -u)" -ne 0 ]; then
+    echo "holtos-update-repair must run as root (use: pkexec holtos-update-repair)" >&2
+    exit 1
+fi
+
+failed=0
+
+echo "==> Checking that no update is running..."
+if pgrep -x pacman >/dev/null 2>&1 || pgrep -f /usr/local/bin/holtos-update-apply >/dev/null 2>&1; then
+    echo "An update is running right now. Try again when it has finished." >&2
+    exit 1
+fi
+if [ -e /var/lib/pacman/db.lck ]; then
+    rm -f /var/lib/pacman/db.lck
+    echo "    Removed a lock left by an interrupted update."
+fi
+
+echo "==> Removing half-finished downloads..."
+find /var/cache/pacman/pkg -maxdepth 1 -type f -name '*.part' -delete 2>/dev/null
+find /var/cache/pacman/pkg -maxdepth 1 -type d -name 'download-*' -exec rm -rf {} + 2>/dev/null
+
+echo "==> Repairing the package signing keys..."
+if ! pacman-key --init >/dev/null 2>&1 || ! pacman-key --populate archlinux >/dev/null 2>&1; then
+    echo "    The Arch keys could not be set up." >&2
+    failed=1
+fi
+
+echo "==> Choosing fast, up-to-date mirrors..."
+if command -v reflector >/dev/null 2>&1; then
+    list="$(mktemp)"
+    if timeout 120 reflector --protocol https --latest 20 --sort rate --save "$list" >/dev/null 2>&1 \
+            && grep -q '^Server' "$list"; then
+        cp -p /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.before-repair 2>/dev/null || true
+        install -m 644 "$list" /etc/pacman.d/mirrorlist
+        echo "    New mirror list saved (the old one is mirrorlist.before-repair)."
+    else
+        echo "    Could not reach the mirror status service; the current mirrors are kept."
+    fi
+    rm -f "$list"
+else
+    echo "    reflector is not installed; the current mirrors are kept."
+fi
+
+echo "==> Refreshing the package database..."
+if ! pacman -Syy --noconfirm >/dev/null 2>&1; then
+    echo "    The package database could not be refreshed. Check the internet connection." >&2
+    failed=1
+else
+    # Arch's advice when signatures fail: update the keyring on its own first.
+    echo "==> Updating the Arch keyring..."
+    pacman -S --noconfirm --needed archlinux-keyring >/dev/null 2>&1 || {
+        echo "    The keyring package could not be updated." >&2
+        failed=1
+    }
+fi
+
+if command -v flatpak >/dev/null 2>&1; then
+    echo "==> Repairing Flatpak apps..."
+    flatpak repair --system >/dev/null 2>&1 || {
+        echo "    Flatpak's repair reported problems." >&2
+        failed=1
+    }
+fi
+
+echo "==> Checking for updates again..."
+/usr/local/bin/holtos-update-status --quiet >/dev/null 2>&1 || true
+
+if [ "$failed" -ne 0 ]; then
+    echo "==> Some steps did not work (see above). Create a support bundle if updates still fail."
+    exit 1
+fi
+echo "==> Done. Updates should work again."

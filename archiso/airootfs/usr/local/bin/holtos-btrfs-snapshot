@@ -32,12 +32,27 @@ keep_setting="$(sed -n 's/^SNAPSHOT_KEEP=\([0-9]\+\)$/\1/p' /etc/holtos/updates.
 if [ -n "$keep_setting" ] && [ "$keep_setting" -ge 2 ] && [ "$keep_setting" -le 10 ]; then
     KEEP="$keep_setting"
 fi
+#
+# `--delete <name>` removes one snapshot (HoltOS Updates > Snapshots): its
+# subvolume, its kernel copy on the ESP and its log line, then rewrites the
+# Limine menu. The name must match the snapshot naming exactly and be in the
+# log; the snapshot you are booted into is refused. Written by hand: it
+# deletes subvolumes as root from a name the desktop passes.
 REGEN_ONLY=0
+DELETE_NAME=""
 if [ "${1:-}" = "--regen" ]; then
     REGEN_ONLY=1
     LABEL=regen
+elif [ "${1:-}" = "--delete" ]; then
+    REGEN_ONLY=1
+    LABEL=delete
+    DELETE_NAME="${2:-}"
+    if ! [[ "$DELETE_NAME" =~ ^[0-9]{8}T[0-9]{6}Z-[a-z]+(-[a-z]+)*$ ]]; then
+        echo "not a snapshot name: ${DELETE_NAME}" >&2
+        exit 2
+    fi
 else
-    LABEL="${1:?Usage: holtos-btrfs-snapshot <label> | --regen}"
+    LABEL="${1:?Usage: holtos-btrfs-snapshot <label> | --regen | --delete <name>}"
 fi
 SNAP_LOG="${SNAP_LOG:-/var/lib/holtos/snapshots.log}"
 SNAPSHOTS_DIR="${SNAPSHOTS_DIR:-/.snapshots}"
@@ -103,6 +118,29 @@ if [ "$REGEN_ONLY" -eq 0 ]; then
     esac
 fi
 [ -f "$SNAP_LOG" ] || : > "$SNAP_LOG"
+
+if [ -n "$DELETE_NAME" ]; then
+    if ! cut -f3 "$SNAP_LOG" | grep -qx -- "$DELETE_NAME"; then
+        echo "no snapshot called ${DELETE_NAME}" >&2
+        exit 1
+    fi
+    case "$(findmnt -no SOURCE /)" in
+        *"[/@snapshots/${DELETE_NAME}]")
+            echo "${DELETE_NAME} is the system running right now; start HoltOS normally before deleting it" >&2
+            exit 1
+            ;;
+    esac
+    echo "==> Deleting snapshot ${DELETE_NAME}..."
+    btrfs subvolume delete "${SNAPSHOTS_DIR}/${DELETE_NAME}" 2>/dev/null || true
+    rm -rf "${ESP}/holtos-snapshots/${DELETE_NAME}"
+    awk -F'\t' -v name="$DELETE_NAME" '$3 != name' "$SNAP_LOG" > "${SNAP_LOG}.tmp"
+    mv "${SNAP_LOG}.tmp" "$SNAP_LOG"
+    chmod 644 "$SNAP_LOG"
+    # A snapshot the rollback guard would restore is gone: stand the guard down.
+    if [ "$(cat /var/log/holtos-boot-guard/armed 2>/dev/null)" = "$DELETE_NAME" ]; then
+        rm -f /var/log/holtos-boot-guard/armed /var/log/holtos-boot-guard/unconfirmed-boots
+    fi
+fi
 
 # Retention: evict the oldest entries beyond KEEP — both the Btrfs
 # subvolume and its ESP kernel copy — then drop them from the log too.

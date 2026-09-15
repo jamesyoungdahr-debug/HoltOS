@@ -1,11 +1,14 @@
 // HoltOS updates without a password prompt for the person at the machine:
 // Steam's Software Updates page in Game Mode (a controller user has no
 // keyboard for a polkit prompt), and the update window's "Check now" /
-// "Install now", which only start two fixed root services. Those services
-// run fixed commands that install only what holtos-update-status found in
-// HoltOS' own sources; nothing the caller passes reaches root. Only the
-// active local session's user, only wheel. Written by hand:
-// security-relevant.
+// "Install now", which only start fixed root services. Those services run
+// fixed commands that install only what holtos-update-status found in
+// HoltOS' own sources. The one thing a caller chooses is which of those
+// updates to install: the instance name of holtos-update-install@.service,
+// lowercase item ids joined by "_" (config_flatpak). holtos-update-install
+// accepts only known item ids that the last check found, so a crafted name
+// installs nothing else. Only the active local session's user, only wheel.
+// Written by hand: security-relevant.
 polkit.addRule(function(action, subject) {
     if (!(subject.local && subject.active && subject.isInGroup("wheel"))) {
         return polkit.Result.NOT_HANDLED;
@@ -17,7 +20,8 @@ polkit.addRule(function(action, subject) {
         var unit = action.lookup("unit");
         var verb = action.lookup("verb");
         if ((unit == "holtos-update-check.service" ||
-             unit == "holtos-update-install.service") &&
+             unit == "holtos-update-install.service" ||
+             /^holtos-update-install@[a-z]+(-[a-z]+)*(_[a-z]+(-[a-z]+)*)*\.service$/.test(unit)) &&
             verb == "start") {
             return polkit.Result.YES;
         }

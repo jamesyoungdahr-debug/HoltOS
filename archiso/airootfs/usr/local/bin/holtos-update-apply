@@ -750,6 +750,15 @@ update_system() {
     # firmware, drivers and every other package, exactly as pacman -Syu.
     echo "==> Downloading system updates..."
     total="$(pacman -Sup --print-format '%s' 2>/dev/null | awk '{s+=$1} END{print s+0}')"
+    # Refuse to start when / cannot hold the download plus room to unpack it:
+    # a disk that fills up halfway through pacman -Su leaves a broken system.
+    local free_kb need_kb
+    free_kb="$(df -Pk / | awk 'NR == 2 {print $4}')"
+    need_kb=$(( ${total:-0} * 2 / 1024 + 1048576 ))
+    if [ "${free_kb:-0}" -lt "$need_kb" ]; then
+        echo "==> Not enough free space for the system update: $(( ${free_kb:-0} / 1024 )) MB free, about $(( need_kb / 1024 )) MB needed. Free some space and try again." >&2
+        return 1
+    fi
     start="$(du -sb /var/cache/pacman/pkg 2>/dev/null | cut -f1)"
     dl_log="$(mktemp)"
     pacman -Suw --noconfirm > "$dl_log" 2>&1 &

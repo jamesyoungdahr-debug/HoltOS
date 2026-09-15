@@ -55,6 +55,9 @@ if os.path.exists("/run/archiso"):
 ICON_PATH = "/usr/share/icons/hicolor/256x256/apps/holtos-logo.png"
 TRAY_ICON_PATH = "/usr/share/icons/hicolor/64x64/apps/holtos-logo-symbolic.png"
 STATUS_PATH = "/var/lib/holtos/update-status.json"
+PROGRESS_PATH = "/run/holtos-update/progress.log"
+# Names the progress lines use (holtos-update-apply's items).
+ITEM_NAMES = {"config": "HoltOS", "the-den": "The Den", "the-den-client": "The Den Client", "system": "System packages", "flatpak": "Flatpak apps", "firmware": "Device firmware", "extras": "HoltOS components"}
 REBOOT_MARKER = "/run/holtos-reboot-required"
 POLL_MS = 30000
 HISTORY_PATH = "/var/lib/holtos/history.log"
@@ -67,6 +70,25 @@ INSTALLED_NAMES = {
     "flatpak": "Flatpak apps",
     "firmware": "Device firmware",
 }
+
+
+def install_progress():
+    """What a running install is doing, from its progress log: (item name, percent or -1), or None when no install is running."""
+    try:
+        with open(PROGRESS_PATH) as f:
+            lines = [line.split() for line in f.read().splitlines() if line.startswith("@@ ")]
+    except OSError:
+        return None
+    if not lines or lines[-1][1:3] == ["all", "finished"]:
+        return None
+    last = lines[-1]
+    if len(last) < 4 or last[2] not in ("check", "download", "install"):
+        return None
+    try:
+        pct = int(last[3])
+    except ValueError:
+        pct = -1
+    return ITEM_NAMES.get(last[1], last[1]), pct
 
 
 def run(cmd, *args):
@@ -205,7 +227,11 @@ class UpdateWatcher:
         updates = status.get("updates", [])
         names = ", ".join(u.get("name") or u.get("id", "?") for u in updates)
 
-        if state == "checking":
+        running = install_progress()
+        if running:
+            name, pct = running
+            self.tray.setToolTip(f"HoltOS: installing updates: {name}" + (f" {pct}%" if pct >= 0 else ""))
+        elif state == "checking":
             self.tray.setToolTip("HoltOS: checking for updates...")
         elif updates:
             self.tray.setToolTip(f"HoltOS: {len(updates)} update(s) available: {names}")
