@@ -214,6 +214,20 @@ Neon rebrand (next major release):
   removed theme, colour scheme or Kvantum theme is moved to the HoltOS one.
 - **Five-colour neon palette** in the brand guide and Konsole: purple, teal,
   electric blue, magenta and lime, with amber still meaning "needs you".
+- **Icons are no longer blurry.** The icon theme's `index.theme` announced
+  sizes such as `Size=1616` for the 16x16 folder — the size was read from the
+  directory name "16x16" by deleting the x — so KDE stretched a drawn icon
+  instead of using the icon drawn at that size. The sizes are right now, and
+  every size from 16 to 64 px also ships a double-resolution copy, which is
+  what a display at 150 % or 200 % scaling asks for.
+- **Restart, Shut Down and Log Out work again.** Those three entries did
+  nothing: to keep only its own themes HoltOS stopped shipping Breeze's
+  look-and-feel packages, and Breeze's package was also what provided the
+  shutdown dialog, so the dialog had no theme to load and closed itself after
+  three seconds. Both HoltOS themes now carry their own copy of the dialog.
+- **KRunner can search your files again.** Its file-search runner is only
+  built when Baloo is present, and Baloo was missing from the image, so
+  searching from Alt+Space found no files. Baloo is installed now.
 
 ## [0.0.7e-alpha] - 2026-09-15
 
