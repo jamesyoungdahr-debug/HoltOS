@@ -1,48 +1,54 @@
-# Neon wallpaper recolour (2026-09-15)
+# Neon wallpapers: five-colour palette (2026-09-15)
 
-Liam: "keep them the same but incorporate the new colours." The ten
-`HoltOS-Neon-*` wallpapers keep their composition and get the neon rebrand's
-colours. This is a reprocessing pass over the chosen art, not a new render.
+Liam's ask began as "keep them the same but incorporate the new colours". The
+recolour pass came back weak — the new colours were barely present — so Liam
+ruled: "lets just generate new ones and not use the source". **Final method:
+fresh txt2img renders.** The img2img notes below are kept as history.
 
 ## Method
 
-Z-Image-Turbo img2img, built from the saved txt2img graph
-(`holtos/z-image-turbo.json` in ComfyUI's library):
-
-- `LoadImage` (the packaged `1920x1080.jpg` of the wallpaper) > `VAEEncode`
-  into the `KSampler`'s latent, instead of an empty latent.
-- `ModelSamplingAuraFlow` shift 3, cfg 1, `res_multistep` / `simple`,
-  8 steps, Z-Image-Turbo bf16 + `qwen_3_4b` + `ae.safetensors`.
-- Seed = the wallpaper's own seed in `wallpapers.json`, so a wallpaper is
-  reproducible.
-- Denoise is the only retouch control: 0.6 / 0.7 / 0.8 were rendered per
-  wallpaper. 0.35-0.5 is too weak to matter - at cfg 1 the base image beats
-  the colour words in the prompt, so a low-denoise recolour barely moves.
+Z-Image-Turbo txt2img through the saved graph `holtos/z-image-turbo.json`
+(`UNETLoader > ModelSamplingAuraFlow shift 3 > KSampler`; cfg 1,
+`res_multistep` / `simple`, 8 steps, `ConditioningZeroOut` as the negative),
+rendered at 1920x1088, three seeds per wallpaper, with the palette colours
+named in every prompt. Queued with the comfyui MCP (`batch` /
+`enqueue_workflow`) while holding a scheduler `comfy` lease taken by hand — in
+the desktop app's third-party mode the `comfy_hook` does not run, so the lease
+is manual.
 
 ## Palette
 
 The art colours from `docs/holtos-brand.md`: purple `#B14DFF`, magenta
 `#FF4FD8`, electric blue `#4F7BFF`, teal `#28E0C8`, lime `#C6FF3D`, over the
-near-black ground `#0D0B12`. Lime is a rare spark, never a background.
+near-black ground `#0D0B12`.
 
 ## Findings
 
-- 27 of 30 candidates were good from one batch with a single shared
-  colour-forward prompt.
-- `otter-night` failed all three at 0.7 and above: with no "otter" in the
-  prompt the subject was replaced by a human figure. Both mascot wallpapers
-  (`otter`, `otter-night`) were re-rendered with prompts that name the otter.
-- **Rule: above about 0.6 the prompt must name the subject, or the subject
-  drifts.** Keep the per-wallpaper prompt from `wallpapers.json` in play and
-  add the colour wording to it.
+- **A palette colour must be a prominent, natural element of the scene.** Lime
+  rendered cleanly as an aurora curtain, forest bioluminescence, nebula wisps
+  and a cabin sky-glow — and not at all when asked for as a small accent (a
+  lime LED strip, "a few lime sparks"), or as a flat rectangle and garbled text
+  when pushed harder. Purple, magenta, electric blue and teal land readily in
+  any scene.
+- **An img2img recolour cannot reliably introduce new hues.** At cfg 1 the base
+  image beats the colour words: 0.35-0.5 barely moves, and 0.6-0.8 mostly
+  re-asserts the original purple and teal. Above about 0.6 the prompt must name
+  the subject or the subject drifts (the otter became a human figure). This is
+  why the recolour was dropped.
+- **A deterministic hue-remap plus spark pass was rejected.** It tints the
+  brightest pixels and reads as hot-spots on the subject rather than neon —
+  `tools/wallpapers/color_grade.py`, committed but unused.
 
-## Candidates
+## Gotcha
 
-In ComfyUI's `output/holtos/` on LiamPC:
+The Real-ESRGAN weights are not in this worktree. They live in the master
+checkout's `tools/wallpapers/models/`; copy them in before running
+`package.py`, which otherwise exits with "missing ... x4v3.pth".
 
-- `recol-<id>-d{6,7,8}_00001_.png` for the eight without a mascot.
-- `recol2-<id>-d{6,7,8}_00001_.png` for `otter` and `otter-night`.
+## Final set
 
-Not committed to the repo. Awaiting Liam's pick of one denoise per wallpaper;
-`tools/wallpapers/package.py` then regenerates the packaged sizes from the
-chosen files.
+Six wallpapers carry the four-colour palette (rings, otter, den, bokeh,
+otter-night, rain) and four carry natural lime as well (aurora, forest, nebula,
+cabin); the otter logo stays purple by design. Packaged by
+`tools/wallpapers/package.py` to 1920x1080 / 2560x1440 / 3840x2160 (JPEG q95,
+4:4:4). Shipped as commit `c90fafb` on `neon-rebrand`.
