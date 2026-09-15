@@ -16,12 +16,17 @@ Rebrand ISO built once (out/holtos-0.0.7c-alpha-x86_64.iso, before the glass
 installer and drivers). Test VM holtos-rebrand (Hyper-V, 60 GB under
 C:\projects\holtos\vm\) is installing that ISO; Liam fills in the Users page
 (Claude must not type passwords).
-Next: rename "homelab" to HoltOS everywhere (scripts, hook, installer
-configs, [homelab] repo published under both names with a pacman.conf
-migration; old files removed by holtos-system-extras); dual boot alongside
-Windows (keep fewer snapshot kernels when the ESP is small; Fast Startup and
-BitLocker notice); rebuild the ISO and VM-test the installer drivers path;
-Liam picks the major version number.
+Also done (2026-09-14): "homelab" renamed to HoltOS (holtos-*.sh scripts,
+95-holtos-limine-sync.hook, holtos-install.desktop, [holtos] repo with
+holtos.db; publish-packages.sh uploads homelab.db copies too; the update
+renames the pacman.conf section and removes old files); dual boot alongside
+Windows (EFI minimum 64MiB, notesqml@dualboot "Notes" page, snapshot
+kernel copies and kernel updates that fit a small ESP).
+Next: detach the old ISO from the holtos-rebrand VM (it locks
+out/holtos-0.0.7c-alpha-x86_64.iso, so build.sh cannot back it up), rebuild,
+VM-install and test the installer drivers path and glass installer; the live
+pacman -Sy against holtos.db once packages are published; dual boot on real
+hardware; Liam picks the major version number.
 
 WHAT HOLTOS IS
 --------------

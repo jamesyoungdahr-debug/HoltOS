@@ -63,9 +63,29 @@ if [ "$REGEN_ONLY" -eq 0 ]; then
     btrfs subvolume snapshot -r / "${SNAPSHOTS_DIR}/${NAME}"
 
     echo "==> Copying current kernel/initramfs to the ESP..."
-    mkdir -p "${ESP}/holtos-snapshots/${NAME}"
-    cp /boot/vmlinuz-linux "${ESP}/holtos-snapshots/${NAME}/vmlinuz-linux"
-    cp /boot/initramfs-linux.img "${ESP}/holtos-snapshots/${NAME}/initramfs-linux.img"
+    # The ESP may be small: installing alongside Windows reuses its EFI
+    # partition (often 100MiB, about 70MiB free, and the main kernel and
+    # initramfs take about 35MiB). Make room by removing the oldest
+    # snapshots; if the kernel still does not fit, keep this snapshot
+    # without a boot entry (it can still be restored from the desktop)
+    # instead of failing the update (Liam, 2026-09-14: dual boot).
+    need_kb=$(( ( $(stat -c %s /boot/vmlinuz-linux) + $(stat -c %s /boot/initramfs-linux.img) ) / 1024 + 8192 ))
+    esp_free_kb() { df -Pk "$ESP" | awk 'NR == 2 { print $4 }'; }
+    while [ "$(esp_free_kb)" -lt "$need_kb" ] && [ -s "$SNAP_LOG" ]; do
+        oldest="$(head -n 1 "$SNAP_LOG" | cut -f3)"
+        echo "==> Not enough room on the EFI partition; removing the oldest snapshot ${oldest}..."
+        btrfs subvolume delete "${SNAPSHOTS_DIR}/${oldest}" 2>/dev/null || true
+        rm -rf "${ESP}/holtos-snapshots/${oldest}"
+        tail -n +2 "$SNAP_LOG" > "${SNAP_LOG}.tmp"
+        mv "${SNAP_LOG}.tmp" "$SNAP_LOG"
+    done
+    if [ "$(esp_free_kb)" -ge "$need_kb" ]; then
+        mkdir -p "${ESP}/holtos-snapshots/${NAME}"
+        cp /boot/vmlinuz-linux "${ESP}/holtos-snapshots/${NAME}/vmlinuz-linux"
+        cp /boot/initramfs-linux.img "${ESP}/holtos-snapshots/${NAME}/initramfs-linux.img"
+    else
+        echo "==> The EFI partition has no room for a kernel copy: ${NAME} gets no boot menu entry, but it can be restored from the desktop"
+    fi
 
     mkdir -p "$(dirname "$SNAP_LOG")"
     printf '%s\t%s\t%s\n' "$(date -u +%FT%TZ)" "$LABEL" "$NAME" >> "$SNAP_LOG"
@@ -113,12 +133,15 @@ fi
 block="$(mktemp)"
 {
     echo "#### HOLTOS SNAPSHOTS START ####"
-    if [ -s "$SNAP_LOG" ]; then
+    # Only snapshots that have a kernel copy on the ESP can boot (a small ESP
+    # may have no room for one); the rest are restored from the desktop.
+    if [ -s "$SNAP_LOG" ] && compgen -G "${ESP}/holtos-snapshots/*/vmlinuz-linux" >/dev/null; then
         echo
         echo "/Snapshots"
         echo "    comment: Earlier states of HoltOS. Read-only rescue boots; restore from the desktop."
         tac "$SNAP_LOG" | while IFS=$'\t' read -r ts snap_label snap_name; do
             [ -n "$snap_name" ] || continue
+            [ -f "${ESP}/holtos-snapshots/${snap_name}/vmlinuz-linux" ] || continue
             echo
             echo "//${snap_label^} ${ts}"
             case "$snap_label" in

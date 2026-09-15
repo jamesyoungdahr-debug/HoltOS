@@ -22,6 +22,13 @@ Neon rebrand (next major release):
   the kernel-update hook and the installer shortcut carry the HoltOS name.
   Updating removes the old homelab files once the renamed ones are in place,
   so the boot menu still refreshes exactly once per kernel update.
+- **Install alongside Windows (dual boot):** the installer accepts the EFI
+  partition Windows already made (usually 100 MB), a new "Notes" step before
+  Partitions explains what to do first (turn off Fast Startup, have the
+  BitLocker recovery key, make room, back up), and the boot menu lists
+  Windows. On a small EFI partition HoltOS keeps only as many snapshot
+  kernels as fit, and kernel updates make room first instead of failing;
+  snapshots without a kernel copy can still be restored from the desktop.
 - **The HoltOS package repository is called `[holtos]`** (was `[homelab]`).
   Updating renames the section in `pacman.conf`; the repository is published
   under both names for a while, so installs that have not updated yet keep
