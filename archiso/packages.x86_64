@@ -197,6 +197,10 @@ pyside6
 # depends; build-vendor-apps.sh fails the image build without them).
 python-cryptography
 python-zeroconf
+# The Den (M49 media playback): ffprobe and ffmpeg as subprocesses. Already
+# pulled in as a dependency; listed so build-vendor-apps.sh accepts The
+# Den's PKGBUILD once it depends on ffmpeg.
+ffmpeg
 qt6-wayland
 # cifs-utils + nfs-utils: mount.cifs / mount.nfs for the Network Shares
 # tool (holtos-shares GUI, holtos-share backend, systemd automount units).
