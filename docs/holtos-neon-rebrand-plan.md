@@ -43,15 +43,19 @@ what is done and what is left.
 | 7 | Hardware drivers for installer and updates (`usr/share/holtos/hardware-drivers.conf`, `holtos-hardware`, staged `holtos-drivers` repo on the ISO, `holtos-system-extras`), Hardware tab in HoltOS Updates | Done, tested with fake hardware in the VM |
 | 8 | Rename "homelab" to HoltOS: scripts, hook, installer shortcut, wording, `[holtos]` package repo with a migration | Done, migration VM-tested |
 | 9 | Install alongside Windows: 64 MiB EFI minimum, "Notes" installer step, snapshot kernels and kernel updates that fit a small ESP | Done, small-ESP logic VM-tested |
-| 10 | Rebuild the ISO and install it in the `holtos-rebrand` VM | ISO built 2026-09-14 21:11; install waits on the Users page for Liam |
+| 10 | Rebuild the ISO and test it in a VM | ISO built 2026-09-14 21:11 and boots: installer pages (Welcome, Notes, Partitions) checked. The install itself needs a user account, which Claude may not create, so it moves to bare metal. Tested instead through the upgrade path on `holtos-test` (see below) |
 | 11 | Bare-metal tests (LIVETEST.md "Neon rebrand" section) | Open |
 | 12 | Release: version number, merge to master, publish packages, tag | Open |
 
 ## Left to do
 
-1. **First boot on the `holtos-rebrand` VM** after Liam fills in the Users
-   page: boot splash, login screen, menu bar and dock, switching to HoltOS
-   Classic and back, the Hardware tab, `/var/lib/holtos/hardware.log`.
+1. **Install from the ISO on bare metal:** the installer run itself, first boot
+   (boot splash, login), and `/var/lib/holtos/hardware.log` from the
+   installer's driver step. Already tested through the upgrade path on
+   `holtos-test`: the account migration to the menu bar and dock, HoltOS
+   Classic and back, the login theme, the Hardware tab, old files removed.
+   The login screen shows no otter overlay on purpose: `theme.conf` leaves
+   `otter=` empty because the Otter Night wallpaper has its own otter.
 2. **Bare metal (Z13, 4090):**
    - dual boot next to Windows;
    - the installer's NVIDIA driver path on the 4090;

@@ -25,8 +25,12 @@ installs; the update renames the pacman.conf section and removes old files);
 install alongside Windows (64 MiB EFI minimum, a "Notes" installer step,
 snapshot kernels and kernel updates that fit a small ESP); a Hardware tab in
 HoltOS Updates. The ISO was rebuilt on 2026-09-14 at 21:11.
-**Paused here (Liam, 2026-09-14).** The `holtos-rebrand` VM waits on the
-installer's Users page for Liam. Open: first-boot checks on that VM, the live
+The rebrand was then tested through the upgrade path on `holtos-test`
+(Hyper-V checkpoint `before-neon-rebrand-20260914-2203`): components applied,
+old files removed, the first login migrated the account to the menu bar and
+dock, HoltOS Classic and back worked, the login theme and Hardware tab look
+right. The installer run needs a user account, which Claude may not create,
+so it is part of the bare-metal tests. Open: the live
 `pacman -Sy` against `holtos.db` once packages are published, dual boot with
 Windows, the NVIDIA install path and the parked glass installer on bare metal
 (LIVETEST.md's rebrand section), and Liam's pick of the version number.

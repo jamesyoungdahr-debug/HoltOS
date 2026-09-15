@@ -26,9 +26,16 @@ kernel copies and kernel updates that fit a small ESP).
 Also done: HoltOS Updates Hardware tab (holtos-hardware needed + installed
 status). ISO rebuilt 2026-09-14 21:11 (out/holtos-0.0.7d-alpha-x86_64.iso:
 opaque installer, 11 staged driver packages, renames, Notes page).
-PAUSED HERE (Liam, 2026-09-14). The holtos-rebrand VM is booted from that
-ISO and waits on the installer's Users page (Erase disk already chosen) for
-Liam to type the account. A Hyper-V VM holding the ISO locks it: turn the VM
+UPGRADE PATH TESTED on holtos-test (2026-09-14, Hyper-V checkpoint
+before-neon-rebrand-20260914-2203): the updater's 101 components from the
+branch applied, holtos-system-extras installed appmenu-gtk-module and
+noto-fonts-cjk and removed old logos and homelab files, the account's old
+panel was restored and the first login ran glass-user-update-5 and
+neon-layout-1 (menu bar and dock, holtos-glass), HoltOS Classic and back
+worked with the system themes, the SDDM theme and the Hardware tab look
+right. The VM's real pacman.conf keeps [homelab] until packages are
+published. The installer run needs a user account, which Claude may not
+create, so it is for bare metal; holtos-rebrand is off. A Hyper-V VM holding the ISO locks it: turn the VM
 off before build.sh. Still open: first boot checks on that VM (splash,
 login, menu bar and dock, Classic switching, Hardware tab, hardware.log);
 the live pacman -Sy against holtos.db once packages are published; dual
