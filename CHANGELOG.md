@@ -5,6 +5,13 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+- **System updates install only tested Arch packages:** Arch's packages now
+  come from the day HoltOS tested (a dated snapshot of the Arch Linux
+  Archive) instead of whatever Arch published that morning. HoltOS updates
+  move the date forward once a newer set has been tested. Packages installed
+  earlier from a newer day go back to the tested versions at the next
+  system update.
+
 ## [0.0.7j-alpha] - 2026-09-15
 
 - **KRunner can search your files again.** Its file-search runner is only

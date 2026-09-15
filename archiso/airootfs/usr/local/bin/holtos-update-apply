@@ -296,6 +296,7 @@ update_config() {
         etc/xdg/dolphinrc
         etc/os-release
         'etc/pacman.d/hooks/*homelab*.hook'
+        etc/pacman.d/holtos-mirrorlist
         etc/sddm.conf.d/holtos.conf
         etc/plymouth/plymouthd.conf
         etc/systemd/zram-generator.conf
@@ -353,6 +354,26 @@ update_config() {
     elif ! grep -q 'releases/download/packages' /etc/pacman.conf; then
         echo "==> Adding the HoltOS package repository server to pacman.conf..."
         sed -i '/^\[homelab\]/,/^\[/{s|^\(Server = .*\)$|\1\nServer = https://github.com/jamesyoungdahr-debug/holtos/releases/download/packages|}' /etc/pacman.conf
+    fi
+
+    # Arch's core, extra and multilib from HoltOS's tested snapshot date of the
+    # Arch Linux Archive (/etc/pacman.d/holtos-mirrorlist, synced above), not
+    # the live mirrors (Liam, 2026-09-15: system updates only install what
+    # HoltOS tested). Only the Include lines inside those three sections
+    # change; commented testing repos and other sections are left alone.
+    if [ -f /etc/pacman.d/holtos-mirrorlist ] && awk '
+            /^\[/ { arch_repo = ($0 ~ /^\[(core|extra|multilib)\]$/) }
+            arch_repo && $0 == "Include = /etc/pacman.d/mirrorlist" { found = 1 }
+            END { exit !found }
+        ' /etc/pacman.conf; then
+        echo "==> Pointing Arch's repositories at HoltOS's tested snapshot..."
+        awk '
+            /^\[/ { arch_repo = ($0 ~ /^\[(core|extra|multilib)\]$/) }
+            arch_repo && $0 == "Include = /etc/pacman.d/mirrorlist" { $0 = "Include = /etc/pacman.d/holtos-mirrorlist" }
+            { print }
+        ' /etc/pacman.conf > /etc/pacman.conf.holtos-new \
+            && install -m 644 /etc/pacman.conf.holtos-new /etc/pacman.conf
+        rm -f /etc/pacman.conf.holtos-new
     fi
 
     # Boot menu: theme, other operating systems, snapshot submenu — all
@@ -793,11 +814,24 @@ update_system() {
     # Download everything first, reporting a percentage as pacman's cache
     # grows towards the total download size, then install: the kernel,
     # firmware, drivers and every other package, exactly as pacman -Syu.
+    # -uu: Arch's repositories are pinned to HoltOS's tested snapshot date
+    # (/etc/pacman.d/holtos-mirrorlist, Liam 2026-09-15), so a package newer
+    # than that snapshot (installed from a live mirror before the pin) is
+    # brought back to the tested version instead of being kept.
     echo "==> Downloading system updates..."
-    total="$(pacman -Sup --print-format '%s' 2>/dev/null | awk '{s+=$1} END{print s+0}')"
+    total="$(pacman -Suup --print-format '%s' 2>/dev/null | awk '{s+=$1} END{print s+0}')"
+    # Refuse to start when / cannot hold the download plus room to unpack it:
+    # a disk that fills up halfway through pacman -Su leaves a broken system.
+    local free_kb need_kb
+    free_kb="$(df -Pk / | awk 'NR == 2 {print $4}')"
+    need_kb=$(( ${total:-0} * 2 / 1024 + 1048576 ))
+    if [ "${free_kb:-0}" -lt "$need_kb" ]; then
+        echo "==> Not enough free space for the system update: $(( ${free_kb:-0} / 1024 )) MB free, about $(( need_kb / 1024 )) MB needed. Free some space and try again." >&2
+        return 1
+    fi
     start="$(du -sb /var/cache/pacman/pkg 2>/dev/null | cut -f1)"
     dl_log="$(mktemp)"
-    pacman -Suw --noconfirm > "$dl_log" 2>&1 &
+    pacman -Suuw --noconfirm > "$dl_log" 2>&1 &
     pid=$!
     while kill -0 "$pid" 2>/dev/null; do
         now="$(du -sb /var/cache/pacman/pkg 2>/dev/null | cut -f1)"
@@ -819,9 +853,9 @@ update_system() {
     rm -f "$dl_log"
     progress system download 100
 
-    echo "==> Installing system updates (pacman -Su)..."
+    echo "==> Installing system updates (pacman -Suu)..."
     progress system install -1
-    pacman -Su --noconfirm || return 1
+    pacman -Suu --noconfirm || return 1
     log_history system pacman "$(date -u +%FT%TZ)"
 
     # Tell the user when a reboot is needed to finish the update (Liam,

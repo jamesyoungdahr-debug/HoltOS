@@ -1,0 +1,11 @@
+# HoltOS: the Arch Linux packages this HoltOS release updates from.
+#
+# core, extra and multilib in /etc/pacman.conf read this file instead of
+# /etc/pacman.d/mirrorlist, so a system update installs exactly the Arch
+# package set of one day in the Arch Linux Archive, the day HoltOS tested.
+# HoltOS releases move the date forward; the config update replaces this
+# file. Do not add live mirrors here: mixing a dated snapshot with an
+# up-to-date mirror installs packages from different days.
+#
+# Set with tools/set-arch-snapshot.sh in the HoltOS repository.
+Server = https://archive.archlinux.org/repos/2026/09/14/$repo/os/$arch
