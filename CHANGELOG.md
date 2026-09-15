@@ -5,6 +5,17 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.0.7l-alpha] - 2026-09-15
+
+- **Updates no longer move a system backwards.** The updater picked the
+  newest released version to install, but only checked whether that version
+  was the one already installed — so a system built from a commit ahead of
+  the newest release looked out of date against an older one and was quietly
+  downgraded to it. A fresh 0.1.0 installation pulled 0.0.7k-alpha's scripts
+  on its first boot. The updater now compares versions and refuses to install
+  anything older than what is already there, for HoltOS itself, The Den and
+  The Den Client. Rolling back to a named release still works.
+
 ## [0.0.7k-alpha] - 2026-09-15
 
 - **System updates install only tested Arch packages:** Arch's packages now

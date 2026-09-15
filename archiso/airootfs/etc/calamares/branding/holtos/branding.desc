@@ -10,10 +10,10 @@ welcomeExpandingLogo: true
 strings:
     productName:         HoltOS
     shortProductName:    HoltOS
-    version:              0.0.7k-alpha
-    shortVersion:         0.0.7k-alpha
-    versionedName:        HoltOS 0.0.7k-alpha
-    shortVersionedName:   HoltOS 0.0.7k-alpha
+    version:              0.0.7l-alpha
+    shortVersion:         0.0.7l-alpha
+    versionedName:        HoltOS 0.0.7l-alpha
+    shortVersionedName:   HoltOS 0.0.7l-alpha
     bootloaderEntryName:  HoltOS
     productUrl:           https://github.com/jamesyoungdahr-debug/HoltOS
     supportUrl:           https://github.com/jamesyoungdahr-debug/HoltOS/issues

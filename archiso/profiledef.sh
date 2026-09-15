@@ -5,7 +5,7 @@ iso_name="holtos"
 iso_label="HOLTOS_$(date --date="@${SOURCE_DATE_EPOCH:-$(date +%s)}" +%Y%m)"
 iso_publisher="HoltOS <https://github.com/jamesyoungdahr-debug/HoltOS>"
 iso_application="HoltOS Live/Install Medium"
-iso_version="0.0.7k-alpha"
+iso_version="0.0.7l-alpha"
 install_dir="arch"
 buildmodes=('iso')
 bootmodes=('bios.syslinux'
