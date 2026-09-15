@@ -744,16 +744,30 @@ install_the_den_client() {
     install -Dm755 "$src_dir/deploy/the-den-client" /usr/bin/the-den-client
     install -Dm644 "$src_dir/deploy/the-den-client.desktop" /usr/share/applications/the-den-client.desktop
 
-    # The logo moved into src/assets/ (v0.4.5+); older tags keep it at assets/.
-    for f in "$src_dir/src/assets/logo.svg" "$src_dir/assets/logo.svg"; do
-        [ -f "$f" ] && { logo="$f"; break; }
-    done
-    if [ -n "$logo" ]; then
-        for dest in /usr/share/icons/hicolor/scalable/apps/the-den-client.svg                     /usr/share/icons/hicolor/64x64/apps/the-den-client.svg                     /usr/share/pixmaps/the-den-client.svg; do
-            install -Dm644 "$logo" "$dest"
-        done
+    # The otter app icon (src/assets/the-den-client.png, the 2026-09-15
+    # rebrand) replaces the old ring logo.svg, as the client's PKGBUILD does.
+    # Plasma prefers a scalable icon over a PNG, so the old SVG copies are
+    # removed once a release ships the PNG; older tags keep the SVG path.
+    if [ -f "$src_dir/src/assets/the-den-client.png" ]; then
+        install -Dm644 "$src_dir/src/assets/the-den-client.png" /usr/share/icons/hicolor/256x256/apps/the-den-client.png
+        install -Dm644 "$src_dir/src/assets/the-den-client.png" /usr/share/pixmaps/the-den-client.png
+        rm -f /usr/share/icons/hicolor/scalable/apps/the-den-client.svg \
+              /usr/share/icons/hicolor/64x64/apps/the-den-client.svg \
+              /usr/share/pixmaps/the-den-client.svg
     else
-        echo "==> No logo.svg in this release; keeping the installed icon" >&2
+        # The logo moved into src/assets/ (v0.4.5+); older tags keep it at assets/.
+        for f in "$src_dir/src/assets/logo.svg" "$src_dir/assets/logo.svg"; do
+            [ -f "$f" ] && { logo="$f"; break; }
+        done
+        if [ -n "$logo" ]; then
+            for dest in /usr/share/icons/hicolor/scalable/apps/the-den-client.svg \
+                        /usr/share/icons/hicolor/64x64/apps/the-den-client.svg \
+                        /usr/share/pixmaps/the-den-client.svg; do
+                install -Dm644 "$logo" "$dest"
+            done
+        else
+            echo "==> No icon in this release; keeping the installed icon" >&2
+        fi
     fi
 
     command -v gtk-update-icon-cache >/dev/null && gtk-update-icon-cache -q -t -f /usr/share/icons/hicolor || true

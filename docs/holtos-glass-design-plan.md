@@ -179,7 +179,7 @@ Each one is a small unit, built and checked before the next.
 | G7 | qqc2-desktop-style fork: Kirigami alpha backgrounds, Qt Quick alpha buffer (with fork plan Milestone 4). **Built 2026-09-15 on `neon-rebrand`: three forks, `holtos-kirigami` 6.30.0 (transparent window, 60 % page), `holtos-qqc2-desktop-style` 6.30.0 (Page/Pane 60 %, Drawer 80 %) and `holtos-plasma-integration` 6.7.5 (alpha buffer for Qt Quick windows, KWin blur and contrast, fullscreen off, Plasma's own processes excluded, `HOLTOS_GLASS=0` off switch); see each fork's README-HOLTOS.md. All three packages build; not run yet. They reach installed systems through the [holtos] package repo (replaces= the stock packages), not the ISO** | compile, then Liamtab with System Settings and Discover |
 | G8 | Adaptive contrast, step 1: bind the smallest blur level, debug view of L | compile, then Liamtab |
 | G9 | Adaptive contrast, step 2: clamp and kcfg keys, blur_config.ui | Liamtab, window over a bright wallpaper, check 4.5:1 under text |
-| G10 | Text-shadow backstop for QtWidgets labels | Liamtab |
+| G10 | Text-shadow backstop for QtWidgets labels. **Done 2026-09-15 on `neon-rebrand`: Kvantum HoltOSGlass `[PanelButtonCommand]` text.shadow=1 (black, alpha 96, 1 px down), inherited by buttons, tabs, menus, check boxes and item views; group boxes, tab bars and tooltips keep 0. Kvantum draws no shadow for plain QLabel text, so labels rely on adaptive contrast (G8/G9). Not seen on a desktop yet** | Liamtab |
 | G11 | Calamares rgba QSS | VM |
 | G12 | Regression pass: fullscreen, Game Mode, excluded windows, iGPU frame time | Liamtab and VM |
 
