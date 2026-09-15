@@ -355,12 +355,21 @@ update_config() {
         echo "==> Renaming the HoltOS package repository in pacman.conf..."
         sed -i 's/^\[homelab\]$/[holtos]/' /etc/pacman.conf
     fi
+    # Only Server lines are matched (never comments), trailing spaces allowed.
+    local holtos_release='https://github\.com/jamesyoungdahr-debug/holtos/releases/download/'
     if ! grep -q '^\[holtos\]' /etc/pacman.conf; then
         echo "==> Adding the HoltOS package repository to pacman.conf..."
+        [ -z "$(tail -c 1 /etc/pacman.conf)" ] || echo >> /etc/pacman.conf
         cat /usr/share/holtos/pacman-holtos.conf >> /etc/pacman.conf
-    elif ! grep -q 'releases/download/packages' /etc/pacman.conf; then
+    elif grep -qE "^Server[[:space:]]*=[[:space:]]*${holtos_release}packages[[:space:]]*$" /etc/pacman.conf; then
+        # This branch's packages live in their own release, packages-dev, so
+        # they never reach stable machines (Liam, 2026-09-15). Switch back to
+        # "packages" when this branch is released.
+        echo "==> Pointing the HoltOS package repository at the dev packages..."
+        sed -i -E "s#^(Server[[:space:]]*=[[:space:]]*${holtos_release})packages[[:space:]]*\$#\\1packages-dev#" /etc/pacman.conf
+    elif ! grep -qE "^Server[[:space:]]*=[[:space:]]*${holtos_release}packages-dev[[:space:]]*$" /etc/pacman.conf; then
         echo "==> Adding the HoltOS package repository server to pacman.conf..."
-        sed -i '/^\[holtos\]/,/^\[/{s|^\(Server = .*\)$|\1\nServer = https://github.com/jamesyoungdahr-debug/holtos/releases/download/packages|}' /etc/pacman.conf
+        sed -i '/^\[holtos\]/,/^\[/{s|^\(Server = .*\)$|\1\nServer = https://github.com/jamesyoungdahr-debug/holtos/releases/download/packages-dev|}' /etc/pacman.conf
     fi
 
     # Boot menu: theme, other operating systems, snapshot submenu — all

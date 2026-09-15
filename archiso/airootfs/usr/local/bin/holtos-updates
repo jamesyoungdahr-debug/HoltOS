@@ -769,7 +769,7 @@ class SettingsTab(QWidget):
         self.channel_note = QLabel(
             "The dev channel installs unfinished work from the HoltOS repository as soon as it is pushed. "
             "It can break things; a snapshot is still taken before every update. "
-            "Switching back to Stable offers the latest release."
+            "To go back to Stable, restore the snapshot from before you switched (Snapshots tab)."
         )
         self.channel_note.setWordWrap(True)
         form.addRow("", self.channel_note)
