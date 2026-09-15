@@ -805,6 +805,13 @@ class HardwareCheck(QThread):
             result["acp7"] = f" {ACP7_PCI_ID}" in lspci
         except (OSError, subprocess.SubprocessError):
             pass
+        if result["acp7"]:
+            # The ROG Flow Z13 has a HoltOS fix (holtos-acp-mic-dkms).
+            try:
+                fix = subprocess.run(["pacman", "-Q", "holtos-acp-mic-dkms"], capture_output=True, text=True, timeout=5)
+                result["acp7_fix"] = fix.returncode == 0
+            except (OSError, subprocess.SubprocessError):
+                pass
         return result
 
 
@@ -877,7 +884,7 @@ class HardwareTab(QWidget):
                 table.setItem(row, column, item)
         table.resizeRowsToContents()
 
-    def show_sound(self, speakers, microphones, acp7, checking=False):
+    def show_sound(self, speakers, microphones, acp7, checking=False, acp7_fix=False):
         lines = []
         for label, names in (("Speakers and headphones", speakers), ("Microphones", microphones)):
             if checking:
@@ -891,7 +898,12 @@ class HardwareTab(QWidget):
             else:
                 text = "None found"
             lines.append(f"{label}: {text}")
-        if acp7 and not checking:
+        if acp7 and not checking and acp7_fix:
+            lines.append(
+                "Built-in microphone: HoltOS's fix for this computer (holtos-acp-mic-dkms) is "
+                "installed. If no built-in microphone is listed above, restart the computer."
+            )
+        elif acp7 and not checking:
             lines.append(
                 "Built-in microphone: not supported on Linux yet. This computer's digital "
                 "microphones sit on AMD's audio coprocessor 7, which Linux does not drive yet, "
@@ -924,7 +936,8 @@ class HardwareTab(QWidget):
             else:
                 summary = f"{missing} of {total} drivers not installed yet; the next update adds them"
             self.status.setText(f"Checked at {now}: {summary}.")
-        self.show_sound(result["speakers"], result["microphones"], result["acp7"])
+        self.show_sound(result["speakers"], result["microphones"], result["acp7"],
+                        acp7_fix=result.get("acp7_fix", False))
 
 
 class SettingsTab(QWidget):
