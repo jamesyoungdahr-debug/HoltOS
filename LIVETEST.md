@@ -40,8 +40,9 @@ Do section 1 first; most of the rest depends on it.
 
 - [ ] Update to `v0.0.7d-alpha` (it may install on its own), then restart.
   `grep VERSION_ID /etc/os-release` shows `0.0.7d-alpha`.
-- [ ] Start Game Mode fresh (after the restart), then Power > **Switch to
+- [x] Start Game Mode fresh (after the restart), then Power > **Switch to
   Desktop**: Plasma comes back within a few seconds, still logged in.
+  (Z13, 2026-09-14: fixed.)
 - [ ] If it does not, send Claude `cat ~/.local/state/holtos/steamos-manager.log`,
   `cat ~/.local/state/holtos/session-select.log` and
   `journalctl -b -t holtos-steamos-manager -t holtos-session-select --no-pager`.
