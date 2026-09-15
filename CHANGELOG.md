@@ -5,6 +5,13 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+- **Withdrawn: the ASUS ROG Flow Z13 (2025) microphone fix.** The fixes in
+  0.0.7f and 0.0.7g made the built-in microphone appear, but it still records
+  nothing: the Z13's microphones send no sound to Linux, and HoltOS cannot
+  change that yet. HoltOS no longer installs `holtos-acp-mic-dkms`. If you
+  have it, remove it with `sudo pacman -R holtos-acp-mic-dkms` and restart.
+  A USB, Bluetooth or headset microphone works.
+
 ## [0.0.7h-alpha] - 2026-09-15
 
 - **Fixed: a kernel update could leave HoltOS unable to start.** HoltOS keeps
