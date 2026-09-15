@@ -1,19 +1,19 @@
 #!/bin/bash
 # Tray entry "Update Proton GE": runs holtos-proton-ge as the user with the
-# usual yad progress/result pattern.
+# usual holtos-dialog progress/result pattern.
 ICON=/usr/share/icons/hicolor/256x256/apps/holtos-logo.png
 logfile="$(mktemp)"
 /usr/local/bin/holtos-proton-ge 2>&1 | tee "$logfile" \
     | stdbuf -oL sed -u 's/^==> /#/' \
-    | yad --progress --pulsate --auto-close --auto-kill \
+    | holtos-dialog --progress --pulsate --auto-close --auto-kill \
         --title="HoltOS" --image="$ICON" --window-icon="$ICON" \
         --text="Checking Proton GE..." --width=420 --center --no-buttons
 status=${PIPESTATUS[0]}
 if [ "$status" -ne 0 ]; then
-    yad --image=dialog-error --title="HoltOS" --window-icon="$ICON" --width=520 --wrap \
+    holtos-dialog --image=dialog-error --title="HoltOS" --window-icon="$ICON" --width=520 --wrap \
         --text="Proton GE update failed (exit $status):\n\n$(tail -8 "$logfile")" --button="Close:0"
 else
-    yad --image="$ICON" --title="HoltOS" --window-icon="$ICON" --width=480 --wrap \
+    holtos-dialog --image="$ICON" --title="HoltOS" --window-icon="$ICON" --width=480 --wrap \
         --text="$(tail -1 "$logfile")" --button="Close:0"
 fi
 rm -f "$logfile"

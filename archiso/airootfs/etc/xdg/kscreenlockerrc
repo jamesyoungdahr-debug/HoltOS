@@ -1,0 +1,9 @@
+# The lock screen shows the HoltOS wallpaper, blurred, behind the clock and the
+# password field. Without WallpaperPlugin the lock screen ignored the image and
+# fell back to a plain dark background (glass audit, 2026-09-15). Accounts can
+# still pick their own image in System Settings > Screen Locking.
+[Greeter]
+WallpaperPlugin=org.kde.image
+
+[Greeter][Wallpaper][org.kde.image][General]
+Image=file:///usr/share/wallpapers/HoltOS-Neon-OtterNight/contents/images/1920x1080.jpg

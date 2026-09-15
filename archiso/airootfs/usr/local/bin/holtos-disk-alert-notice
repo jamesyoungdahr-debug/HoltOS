@@ -19,7 +19,7 @@ stamp="$(stat -c %Y "$ALERT" 2>/dev/null)" || exit 0
 [ "$(cat "$SEEN" 2>/dev/null)" = "$stamp" ] && exit 0
 
 body="$(tail -n 8 "$ALERT" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')"
-yad --title="HoltOS" --image=dialog-warning --window-icon="$ICON" --width=560 --wrap \
+holtos-dialog --title="HoltOS" --image=dialog-warning --window-icon="$ICON" --width=560 --wrap \
     --text="<b>A disk needs attention.</b>\n\n${body}\n\nBack up anything important on it now. Details: System Settings &gt; Disks &amp; Devices, or /var/lib/holtos/scrub.log." \
     --button="Open Disk Health:2" --button="Remind me next login:1" --button="Dismiss:0"
 case $? in

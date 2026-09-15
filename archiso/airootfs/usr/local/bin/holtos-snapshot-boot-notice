@@ -12,7 +12,7 @@ case "$src" in
 esac
 name="${src#*[/@snapshots/}"; name="${name%]}"
 
-yad --title="HoltOS" --image="$ICON" --window-icon="$ICON" --width=520 --wrap \
+holtos-dialog --title="HoltOS" --image="$ICON" --window-icon="$ICON" --width=520 --wrap \
     --text="<b>You are running from snapshot ${name}.</b>\n\nThis is a read-only rescue copy of the system. You can look around, or restore it as the system so the next normal boot runs this state (files in /home are kept)." \
     --button="Restore this snapshot:0" --button="Just look around:1"
 [ $? -eq 0 ] || exit 0
@@ -20,17 +20,17 @@ yad --title="HoltOS" --image="$ICON" --window-icon="$ICON" --width=520 --wrap \
 logfile="$(mktemp)"
 pkexec /usr/local/bin/holtos-btrfs-restore --current 2>&1 | tee "$logfile" \
     | stdbuf -oL sed -u 's/^==> /#/' \
-    | yad --progress --pulsate --auto-close --auto-kill \
+    | holtos-dialog --progress --pulsate --auto-close --auto-kill \
         --title="HoltOS" --image="$ICON" --window-icon="$ICON" \
         --text="Restoring snapshot..." --width=420 --center --no-buttons
 status=${PIPESTATUS[0]}
 if [ "$status" -ne 0 ]; then
-    yad --image=dialog-error --title="HoltOS" --window-icon="$ICON" --width=520 --wrap \
+    holtos-dialog --image=dialog-error --title="HoltOS" --window-icon="$ICON" --width=520 --wrap \
         --text="Restore failed (exit $status):\n\n$(tail -8 "$logfile")" --button="Close:0"
     rm -f "$logfile"; exit "$status"
 fi
 rm -f "$logfile"
-yad --title="HoltOS" --image="$ICON" --window-icon="$ICON" \
+holtos-dialog --title="HoltOS" --image="$ICON" --window-icon="$ICON" \
     --text="Snapshot restored. Reboot now into it?" --button="Reboot:0" --button="Later:1"
 [ $? -eq 0 ] && systemctl reboot
 exit 0

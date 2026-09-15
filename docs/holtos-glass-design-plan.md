@@ -185,6 +185,23 @@ Each one is a small unit, built and checked before the next.
 
 ## Decisions and findings
 
+- **2026-09-15, glass audit (Liam: "make sure every part of our UI is HoltOS
+  glass")**, screenshots of every surface in the VM:
+  - Glass already: windows and title bars (Kvantum + org.holtos.glass), menu
+    bar and dock, KRunner, notifications, volume OSD, tray popups, tooltips,
+    Qt/KDE file dialogs, HoltOS Apps, Updates, Network Shares, Gaming.
+  - Fixed: menus (the Kvantum SVG had no `menu-*` elements, so `[Menu]` drew
+    the opaque button element; `tools/glass/kvantum_glass.py` now adds a glass
+    menu at 45 %); the lock screen (accounts from older images still showed
+    the pre-neon dark HoltOS wallpaper: `etc/xdg/kscreenlockerrc`, skel, and
+    step 6 of `holtos-glass-user-update` moves that old default to Neon Otter
+    Night and keeps a chosen image); HoltOS's GTK `yad` dialogs (replaced by the
+    Qt `holtos-dialog`, a drop-in for the options HoltOS used).
+  - Not judged in the VM: the logout screen (its greeter starts but draws
+    nothing on llvmpipe): bare metal.
+  - Still opaque: System Settings and other Kirigami/Qt Quick apps (G7, the
+    qqc2-desktop-style fork); Chromium/Electron by decision.
+
 - **2026-09-15**: Kvantum leaves a `QMainWindow` opaque when its central
   widget is a plain `QWidget` (tested in the VM with four windows: a plain
   top-level `QWidget` and a `QMainWindow` holding a `QScrollArea` were glass;

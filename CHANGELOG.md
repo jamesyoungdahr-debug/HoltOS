@@ -22,6 +22,21 @@ Neon rebrand (next major release):
   the kernel-update hook and the installer shortcut carry the HoltOS name.
   Updating removes the old homelab files once the renamed ones are in place,
   so the boot menu still refreshes exactly once per kernel update.
+- **Glass everywhere, audited:** every desktop surface was checked on screen.
+  - Menus (the desktop's right-click menu and every app menu) are glass;
+    they were drawn as flat grey buttons.
+  - The lock screen shows the Neon Otter Night wallpaper, blurred; accounts
+    from older images still had the pre-neon dark wallpaper there and move to
+    the new one at their next login (an image you picked yourself is kept).
+  - HoltOS's own notices and progress windows (disk alerts, rollback and
+    snapshot notices, boot menu rescan, Proton GE updates) are glass Qt
+    dialogs instead of GTK windows (`holtos-dialog`).
+  - The tray's Restore Snapshot opens the Snapshots tab of HoltOS Updates.
+  - Already glass: title bars and windows, the menu bar and dock, KRunner,
+    notifications, on-screen volume and brightness, tray popups, tooltips,
+    file dialogs and every HoltOS app. Still opaque: System Settings and
+    other Kirigami apps (they need a restyled Qt Quick style), and browsers
+    by choice.
 - **HoltOS Updates, more complete:**
   - Tick which updates to install; "Skip this version" leaves a HoltOS
     release out (newer ones are still offered).

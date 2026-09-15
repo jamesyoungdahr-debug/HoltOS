@@ -111,6 +111,9 @@ def main():
     parser.add_argument("--pressed-alpha", type=float, default=0.30)
     parser.add_argument("--hover-alpha", type=float, default=0.10)
     parser.add_argument("--accent", default="#b14dff")
+    # Menus: holt-surface at the Plasma popups' glass depth.
+    parser.add_argument("--menu-alpha", type=float, default=0.45)
+    parser.add_argument("--surface", default="#171423")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
@@ -152,6 +155,27 @@ def main():
         else:
             edits += [(f"{prefix}-{state}", {"fill": args.accent, "opacity": fmt(alpha)}, None)
                       for state, _, alpha in states]
+
+    # Menus (Qt menus and Plasma's context menus) had no menu-* elements, so
+    # Kvantum drew them with the opaque button element they inherit from
+    # PanelButtonCommand (glass audit, 2026-09-15). They get one glass pane in
+    # holt-surface at the depth of the Plasma popups; the frame matches [Menu]'s
+    # 3 px frame.
+    menu_parts = [("-topleft", 0, 0, 3, 3), ("-top", 3, 0, 20, 3), ("-topright", 23, 0, 3, 3),
+                  ("-left", 0, 3, 3, 20), ("", 3, 3, 20, 20), ("-right", 23, 3, 3, 20),
+                  ("-bottomleft", 0, 23, 3, 3), ("-bottom", 3, 23, 20, 3), ("-bottomright", 23, 23, 3, 3)]
+    if find_tag(text, "menu-normal") is None:
+        block = '<g id="holtos-glass-menu">\n' + "".join(
+            f'<rect id="menu-normal{suffix}" x="{2200 + x}" y="{2000 + y}" width="{w}" height="{h}" '
+            f'style="fill:{args.surface};opacity:{fmt(args.menu_alpha)}"/>\n'
+            for suffix, x, y, w, h in menu_parts) + "</g>\n"
+        at = text.rfind("</svg>")
+        text = text[:at] + block + text[at:]
+        print("menu-normal and its frame: added")
+        changed += len(menu_parts)
+    else:
+        edits += [(f"menu-normal{suffix}", {"fill": args.surface, "opacity": fmt(args.menu_alpha)}, None)
+                  for suffix, *_ in menu_parts]
 
     for eid, props, accent in edits:
         text, did = apply(text, eid, props, accent)

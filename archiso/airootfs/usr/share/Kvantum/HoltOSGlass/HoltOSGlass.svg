@@ -937,4 +937,15 @@
 <rect id="tbutton-pressed" x="2060" y="2030" width="20" height="20" rx="4" style="fill:#b14dff;opacity:0.3"/>
 <rect id="tbutton-toggled" x="2090" y="2030" width="20" height="20" rx="4" style="fill:#b14dff;opacity:0.22"/>
 </g>
+<g id="holtos-glass-menu">
+<rect id="menu-normal-topleft" x="2200" y="2000" width="3" height="3" style="fill:#171423;opacity:0.45"/>
+<rect id="menu-normal-top" x="2203" y="2000" width="20" height="3" style="fill:#171423;opacity:0.45"/>
+<rect id="menu-normal-topright" x="2223" y="2000" width="3" height="3" style="fill:#171423;opacity:0.45"/>
+<rect id="menu-normal-left" x="2200" y="2003" width="3" height="20" style="fill:#171423;opacity:0.45"/>
+<rect id="menu-normal" x="2203" y="2003" width="20" height="20" style="fill:#171423;opacity:0.45"/>
+<rect id="menu-normal-right" x="2223" y="2003" width="3" height="20" style="fill:#171423;opacity:0.45"/>
+<rect id="menu-normal-bottomleft" x="2200" y="2023" width="3" height="3" style="fill:#171423;opacity:0.45"/>
+<rect id="menu-normal-bottom" x="2203" y="2023" width="20" height="3" style="fill:#171423;opacity:0.45"/>
+<rect id="menu-normal-bottomright" x="2223" y="2023" width="3" height="3" style="fill:#171423;opacity:0.45"/>
+</g>
 </svg>

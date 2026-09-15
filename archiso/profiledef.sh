@@ -61,6 +61,7 @@ file_permissions=(
   ["/usr/local/bin/holtos-share"]="0:0:755"
   ["/usr/local/bin/holtos-samba"]="0:0:755"
   ["/usr/local/bin/holtos-update-repair"]="0:0:755"
+  ["/usr/local/bin/holtos-dialog"]="0:0:755"
   ["/usr/local/bin/holtos-proton-ge"]="0:0:755"
   ["/usr/local/bin/holtos-proton-ge-firstrun"]="0:0:755"
   ["/usr/local/bin/holtos-update-proton-ge"]="0:0:755"

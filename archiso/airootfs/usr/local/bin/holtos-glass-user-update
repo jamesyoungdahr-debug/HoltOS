@@ -20,8 +20,9 @@ set -u
 # Bump the number when a release adds a step, so accounts that already ran an
 # older version run again (2: glyph-free buttons; 3: clearer glass, title bar
 # opacity 12 to match the 15 % window tint; 4: neon rebrand menu bar and dock;
-# 5: holtos-glass Plasma style, off removed stock themes).
-STAMP="${XDG_STATE_HOME:-$HOME/.local/state}/holtos/glass-user-update-5"
+# 5: holtos-glass Plasma style, off removed stock themes; 6: the lock screen
+# shows its wallpaper).
+STAMP="${XDG_STATE_HOME:-$HOME/.local/state}/holtos/glass-user-update-6"
 [ -e "$STAMP" ] && exit 0
 [ -e /run/archiso ] && exit 0
 
@@ -137,6 +138,33 @@ if [ ! -e "$LAYOUT_STAMP" ] && [ -f "$LAYOUT_JS" ]; then
         fi
     fi
 fi
+
+# Older images gave every account the pre-neon HoltOS wallpaper (dark, with
+# rings) on the lock screen, and the neon rebrand never replaced it (glass
+# audit, 2026-09-15). Move an account still on that old default to Neon Otter
+# Night, and keep an image the account chose itself (with a file:// prefix);
+# a missing file is dropped so /etc/xdg/kscreenlockerrc's image applies.
+LOCKRC="$CFG/kscreenlockerrc"
+LOCK_DEFAULT="file:///usr/share/wallpapers/HoltOS-Neon-OtterNight/contents/images/1920x1080.jpg"
+if [ -z "$(kreadconfig6 --file "$LOCKRC" --group Greeter --key WallpaperPlugin)" ]; then
+    kwriteconfig6 --file "$LOCKRC" --group Greeter --key WallpaperPlugin org.kde.image
+fi
+lock_image="$(kreadconfig6 --file "$LOCKRC" --group Greeter --group Wallpaper --group org.kde.image --group General --key Image)"
+case "$lock_image" in
+    /usr/share/wallpapers/HoltOS/*|file:///usr/share/wallpapers/HoltOS/*)
+        kwriteconfig6 --file "$LOCKRC" --group Greeter --group Wallpaper --group org.kde.image \
+            --group General --key Image "$LOCK_DEFAULT"
+        ;;
+    /*)
+        if [ -f "$lock_image" ]; then
+            kwriteconfig6 --file "$LOCKRC" --group Greeter --group Wallpaper --group org.kde.image \
+                --group General --key Image "file://$lock_image"
+        else
+            kwriteconfig6 --file "$LOCKRC" --group Greeter --group Wallpaper --group org.kde.image \
+                --group General --key Image --delete
+        fi
+        ;;
+esac
 
 qdbus6 org.kde.KWin /KWin reconfigure >/dev/null 2>&1 || true
 

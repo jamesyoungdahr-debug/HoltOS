@@ -1,0 +1,187 @@
+#!/usr/bin/env python3
+"""holtos-dialog: HoltOS's glass dialogs for shell scripts.
+
+A drop-in for the yad options HoltOS scripts use, drawn with Qt so they wear
+HoltOS glass like every other HoltOS window (yad's GTK windows cannot).
+
+  holtos-dialog --title=T --image=ICON --text=TEXT [--button=Label:code ...] [--width=N] [--wrap] [--center] [--window-icon=ICON]
+      A message. Exits with the code of the button pressed (default button "OK:0");
+      closing the window exits 252, like yad.
+  ... | holtos-dialog --progress --pulsate --text=TEXT [--auto-close] [--auto-kill] [--no-buttons]
+      A busy dialog. Each input line starting with "#" replaces the text; the
+      dialog closes when the input ends and exits 0.
+
+TEXT may use yad's markup: <b>, <i>, &amp; &gt; &lt; entities, and "\n" for a
+line break. ICON is a theme icon name (dialog-warning, holtos-logo) or a file path.
+Unknown yad options are ignored.
+"""
+
+import os
+import sys
+
+from PySide6.QtCore import QSocketNotifier, Qt
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import (
+    QApplication,
+    QDialog,
+    QHBoxLayout,
+    QLabel,
+    QProgressBar,
+    QPushButton,
+    QVBoxLayout,
+)
+
+
+def parse(argv):
+    """yad-style options: --name=value, bare --flag, and --name value for the options that take a value."""
+    VALUE_OPTS = {"title", "image", "text", "button", "width", "height", "window-icon"}
+    opts = {"buttons": []}
+    flags = set()
+    i = 0
+    while i < len(argv):
+        arg = argv[i]
+        if not arg.startswith("--"):
+            i += 1
+            continue
+        name, sep, value = arg[2:].partition("=")
+        if not sep and name in VALUE_OPTS and i + 1 < len(argv):
+            value = argv[i + 1]
+            i += 1
+            sep = "="
+        if name == "button" and sep:
+            opts["buttons"].append(value)
+        elif sep:
+            opts[name] = value
+        else:
+            flags.add(name)
+        i += 1
+    return opts, flags
+
+
+def markup(text):
+    """yad text to Qt rich text: "\\n" escapes and real newlines become <br>; <b>/<i> and entities pass through."""
+    text = text.replace("\\n", "\n")
+    return text.replace("\n", "<br>")
+
+
+def icon(name):
+    if not name:
+        return QIcon()
+    if os.path.isfile(name):
+        return QIcon(name)
+    return QIcon.fromTheme(name)
+
+
+class Message(QDialog):
+    def __init__(self, opts, flags):
+        super().__init__()
+        self.code = 252
+        self.setWindowTitle(opts.get("title", "HoltOS"))
+        win_icon = icon(opts.get("window-icon") or "holtos-logo")
+        if not win_icon.isNull():
+            self.setWindowIcon(win_icon)
+        if opts.get("width", "").isdigit():
+            self.setMinimumWidth(int(opts["width"]))
+        layout = QVBoxLayout(self)
+        row = QHBoxLayout()
+        pic = icon(opts.get("image", ""))
+        if not pic.isNull():
+            label = QLabel()
+            label.setPixmap(pic.pixmap(64, 64))
+            label.setAlignment(Qt.AlignTop)
+            row.addWidget(label)
+        self.text = QLabel(markup(opts.get("text", "")))
+        self.text.setTextFormat(Qt.RichText)
+        self.text.setWordWrap(True)
+        self.text.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        row.addWidget(self.text, 1)
+        layout.addLayout(row)
+        buttons = QHBoxLayout()
+        buttons.addStretch()
+        specs = opts["buttons"] or ["OK:0"]
+        for spec in specs:
+            label, _, code = spec.rpartition(":")
+            if not label:
+                label, code = spec, "0"
+            try:
+                code = int(code)
+            except ValueError:
+                code = 0
+            button = QPushButton(label.replace("&", "&&"))
+            button.clicked.connect(lambda _checked=False, c=code: self.finish(c))
+            buttons.addWidget(button)
+        # The last button is the default, like yad's rightmost button: only it
+        # answers Enter (Qt otherwise gives Enter to whichever button has focus).
+        for other in self.findChildren(QPushButton):
+            other.setAutoDefault(False)
+        button.setDefault(True)
+        button.setFocus()
+        layout.addLayout(buttons)
+
+    def finish(self, code):
+        self.code = code
+        self.accept()
+
+
+class Progress(QDialog):
+    def __init__(self, opts, flags):
+        super().__init__()
+        self.setWindowTitle(opts.get("title", "HoltOS"))
+        win_icon = icon(opts.get("window-icon") or "holtos-logo")
+        if not win_icon.isNull():
+            self.setWindowIcon(win_icon)
+        self.setMinimumWidth(int(opts["width"]) if opts.get("width", "").isdigit() else 420)
+        layout = QVBoxLayout(self)
+        row = QHBoxLayout()
+        pic = icon(opts.get("image", ""))
+        if not pic.isNull():
+            label = QLabel()
+            label.setPixmap(pic.pixmap(48, 48))
+            row.addWidget(label)
+        self.text = QLabel(markup(opts.get("text", "")))
+        self.text.setWordWrap(True)
+        self.text.setTextFormat(Qt.RichText)
+        row.addWidget(self.text, 1)
+        layout.addLayout(row)
+        bar = QProgressBar()
+        bar.setRange(0, 0)
+        bar.setTextVisible(False)
+        layout.addWidget(bar)
+        self.buffer = b""
+        self.notifier = QSocketNotifier(sys.stdin.fileno(), QSocketNotifier.Read, self)
+        self.notifier.activated.connect(self.read_input)
+
+    def read_input(self):
+        chunk = os.read(sys.stdin.fileno(), 4096)
+        if not chunk:
+            self.notifier.setEnabled(False)
+            self.accept()
+            return
+        self.buffer += chunk
+        while b"\n" in self.buffer:
+            line, self.buffer = self.buffer.split(b"\n", 1)
+            text = line.decode(errors="replace")
+            if text.startswith("#"):
+                self.text.setText(markup(text[1:].strip()))
+
+    def reject(self):
+        # No cancelling a running job from the busy dialog (yad's --no-buttons).
+        pass
+
+
+def main():
+    opts, flags = parse(sys.argv[1:])
+    app = QApplication(sys.argv[:1])
+    app.setApplicationName("holtos-dialog")
+    app.setDesktopFileName("holtos-dialog")
+    if "progress" in flags:
+        dialog = Progress(opts, flags)
+        dialog.exec()
+        sys.exit(0)
+    dialog = Message(opts, flags)
+    dialog.exec()
+    sys.exit(dialog.code)
+
+
+if __name__ == "__main__":
+    main()

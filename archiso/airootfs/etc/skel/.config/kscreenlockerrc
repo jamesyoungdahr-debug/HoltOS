@@ -1,2 +1,5 @@
+[Greeter]
+WallpaperPlugin=org.kde.image
+
 [Greeter][Wallpaper][org.kde.image][General]
-Image=/usr/share/wallpapers/HoltOS-Neon-OtterNight/contents/images/1920x1080.jpg
+Image=file:///usr/share/wallpapers/HoltOS-Neon-OtterNight/contents/images/1920x1080.jpg

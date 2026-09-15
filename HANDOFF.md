@@ -790,6 +790,35 @@ Backend commit 5d01342; window work committed after this section was written.
   active session), Retry after a real failure, the restart countdown, a
   metered connection, bare metal.
 
+## Glass-everywhere audit (2026-09-15, branch `neon-rebrand`)
+
+Liam: "make sure every part of our UI is HoltOS glass", then "Do the audit".
+Every surface screenshotted on `holtos-test` (screens in the session
+scratchpad, `audit/`).
+
+- **Glass already:** windows and title bars, menu bar and dock, KRunner,
+  notifications, volume OSD, tray popups, tooltips, Qt/KDE file dialogs,
+  HoltOS Apps, Updates, Network Shares, Gaming.
+- **Fixed:**
+  - Menus: the Kvantum SVG had no `menu-*` elements, so every menu drew the
+    opaque button element. `tools/glass/kvantum_glass.py` adds a 45 %
+    holt-surface menu; checked on the desktop menu and Dolphin's menu.
+  - Lock screen: accounts from older images still used the pre-neon dark
+    rings wallpaper. `etc/xdg/kscreenlockerrc`, skel and step 6 of
+    `holtos-glass-user-update` move that old default to Neon Otter Night and
+    keep a chosen image. Checked by locking the VM.
+  - GTK `yad` dialogs in eight HoltOS scripts: replaced by `holtos-dialog`
+    (PySide6 drop-in for the message and busy-progress options HoltOS used;
+    button exit codes and `#text` progress lines verified). The tray's
+    Restore Snapshot opens `holtos-updates --snapshots`.
+- **Not judged in the VM:** the logout screen (its greeter starts but draws
+  nothing on llvmpipe).
+- **Still opaque:** System Settings and other Kirigami apps (G7, the
+  qqc2-desktop-style fork, a real build); Chromium/Electron by decision.
+- **Handoffs:** fast-edit wrote `holtos-dialog`; Claude wrote the menu
+  generator change, the lock-screen migration and the mechanical yad
+  replacements (search-and-replace scripts, reviewed with `bash -n`).
+
 ## Still open
 
 - **Milestone 2 crash: root-caused, fixed and verified on a fresh ISO (build 23).**

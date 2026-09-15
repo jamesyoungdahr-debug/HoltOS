@@ -17,7 +17,7 @@ snapshot="$(sed -n 's/^SNAPSHOT=//p' "$NOTE")"
 mkdir -p "$(dirname "$SEEN")"
 printf '%s\n' "$when" > "$SEEN"
 
-yad --title="HoltOS" --image="$ICON" --window-icon="$ICON" --width=540 --wrap \
+holtos-dialog --title="HoltOS" --image="$ICON" --window-icon="$ICON" --width=540 --wrap \
     --text="<b>HoltOS undid the last update.</b>\n\nThe desktop did not start twice in a row after an update, so HoltOS went back to the snapshot taken just before it (${snapshot}). Your files in /home were not touched.\n\nThe system as it was before the rollback is kept as a snapshot too, so this can be undone from the tray (Restore Snapshot). HoltOS Updates will offer the update again; you can wait for a fixed one." \
     --button="OK:0"
 exit 0

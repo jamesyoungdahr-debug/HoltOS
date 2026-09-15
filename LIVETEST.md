@@ -102,6 +102,13 @@ Do section 1 first; most of the rest depends on it.
 - [ ] Settings > Fix updates...: the steps run and end with "Done".
 - [ ] While updates install, the HoltOS tray tooltip shows what is
   installing and the percentage.
+- [ ] **Glass audit:** right-click the desktop and open any app menu: the
+  menus are glass, not grey. Lock the screen (Meta+L): Neon Otter Night,
+  blurred. Log out or restart from the app launcher: judge the logout screen
+  (it draws nothing in the VM).
+- [ ] Tray > Restore Snapshot... opens HoltOS Updates on the Snapshots tab.
+- [ ] Tray > Update Proton GE and Rescan Boot Menu show glass dialogs, not
+  plain grey GTK windows.
 
 ## 0.0.7d-alpha: Switch to Desktop through SteamOS Manager (Z13 first, then 4090)
 

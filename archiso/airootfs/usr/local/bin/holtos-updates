@@ -874,6 +874,8 @@ def main():
     window = UpdatesWindow()
     if "--settings" in sys.argv:
         window.setCurrentIndex(4)
+    elif "--snapshots" in sys.argv:
+        window.setCurrentIndex(2)
     window.show()
     sys.exit(app.exec())
 
