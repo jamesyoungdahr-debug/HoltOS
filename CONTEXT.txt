@@ -1,6 +1,6 @@
 HoltOS — running context file (plain text, kept current by the agent)
 =====================================================================
-Last updated: 2026-09-15 (v0.0.7j-alpha, the current stable release; the neon rebrand is on branch neon-rebrand as 0.1.0)
+Last updated: 2026-09-15 (v0.0.7k-alpha, the current stable release; the neon rebrand is on branch neon-rebrand as 0.1.0)
 Read this first when resuming. Newest state at the top of each section.
 
 LATEST (2026-09-15) — read this before the dated sections below, which are history
@@ -13,7 +13,7 @@ LATEST (2026-09-15) — read this before the dated sections below, which are his
   to Linux; remove holtos-acp-mic-dkms if installed), v0.0.7h fixed a kernel
   update that left the boot copy on the EFI partition stale, so the next start
   went to emergency mode, and v0.0.7f/0.0.7g were the two microphone attempts.
-- NEW on stable, unreleased on master: Arch's core, extra and multilib now read
+- RELEASED on stable as v0.0.7k-alpha: Arch's core, extra and multilib read
   /etc/pacman.d/holtos-mirrorlist, pinned to 2026/09/14, so a system update
   installs only the Arch package set HoltOS tested instead of whatever Arch
   published that morning. tools/set-arch-snapshot.sh moves the date; the config
