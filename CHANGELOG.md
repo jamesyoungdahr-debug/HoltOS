@@ -5,6 +5,8 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.0.7i-alpha] - 2026-09-15
+
 - **Withdrawn: the ASUS ROG Flow Z13 (2025) microphone fix.** The fixes in
   0.0.7f and 0.0.7g made the built-in microphone appear, but it still records
   nothing: the Z13's microphones send no sound to Linux, and HoltOS cannot
