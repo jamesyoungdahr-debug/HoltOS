@@ -313,8 +313,11 @@ clamp so white text keeps 4.5:1 (milestones G8 and G9 in
   `#5FF0DC`, inactive header text `180,180,180`. (The Calamares sidebar text
   and the SDDM and installer hover colours now use the tokens.)
 - **Eyebrow weight:** the tokens say 400; the typography page shows 600.
-- **Missing logo files:** no vector version of the mark (the icons and the
-  lockups are PNGs derived from the render, 16–1024 px). The stacked and
+- **Logo files:** a vector version of the mark exists since 2026-09-15
+  (`usr/share/holtos/brand/holtos-mark.svg`, traced from the render by
+  `tools/brand/trace_mark.py`: flat colour layers, outlines simplified, the
+  rim as a magenta-to-blue gradient). Its edges are slightly simplified, so
+  the PNG renders stay the reference at large sizes. The stacked and
   light-background lockups exist since 2026-09-15. The otter's expressions (happy, idle, alert) are
   rendered for the new mark (2026-09-15); The Den still uses its old React
   versions until its client is rebranded. The old hand-drawn SVG logos are deleted from the image and removed

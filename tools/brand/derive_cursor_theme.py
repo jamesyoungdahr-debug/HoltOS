@@ -228,12 +228,12 @@ def main() -> None:
 
     # Write cursor.theme index.
     index = Path(args.root) / "usr/share/icons" / THEME / "cursor.theme"
-    index.write_text("[Icon Theme]\nName=HoltOS\nInherits=breeze_cursors\n")
+    index.write_text("[Icon Theme]\nName=HoltOS\nInherits=breeze_cursors\n", newline="\n")
 
     # Do not overwrite index.theme if it already exists (from derive_icon_theme.py).
     icon_index = Path(args.root) / "usr/share/icons" / THEME / "index.theme"
     if not icon_index.exists():
-        icon_index.write_text("[Icon Theme]\nName=HoltOS\nInherits=breeze-icons\n")
+        icon_index.write_text("[Icon Theme]\nName=HoltOS\nInherits=breeze-icons\n", newline="\n")
 
     # Preview: one row per shape, 64 px version on two backgrounds in 96 px cells.
     preview_shapes = [s for s in HOTSPOTS if s in shapes]

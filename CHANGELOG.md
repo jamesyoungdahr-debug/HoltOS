@@ -25,6 +25,8 @@ Neon rebrand (next major release):
 - **Title bar buttons in HoltOS traffic-light colours:** magenta close, amber
   minimise and teal maximise, so close and minimise no longer share the same
   amber. Existing accounts get them at their next login.
+- **Vector otter mark:** `/usr/share/holtos/brand/holtos-mark.svg`, traced
+  from the ComfyUI render, for places that need a scalable logo.
 - **HoltOS icons:** folders, places (home, desktop, documents, downloads, music,
   pictures, videos, network, trash), file types and the Dolphin, Konsole and
   System Settings icons are glass tiles with neon rims, rendered on ComfyUI.
