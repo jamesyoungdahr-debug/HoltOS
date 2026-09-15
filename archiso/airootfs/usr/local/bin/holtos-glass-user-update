@@ -23,8 +23,8 @@ set -u
 # 5: holtos-glass Plasma style, off removed stock themes; 6: the lock screen
 # shows its wallpaper; 7: magenta, amber and teal title bar buttons; 8: HoltOS
 # icons and cursor; 9: translucent GTK 3 and GTK 4 styles; 10: floating menu
-# bar).
-STAMP="${XDG_STATE_HOME:-$HOME/.local/state}/holtos/glass-user-update-10"
+# bar; 11: 32 px cursor).
+STAMP="${XDG_STATE_HOME:-$HOME/.local/state}/holtos/glass-user-update-11"
 [ -e "$STAMP" ] && exit 0
 [ -e /run/archiso ] && exit 0
 
@@ -208,6 +208,22 @@ case "$(kreadconfig6 --file "$CFG/kcminputrc" --group Mouse --key cursorTheme)" 
     ""|breeze_cursors)
         kwriteconfig6 --file "$CFG/kcminputrc" --group Mouse --key cursorTheme HoltOS ;;
 esac
+
+# A larger default cursor (Liam, 2026-09-15: "the cursor is a bit small"):
+# 32 px, one of the sizes the HoltOS cursor theme is drawn at. Only accounts
+# still on the old default (unset or 24) change; a size someone picked stays.
+case "$(kreadconfig6 --file "$CFG/kcminputrc" --group Mouse --key cursorSize)" in
+    ""|24)
+        kwriteconfig6 --file "$CFG/kcminputrc" --group Mouse --key cursorSize 32 ;;
+esac
+for gtk in "$CFG/gtk-3.0/settings.ini" "$CFG/gtk-4.0/settings.ini"; do
+    [ -f "$gtk" ] || continue
+    if grep -q '^gtk-cursor-theme-size=' "$gtk"; then
+        sed -i 's/^gtk-cursor-theme-size=24$/gtk-cursor-theme-size=32/' "$gtk"
+    else
+        printf 'gtk-cursor-theme-size=32\n' >> "$gtk"
+    fi
+done
 
 # Translucent GTK styles (2026-09-15): KWin blurs behind every window, so GTK
 # 3 and GTK 4 apps can be glass too. An account with no gtk.css of its own,

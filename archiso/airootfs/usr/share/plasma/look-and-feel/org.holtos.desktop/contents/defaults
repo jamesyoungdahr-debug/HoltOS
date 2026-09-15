@@ -21,6 +21,7 @@ Image=HoltOS-Neon-OtterNight
 
 [kcminputrc][Mouse]
 cursorTheme=HoltOS
+cursorSize=32
 
 [kwinrc][org.kde.kdecoration2]
 library=org.holtos.glass

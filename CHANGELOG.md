@@ -54,6 +54,9 @@ Neon rebrand (next major release):
   and menu text keeps white text readable over bright wallpapers.
 - **Floating menu bar:** the top bar now floats like the dock, with a small
   gap from the screen edges. Existing accounts switch at their next login.
+- **Bigger cursor:** the HoltOS cursor is now 32 px by default instead of
+  24, in apps, GTK apps and on the login screen. A cursor size you chose
+  yourself in System Settings is kept.
 - **Dev update channel:** HoltOS Updates > Settings > Update channel. Stable
   installs HoltOS releases, as before; Dev installs the newest work straight
   from a branch of the HoltOS repository (the branch in progress, currently
