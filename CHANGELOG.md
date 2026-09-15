@@ -22,6 +22,13 @@ Neon rebrand (next major release):
   the kernel-update hook and the installer shortcut carry the HoltOS name.
   Updating removes the old homelab files once the renamed ones are in place,
   so the boot menu still refreshes exactly once per kernel update.
+- **Title bar buttons in HoltOS traffic-light colours:** magenta close, amber
+  minimise and teal maximise, so close and minimise no longer share the same
+  amber. Existing accounts get them at their next login.
+- **Icon and cursor style chosen:** glass tiles with neon rims for icons and a
+  purple neon-edged cursor with a lime spark, from ComfyUI concepts kept in
+  `docs/design-references/`. The full icon set and cursor theme are not
+  built yet.
 - **Otter expressions:** the new otter now comes in Happy, Idle and Alert, rendered
   on ComfyUI to match the mark, as transparent files in `/usr/share/holtos/brand/`
   for success, waiting and warning states.

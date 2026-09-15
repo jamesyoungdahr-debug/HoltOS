@@ -287,9 +287,11 @@ clamp so white text keeps 4.5:1 (milestones G8 and G9 in
 - **Old numbers in history:** the glass plan's early tables (70 / 60 % for the
   title bar) are kept as history; everything that ships and every tool
   default use the current values.
-- **Title bar button colours:** the plan asked for red, yellow and green; the
-  scheme gives amber, amber and teal, so close and minimise may look alike on
-  real hardware (checked in LIVETEST.md).
+- **Title bar button colours (settled 2026-09-15, Liam):** the traffic-light
+  balance in HoltOS colours, since the palette has no red: magenta flare
+  `#FF4FD8` close, amber `#FFB84D` minimise, teal `#28E0C8` maximise, as
+  per-button override colours in `klassyrc` (dimmed to 45 % in inactive
+  windows). The colour scheme's warning colours are unchanged.
 - **Glass depth differs by product:** desktop 30 / 45 %, The Den web and client
   70 / 84 %, SDDM 84 %, Konsole 75 %.
 - **Colours outside the tokens:** logo blush `#FF7ABE`, disabled grey

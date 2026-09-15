@@ -107,6 +107,10 @@ Do section 1 first; most of the rest depends on it.
   blurred. Log out or restart from the app launcher: judge the logout screen
   (it draws nothing in the VM).
 - [ ] Tray > Restore Snapshot... opens HoltOS Updates on the Snapshots tab.
+- [ ] **Title bar buttons:** close is magenta, minimise amber, maximise teal,
+  and the three are easy to tell apart at a glance; in an inactive window they
+  are dimmer. An account made before this change gets the colours at its next
+  login. (Not checked in the VM: it could not start for lack of host memory.)
 - [ ] Tray > Update Proton GE and Rescan Boot Menu show glass dialogs, not
   plain grey GTK windows.
 

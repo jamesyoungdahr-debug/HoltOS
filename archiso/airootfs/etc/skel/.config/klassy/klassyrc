@@ -57,6 +57,17 @@ ButtonIconColorsActive=TitleBarText
 ButtonIconColorsInactive=TitleBarText
 ButtonBackgroundColorsActive=AccentTrafficLights
 ButtonBackgroundColorsInactive=AccentTrafficLights
+# Traffic-light balance in HoltOS colours (Liam, 2026-09-15): the palette has
+# no red, and AccentTrafficLights alone made close and minimise the same
+# amber. Close is magenta flare, minimise amber, maximise healthy teal; the
+# scheme's warning colours elsewhere are untouched. Values: [r,g,b] or
+# [opacity %,r,g,b]; inactive windows dim the circles to 45 %.
+ButtonOverrideColorsActiveClose={"BackgroundNormal":[255,79,216],"BackgroundHover":[255,79,216],"BackgroundPress":[80,255,79,216]}
+ButtonOverrideColorsActiveMinimize={"BackgroundNormal":[255,184,77],"BackgroundHover":[255,184,77],"BackgroundPress":[80,255,184,77]}
+ButtonOverrideColorsActiveMaximize={"BackgroundNormal":[40,224,200],"BackgroundHover":[40,224,200],"BackgroundPress":[80,40,224,200]}
+ButtonOverrideColorsInactiveClose={"BackgroundNormal":[45,255,79,216],"BackgroundHover":[255,79,216],"BackgroundPress":[80,255,79,216]}
+ButtonOverrideColorsInactiveMinimize={"BackgroundNormal":[45,255,184,77],"BackgroundHover":[255,184,77],"BackgroundPress":[80,255,184,77]}
+ButtonOverrideColorsInactiveMaximize={"BackgroundNormal":[45,40,224,200],"BackgroundHover":[40,224,200],"BackgroundPress":[80,40,224,200]}
 
 [ButtonBehaviour]
 ButtonHoverGlow=true
