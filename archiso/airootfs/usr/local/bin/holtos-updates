@@ -711,13 +711,26 @@ def sound_devices(kind):
         if not isinstance(device, dict):
             continue
         name = str(device.get("name", ""))
-        if kind == "sources" and (
-            name.endswith(".monitor")
-            or device.get("monitor_of_sink") not in (None, "", "n/a")
-        ):
+        if kind == "sources" and is_monitor_source(name, device):
             continue
         names.append(str(device.get("description") or name))
     return names
+
+
+def is_monitor_source(name, device):
+    """A monitor source copies a speaker's output. pactl names them *.monitor;
+    its JSON gives monitor_of_sink as the sink's name or index for monitors,
+    and "n/a" or PA_INVALID_INDEX (4294967295) for real microphones, depending
+    on the version, so every form is checked."""
+    if name.endswith(".monitor"):
+        return True
+    for key in ("monitor_of_sink", "monitor_of_sink_name"):
+        value = device.get(key)
+        if isinstance(value, str) and value not in ("", "n/a"):
+            return True
+        if isinstance(value, int) and not isinstance(value, bool) and 0 <= value < 4294967295:
+            return True
+    return False
 
 
 # AMD audio coprocessor 7.x (Strix Halo / Strix Point, PCI 1022:15e2). Its
@@ -735,6 +748,19 @@ class HardwareCheck(QThread):
     done = Signal(dict)
 
     def run(self):
+        # Any unexpected error still finishes the check, so the button never
+        # stays stuck on "Checking...".
+        try:
+            result = self.check()
+        except Exception as exc:
+            result = {
+                "error": f"the check stopped unexpectedly ({exc.__class__.__name__}: {exc})",
+                "rows": [], "missing": 0,
+                "speakers": None, "microphones": None, "acp7": False,
+            }
+        self.done.emit(result)
+
+    def check(self):
         result = {
             "error": "", "rows": [], "missing": 0,
             "speakers": None, "microphones": None, "acp7": False,
@@ -760,13 +786,14 @@ class HardwareCheck(QThread):
                 if not pkg:
                     continue
                 try:
-                    query = subprocess.run(["pacman", "-Q", pkg], capture_output=True, text=True, timeout=10)
+                    query = subprocess.run(["pacman", "-Q", pkg], capture_output=True, text=True, timeout=5)
                 except (OSError, subprocess.SubprocessError):
                     query = None
                 if query is None:
                     status = "Could not check"
                 elif query.returncode == 0:
-                    status = "Installed " + query.stdout.split()[-1]
+                    parts = query.stdout.split()
+                    status = "Installed " + parts[-1] if parts else "Installed"
                 else:
                     status = "Not installed yet: the next update adds it"
                     result["missing"] += 1
@@ -778,7 +805,7 @@ class HardwareCheck(QThread):
             result["acp7"] = f" {ACP7_PCI_ID}" in lspci
         except (OSError, subprocess.SubprocessError):
             pass
-        self.done.emit(result)
+        return result
 
 
 class HardwareTab(QWidget):
@@ -804,13 +831,13 @@ class HardwareTab(QWidget):
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         layout.addWidget(self.table, 1)
 
+        # A wrapping label, not a table: long notes re-wrap when the window
+        # is resized instead of being cut off.
         layout.addWidget(QLabel("Sound devices"))
-        self.sound = QTableWidget(0, 2)
-        self.sound.setHorizontalHeaderLabels(["Device", "Found"])
-        self.sound.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.sound.verticalHeader().setVisible(False)
-        self.sound.setEditTriggers(QTableWidget.NoEditTriggers)
+        self.sound = QLabel("")
         self.sound.setWordWrap(True)
+        self.sound.setTextFormat(Qt.PlainText)
+        self.sound.setTextInteractionFlags(Qt.TextSelectableByMouse)
         layout.addWidget(self.sound)
         self.show_sound(None, None, False, checking=True)
 
@@ -826,8 +853,10 @@ class HardwareTab(QWidget):
         self.refresh()
 
     def refresh(self):
-        if self.check is not None and self.check.isRunning():
-            return
+        if self.check is not None:
+            if self.check.isRunning():
+                return
+            self.check.deleteLater()
         self.again.setEnabled(False)
         self.again.setText("Checking...")
         self.status.setText("Checking this computer's drivers and sound devices...")
@@ -837,7 +866,7 @@ class HardwareTab(QWidget):
 
     def wait_for_check(self):
         if self.check is not None and self.check.isRunning():
-            self.check.wait(30000)
+            self.check.wait(60000)
 
     def fill(self, table, rows):
         table.setRowCount(len(rows))
@@ -849,31 +878,27 @@ class HardwareTab(QWidget):
         table.resizeRowsToContents()
 
     def show_sound(self, speakers, microphones, acp7, checking=False):
-        rows = []
+        lines = []
         for label, names in (("Speakers and headphones", speakers), ("Microphones", microphones)):
             if checking:
                 text = "Checking..."
             elif names is None:
-                text = "Could not check: the sound service (PipeWire) is not answering"
+                text = "Could not check (pactl did not answer; is the sound service running?)"
             elif names:
                 text = ", ".join(names)
             elif label == "Microphones":
                 text = "None found. A USB, Bluetooth or headset microphone should appear here when plugged in."
             else:
                 text = "None found"
-            rows.append((label, text))
+            lines.append(f"{label}: {text}")
         if acp7 and not checking:
-            rows.append((
-                "Built-in microphone",
-                "Not supported on Linux yet: this computer's digital microphones sit on "
-                "AMD's audio coprocessor 7, which Linux does not drive yet. Any microphone "
-                "listed above may be silent. A USB, Bluetooth or headset microphone works.",
-            ))
-        self.fill(self.sound, rows)
-        self.sound.setFixedHeight(
-            self.sound.horizontalHeader().height()
-            + sum(self.sound.rowHeight(r) for r in range(self.sound.rowCount())) + 4
-        )
+            lines.append(
+                "Built-in microphone: not supported on Linux yet. This computer's digital "
+                "microphones sit on AMD's audio coprocessor 7, which Linux does not drive yet, "
+                "so a microphone listed above may be silent. A USB, Bluetooth or headset "
+                "microphone works."
+            )
+        self.sound.setText("\n".join(lines))
 
     def show_result(self, result):
         now = datetime.now().strftime("%H:%M")
