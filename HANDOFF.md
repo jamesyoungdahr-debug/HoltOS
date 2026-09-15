@@ -850,6 +850,23 @@ the [holtos] package repo, not packages.x86_64.
   parts written by Claude. Update DEV_BRANCH's default when the working
   branch changes.
 
+## 0.0.7e-alpha, version 0.1.0, dev package repo (2026-09-15)
+
+- **v0.0.7e-alpha** (master 5ad80af): the dev channel backported to master
+  alone, so Stable machines can switch to Dev. Merged back into this branch
+  (e5f9492).
+- **Version scheme (Liam):** major.features.bugfix.smallbugfix, letters for
+  the last. This branch is **0.1.0**, untagged.
+- **Next, approved and not started:** neon's packages get their own
+  `packages-dev` GitHub release, so the dev channel never pushes them to
+  Stable machines. Point `[holtos]` at it in holtos-update-apply,
+  usr/share/holtos/pacman-holtos.conf and archiso/pacman.conf; give
+  tools/publish-packages.sh a target; switch back to `packages` at the 0.1.0
+  tag. G7 is included. Check the kwin, plasma-workspace and
+  window-decoration builds match source before publishing. Do not switch the
+  Z13 to Dev until packages-dev is published: the neon update renames its
+  repo section to `[holtos]`.
+
 ## Still open
 
 - **Milestone 2 crash: root-caused, fixed and verified on a fresh ISO (build 23).**
