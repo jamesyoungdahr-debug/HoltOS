@@ -1,0 +1,27 @@
+# HoltOS: built-in microphones on the ASUS ROG Flow Z13 (GZ302EA), as DKMS.
+# The Z13's firmware configures the AMD audio coprocessor 7 for digital
+# microphones only (acp-audio-config-flag 0x10), but its _WOV method returns
+# 0 and the PDMC device has no acp-audio-device-type property, so Linux turns
+# the microphones off. This rebuilds snd-acp-legacy-common from Linux 7.2.4
+# with a DMI quirk that ignores both on the GZ302 (sources in
+# forks/holtos-acp-mic-dkms, see README-HOLTOS.md there). Other machines
+# behave exactly as with the stock module.
+pkgname=holtos-acp-mic-dkms
+pkgver=1.0.r${HOLTOS_REV:-0}
+pkgrel=1
+pkgdesc="HoltOS fix for the built-in microphones of the ASUS ROG Flow Z13 (GZ302), DKMS"
+arch=(any)
+url="https://github.com/jamesyoungdahr-debug/HoltOS"
+license=(GPL-2.0-only)
+depends=(dkms)
+source=("${pkgname}.tar")
+sha256sums=('SKIP')
+
+package() {
+    local dest="${pkgdir}/usr/src/holtos-acp-mic-${pkgver}"
+    install -dm755 "${dest}"
+    install -m644 "${pkgname}/src/acp-legacy-common.c" "${pkgname}/src/amd.h" \
+        "${pkgname}/src/acp_common.h" "${pkgname}/src/chip_offset_byte.h" \
+        "${pkgname}/src/mach-config.h" "${pkgname}/src/Makefile" "${pkgname}/src/dkms.conf" "${dest}/"
+    sed -i "s/@PKGVER@/${pkgver}/" "${dest}/dkms.conf"
+}
