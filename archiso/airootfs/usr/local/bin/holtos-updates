@@ -25,7 +25,7 @@ from PySide6.QtCore import Qt, QTime, QTimer
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QApplication, QCheckBox, QComboBox, QFormLayout, QFrame, QHBoxLayout,
-    QHeaderView, QLabel, QMessageBox, QProgressBar, QPushButton, QScrollArea,
+    QHeaderView, QLabel, QLineEdit, QMessageBox, QProgressBar, QPushButton, QScrollArea,
     QTableWidget, QTableWidgetItem, QTabWidget, QTimeEdit, QToolButton,
     QVBoxLayout, QWidget,
 )
@@ -43,6 +43,8 @@ DEFAULTS = {
     "AUTO_INSTALL": "apps",
     "INSTALL_WINDOW": "",
     "CHECK_AFTER_GAMEMODE": "yes",
+    "UPDATE_CHANNEL": "stable",
+    "DEV_BRANCH": "neon-rebrand",
 }
 INTERVALS = [
     ("1h", "Every hour"),
@@ -54,6 +56,10 @@ AUTO_INSTALL_CHOICES = [
     ("off", "Never, I'll install them myself"),
     ("apps", "HoltOS and apps (ask before system packages)"),
     ("all", "Everything, including system packages and firmware"),
+]
+CHANNEL_CHOICES = [
+    ("stable", "Stable: HoltOS releases"),
+    ("dev", "Dev: the newest work, straight from a branch"),
 ]
 NAMES = {
     "config": "HoltOS",
@@ -443,6 +449,26 @@ class SettingsTab(QWidget):
         form.setFormAlignment(Qt.AlignLeft | Qt.AlignTop)
         form.setFieldGrowthPolicy(QFormLayout.AllNonFixedFieldsGrow)
 
+        # Update channel (first row)
+        channel_row = QHBoxLayout()
+        self.channel = QComboBox()
+        for value, text in CHANNEL_CHOICES:
+            self.channel.addItem(text, value)
+        channel_row.addWidget(self.channel, 1)
+        self.dev_branch = QLineEdit()
+        self.dev_branch.setPlaceholderText("neon-rebrand")
+        self.dev_branch.setMaximumWidth(200)
+        channel_row.addWidget(self.dev_branch)
+        form.addRow("Update channel:", channel_row)
+        self.channel_note = QLabel(
+            "The dev channel installs unfinished work from the HoltOS repository as soon as it is pushed. "
+            "It can break things; a snapshot is still taken before every update. "
+            "Switching back to Stable offers the latest release."
+        )
+        self.channel_note.setWordWrap(True)
+        form.addRow("", self.channel_note)
+        self.channel.currentIndexChanged.connect(self.update_channel_state)
+
         self.interval = QComboBox()
         for value, text in INTERVALS:
             self.interval.addItem(text, value)
@@ -479,6 +505,11 @@ class SettingsTab(QWidget):
         layout.addStretch()
         self.load()
 
+    def update_channel_state(self):
+        dev = self.channel.currentData() == "dev"
+        self.dev_branch.setEnabled(dev)
+        self.channel_note.setVisible(dev)
+
     def load(self):
         settings = read_settings()
         index = self.interval.findData(settings["CHECK_INTERVAL"])
@@ -492,6 +523,10 @@ class SettingsTab(QWidget):
         self.window_time.setTime(QTime(int(hour), 0) if has_window else QTime(4, 0))
         self.window_time.setEnabled(has_window)
         self.after_gamemode.setChecked(settings["CHECK_AFTER_GAMEMODE"] != "no")
+        index = self.channel.findData(settings["UPDATE_CHANNEL"])
+        self.channel.setCurrentIndex(index if index >= 0 else 0)
+        self.dev_branch.setText(settings["DEV_BRANCH"])
+        self.update_channel_state()
 
     def save(self):
         window = f"{self.window_time.time().hour():02d}:00" if self.use_window.isChecked() else ""
@@ -501,6 +536,8 @@ class SettingsTab(QWidget):
             f"AUTO_INSTALL={self.auto_install.currentData()}",
             f"INSTALL_WINDOW={window}",
             f"CHECK_AFTER_GAMEMODE={'yes' if self.after_gamemode.isChecked() else 'no'}",
+            f"UPDATE_CHANNEL={self.channel.currentData()}",
+            f"DEV_BRANCH={self.dev_branch.text().strip() or 'neon-rebrand'}",
         ]
         proc = subprocess.run(
             ["pkexec", "/usr/local/bin/holtos-update-settings", *args],

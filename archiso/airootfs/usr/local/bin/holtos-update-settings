@@ -22,6 +22,8 @@ declare -A setting=(
     [AUTO_INSTALL]=apps
     [INSTALL_WINDOW]=""
     [CHECK_AFTER_GAMEMODE]=yes
+    [UPDATE_CHANNEL]=stable
+    [DEV_BRANCH]=neon-rebrand
 )
 
 valid() {
@@ -30,6 +32,17 @@ valid() {
         AUTO_DOWNLOAD|CHECK_AFTER_GAMEMODE) [[ "$2" =~ ^(yes|no)$ ]] ;;
         AUTO_INSTALL) [[ "$2" =~ ^(off|apps|all)$ ]] ;;
         INSTALL_WINDOW) [[ "$2" =~ ^(([01][0-9]|2[0-3]):00)?$ ]] ;;
+        # Stable follows HoltOS release tags; dev follows the newest commit of
+        # DEV_BRANCH (Liam, 2026-09-15: the branch we are working on).
+        UPDATE_CHANNEL) [[ "$2" =~ ^(stable|dev)$ ]] ;;
+        # A branch of the HoltOS repo: git-safe characters, no "..", "//",
+        # trailing "/" or ".lock", never starting with "-".
+        DEV_BRANCH)
+            [[ "$2" =~ ^[A-Za-z0-9][A-Za-z0-9._/-]{0,99}$ ]] || return 1
+            case "$2" in
+                *..*|*//*|*/|*.lock) return 1 ;;
+            esac
+            ;;
         *) return 1 ;;
     esac
 }
@@ -64,7 +77,7 @@ mkdir -p "$(dirname "$CONF")"
 tmp="$(mktemp "$CONF.XXXXXX")"
 {
     echo "# HoltOS updater settings. Edit them in HoltOS Updates > Settings."
-    for key in CHECK_INTERVAL AUTO_DOWNLOAD AUTO_INSTALL INSTALL_WINDOW CHECK_AFTER_GAMEMODE; do
+    for key in CHECK_INTERVAL AUTO_DOWNLOAD AUTO_INSTALL INSTALL_WINDOW CHECK_AFTER_GAMEMODE UPDATE_CHANNEL DEV_BRANCH; do
         printf '%s=%s\n' "$key" "${setting[$key]}"
     done
 } > "$tmp"
