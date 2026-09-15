@@ -5,6 +5,15 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+## [0.0.7g-alpha] - 2026-09-15
+
+- **Fixed (second try): the built-in microphones on the ASUS ROG Flow Z13
+  (2025).** The 0.0.7f fix made the microphone appear, but it recorded only
+  silence: it used an AMD audio driver that reads this chip's microphones
+  wrongly. Version 2 of `holtos-acp-mic-dkms` switches the Z13 to AMD's
+  other audio driver, the one that works on similar ASUS laptops. Update,
+  then restart the computer. Other computers are not affected.
+
 ## [0.0.7f-alpha] - 2026-09-15
 
 - **Fixed: the built-in microphones on the ASUS ROG Flow Z13 (2025).** The
