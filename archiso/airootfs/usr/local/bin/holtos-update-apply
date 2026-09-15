@@ -305,6 +305,7 @@ update_config() {
         usr/share/Kvantum/HoltOSGlass/
         usr/share/color-schemes/
         usr/share/icons/hicolor/
+        usr/share/icons/HoltOS/
         usr/share/konsole/
         usr/share/plasma/look-and-feel/
         'usr/share/plasma/desktoptheme/holtos-*/'
