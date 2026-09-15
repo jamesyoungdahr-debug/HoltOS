@@ -716,6 +716,39 @@ me", without checking in. All on branch `neon-rebrand`, pushed, VM-tested on
 - **Not tested:** opening a share with a network password (no password may be
   set by Claude), Windows discovery, real NAS browsing.
 
+## HoltOS Apps rebuilt (2026-09-15, branch `neon-rebrand`)
+
+Liam: "make our flatpak store more feature complete" (all phases approved).
+Commits 7d54e88 (store) and 3705497 (icon), pushed; VM-tested on
+`holtos-test`.
+
+- **Modules** in `usr/share/holtos/apps/`: `flathub.py` (web API, disk cache,
+  offline fallback, permission warnings, media from Flathub hosts only),
+  `flatpak_helper.py` (libflatpak transactions in their own process, JSON
+  progress lines, SIGTERM cancels), `store.py` (queue and progress),
+  `browse.py`, `app_page.py`, `manage.py`, `workers.py`; `holtos-apps` is the
+  window (search, `--updates`, `appstream://`, Flathub `.flatpakref`).
+- **Found on the way:** libflatpak through PyGObject is on the image and gives
+  real byte progress (the CLI prints none without a terminal). Flatpak's
+  polkit rules refuse system installs from SSH, so GUI installs are tested by
+  launching from KRunner inside the session. Kvantum keeps a `QMainWindow`
+  with a plain central widget opaque; the store window is a top-level
+  `QWidget` (rule recorded in the glass plan).
+- **Icon:** the head mark read as a teddy bear at dock size. ComfyUI renders
+  (two concepts, three images each); Liam picked B1 (seed 5201). Derived by
+  `tools/brand/derive_app_icon.py`; render kept in `docs/design-references/`.
+- **Handoffs:** local models wrote every store module, the main window, the
+  apps.json additions and the icon script; fix rounds were short literal
+  edits. Timeouts on two units (manage.py and the helper spec) still left
+  complete files.
+- **Not tested:** queue plus cancel in the GUI, "Update all" with real
+  updates, removing app data, web links from a browser, bare metal.
+- **Waiting on Liam:** the updater plan (choose what installs, package
+  details, safety checks, Snapshots tab, failure log and retry, install and
+  restart, holds, tray progress, "Fix updates") and the glass-everywhere audit
+  (Kirigami apps need the qqc2-desktop-style fork; HoltOS yad notices to Qt;
+  widgets inside popups; lock and logout screens).
+
 ## Still open
 
 - **Milestone 2 crash: root-caused, fixed and verified on a fresh ISO (build 23).**

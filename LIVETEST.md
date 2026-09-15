@@ -64,6 +64,20 @@ Do section 1 first; most of the rest depends on it.
 - [ ] Only if an update ever stops the desktop from starting: after two such
   boots HoltOS restores the snapshot from before the update, restarts, and
   says "HoltOS undid the last update" at login.
+- [ ] **HoltOS Apps:** the dock shows the new app-grid otter icon, and the
+  store window is glass. Browse shows Categories, the HoltOS picks and
+  Flathub's Popular, Trending, New and Recently updated rows with icons.
+- [ ] Open an app's page (screenshots, sizes, licence, permissions, release
+  notes). Install it: the bar shows percent and "Downloading ... MB/s", with
+  no password prompt. An app that wants all your files asks first.
+- [ ] Queue two installs at once: the second waits, then runs. Cancel one
+  while it downloads.
+- [ ] Installed lists the app with its size; Remove with "Also delete its
+  settings and data" removes `~/.var/app/<id>`; "Clean up unused runtimes"
+  appears after removing the last app of a runtime.
+- [ ] Updates: "Update all" and per-app Update, with progress.
+- [ ] On flathub.org, click Install on any app: HoltOS Apps opens that app's
+  page. A downloaded .flatpakref file opens the same way.
 
 ## 0.0.7d-alpha: Switch to Desktop through SteamOS Manager (Z13 first, then 4090)
 
