@@ -22,13 +22,13 @@ file_permissions=(
   ["/usr/local/bin/choose-mirror"]="0:0:755"
   ["/usr/local/bin/Installation_guide"]="0:0:755"
   ["/usr/local/bin/livecd-sound"]="0:0:755"
-  ["/usr/local/bin/homelab-limine-install.sh"]="0:0:755"
-  ["/usr/local/bin/homelab-fix-mkinitcpio.sh"]="0:0:755"
-  ["/usr/local/bin/homelab-limine-sync.sh"]="0:0:755"
-  ["/usr/local/bin/homelab-limine-theme.sh"]="0:0:755"
-  ["/usr/local/bin/homelab-cleanup-live.sh"]="0:0:755"
-  ["/usr/local/bin/homelab-detect-hardware.sh"]="0:0:755"
-  ["/usr/local/bin/homelab-locate-airootfs.sh"]="0:0:755"
+  ["/usr/local/bin/holtos-limine-install.sh"]="0:0:755"
+  ["/usr/local/bin/holtos-fix-mkinitcpio.sh"]="0:0:755"
+  ["/usr/local/bin/holtos-limine-sync.sh"]="0:0:755"
+  ["/usr/local/bin/holtos-limine-theme.sh"]="0:0:755"
+  ["/usr/local/bin/holtos-cleanup-live.sh"]="0:0:755"
+  ["/usr/local/bin/holtos-detect-hardware.sh"]="0:0:755"
+  ["/usr/local/bin/holtos-locate-airootfs.sh"]="0:0:755"
   # HoltOS updater scripts. These were relying on the executable bit set
   # via `chmod +x` in the working copy surviving verbatim into the built
   # image — it doesn't reliably: this repo is edited on Windows/Git Bash,

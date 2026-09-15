@@ -2,7 +2,7 @@
 # installer because udisks announces the boot medium itself (the ISO, label
 # HOLTOS_YYYYMM, and archiso's EFI partition, label ARCHISO_EFI) as newly
 # plugged removable storage. Hide those two filesystems from udisks so the
-# popup does not fire. The Calamares cleanup step (homelab-cleanup-live.sh)
+# popup does not fire. The Calamares cleanup step (holtos-cleanup-live.sh)
 # removes this file from the installed system so real USB sticks with that
 # label still show up there. Drafted by the local model.
 SUBSYSTEM=="block", ENV{ID_FS_LABEL}=="HOLTOS_*", ENV{UDISKS_IGNORE}="1"

@@ -51,8 +51,8 @@ ESP_PARTNUM="$(findmnt -no SOURCE "${ESP}" | grep -oE '[0-9]+$')"
 # subvolume layout cleanly, and it needs to exist regardless for the
 # per-snapshot kernel/initramfs copies holtos-btrfs-snapshot adds later
 # (see the HOLTOS SNAPSHOTS block below) — those load the exact same way.
-# Kept in sync on kernel upgrades by the homelab-limine-sync pacman hook
-# (see /etc/pacman.d/hooks/95-homelab-limine-sync.hook).
+# Kept in sync on kernel upgrades by the holtos-limine-sync pacman hook
+# (see /etc/pacman.d/hooks/95-holtos-limine-sync.hook).
 mkdir -p "${ESP}/boot"
 cp /boot/vmlinuz-linux "${ESP}/boot/vmlinuz-linux"
 cp /boot/initramfs-linux.img "${ESP}/boot/initramfs-linux.img"
@@ -68,7 +68,7 @@ cp /boot/initramfs-linux.img "${ESP}/boot/initramfs-linux.img"
 ROOTFLAGS="subvol=@"
 
 # Extra kernel parameters decided at install time by
-# homelab-detect-hardware.sh (e.g. nvidia_drm.modeset=1 when an NVIDIA GPU
+# holtos-detect-hardware.sh (e.g. nvidia_drm.modeset=1 when an NVIDIA GPU
 # was found and its driver installed). Empty or missing file = nothing.
 CMDLINE_EXTRA="$(tr '\n' ' ' < /var/lib/holtos/kernel-cmdline-extra 2>/dev/null || true)"
 CMDLINE_EXTRA="${CMDLINE_EXTRA% }"
@@ -99,7 +99,7 @@ cp /usr/share/wallpapers/HoltOS-Neon-OtterNight/contents/images/1920x1080.jpg "$
 # same config to both paths makes it boot correctly regardless of which
 # copy the firmware actually runs.
 # The menu's look (branding, font, colours, panel) is applied by
-# homelab-limine-theme.sh right after this file is written — kept
+# holtos-limine-theme.sh right after this file is written — kept
 # separate so the updater can re-theme existing installs. Each entry
 # carries a one-line `comment` shown when selected; snapshot entries live
 # in a collapsed "Snapshots" submenu written by holtos-btrfs-snapshot, so
@@ -124,7 +124,7 @@ EOF
 printf '%s\n' "$LIMINE_CONF_CONTENT" > "${ESP}/EFI/limine/limine.conf"
 printf '%s\n' "$LIMINE_CONF_CONTENT" > "${ESP}/EFI/BOOT/limine.conf"
 
-/usr/local/bin/homelab-limine-theme.sh
+/usr/local/bin/holtos-limine-theme.sh
 
 # Other operating systems on this machine (Windows, other Linux) get
 # chainload entries — see holtos-limine-other-os. Best-effort: a scan

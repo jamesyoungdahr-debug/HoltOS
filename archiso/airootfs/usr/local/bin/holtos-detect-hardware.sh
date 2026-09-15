@@ -20,7 +20,7 @@ set -euo pipefail
 
 LOG=/var/lib/holtos/hardware.log
 DRIVERS=/usr/share/holtos/drivers
-CMDLINE_EXTRA=/var/lib/holtos/kernel-cmdline-extra   # read by homelab-limine-install.sh
+CMDLINE_EXTRA=/var/lib/holtos/kernel-cmdline-extra   # read by holtos-limine-install.sh
 
 mkdir -p /var/lib/holtos
 {

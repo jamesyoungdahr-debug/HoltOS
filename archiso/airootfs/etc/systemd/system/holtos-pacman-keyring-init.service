@@ -1,4 +1,4 @@
-# Backstop for homelab-cleanup-live.sh's chroot-time `pacman-key --init`:
+# Backstop for holtos-cleanup-live.sh's chroot-time `pacman-key --init`:
 # on the first install from a clean-machine build (2026-09-11) that init
 # only got as far as writing gpg.conf — no master key, no pubring — so the
 # installed system could not install or update a single package. The same

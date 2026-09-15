@@ -5,7 +5,7 @@
 # SNAPSHOTS / OTHER OS blocks are left exactly as they are, so this is
 # safe to run on an installed system — holtos-update-apply's config
 # update does, which is how a theme change reaches existing installs.
-# Called at install time by homelab-limine-install.sh.
+# Called at install time by holtos-limine-install.sh.
 #
 # Limine 12 theming keys (see its CONFIG.md): branded header instead of
 # "Limine x.y.z", the HoltOS palette for help/countdown/selection, a

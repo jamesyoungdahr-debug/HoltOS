@@ -105,14 +105,14 @@ install -m 644 /etc/os-release /usr/lib/os-release
 # them: every package named in /usr/share/holtos/hardware-drivers.conf
 # (NVIDIA, Broadcom Wi-Fi, laptop audio firmware, sensors, fingerprint
 # readers...), indexed as a small local repo so the installer can resolve
-# their dependencies offline. homelab-detect-hardware.sh installs only the
+# their dependencies offline. holtos-detect-hardware.sh installs only the
 # ones the install target's hardware needs (holtos-hardware). The
 # dependency set is resolved against THIS image, so nothing already in
 # packages.x86_64 is duplicated. The [homelab] local repo is only
 # reachable at build time from the host, so the download uses a
 # pacman.conf without it — and with signature checking off: the chroot
 # has no pacman keyring (creating one here proved unreliable — see
-# homelab-cleanup-live.sh), the files come straight from the HTTPS
+# holtos-cleanup-live.sh), the files come straight from the HTTPS
 # mirrors, and they are only STAGED here, not installed. CheckSpace is
 # dropped too: inside the mkarchiso chroot pacman cannot map the cache
 # dir to a mount point and aborts with a bogus "not enough free disk
@@ -161,8 +161,8 @@ EOF
 
 # Desktop launcher for our installer, visible on the live session's desktop.
 mkdir -p /home/liveuser/Desktop
-cp /usr/share/applications/homelab-install.desktop /home/liveuser/Desktop/homelab-install.desktop
-chmod +x /home/liveuser/Desktop/homelab-install.desktop
+cp /usr/share/applications/holtos-install.desktop /home/liveuser/Desktop/holtos-install.desktop
+chmod +x /home/liveuser/Desktop/holtos-install.desktop
 # The live session must never lock itself: the installer ran to completion
 # behind a lock screen during the build 9 VM test (2026-09-12) and anyone
 # installing from a USB stick would hit the same thing after 5 idle

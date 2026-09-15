@@ -231,7 +231,7 @@ clamp so white text keeps 4.5:1 (milestones G8 and G9 in
 
 | Surface | What it shows | Files |
 |---|---|---|
-| Boot menu (Limine) | Otter Night wallpaper, deep backdrop, translucent surface panel, lilac text, purple highlight, HoltOS name in purple | `usr/local/bin/homelab-limine-theme.sh` |
+| Boot menu (Limine) | Otter Night wallpaper, deep backdrop, translucent surface panel, lilac text, purple highlight, HoltOS name in purple | `usr/local/bin/holtos-limine-theme.sh` |
 | Boot splash (Plymouth) | deep ground, magenta-purple-blue neon glow, otter mark, dot ring drawing over 1.6 s, lockup | `usr/share/plymouth/themes/holtos/` |
 | Login (SDDM) | neon glow, the full-body otter, glass card with the lockup, avatar, one purple Log in button, quiet Restart and Shut down, mono hostname | `usr/share/sddm/themes/holtos/` |
 | Plasma splash | deep ground, glow, otter mark, lockup | look-and-feel `org.holtos.desktop` |

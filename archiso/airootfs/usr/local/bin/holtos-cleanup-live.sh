@@ -31,7 +31,7 @@ rm -f /etc/sudoers.d/liveuser-wheel
 install -m 440 /dev/null /etc/sudoers.d/10-wheel
 echo "%wheel ALL=(ALL:ALL) ALL" > /etc/sudoers.d/10-wheel
 rm -f /etc/sddm.conf.d/autologin.conf
-rm -f /usr/share/applications/homelab-install.desktop
+rm -f /usr/share/applications/holtos-install.desktop
 pacman -Rns --noconfirm calamares
 
 # Real bug found in the same live-testing round as the sudoers one above:

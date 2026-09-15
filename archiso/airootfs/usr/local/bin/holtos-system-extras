@@ -77,7 +77,7 @@ missing_drivers() {
 
 # After the NVIDIA driver is first installed on a running system: the same
 # settings the installer writes, and the kernel option added to the existing
-# boot entries (homelab-limine-sync.sh copies kernels but never rewrites the
+# boot entries (holtos-limine-sync.sh copies kernels but never rewrites the
 # entries).
 setup_nvidia() {
     local esp conf
@@ -186,6 +186,26 @@ remove_old_logo() {
     fi
 }
 
+# "homelab" is now HoltOS everywhere (Liam, 2026-09-14). The update brings
+# the renamed scripts and pacman hook but never deletes the old ones, and
+# two copies of the kernel-update hook would sync the boot menu twice.
+# Remove each old file only once its HoltOS replacement is in place.
+remove_old_homelab_files() {
+    local name old new
+    for name in cleanup-live detect-hardware fix-mkinitcpio limine-install limine-sync limine-theme locate-airootfs; do
+        old="/usr/local/bin/homelab-$name.sh"
+        new="/usr/local/bin/holtos-$name.sh"
+        [ -e "$old" ] && [ -x "$new" ] && rm -f "$old"
+    done
+    old=/etc/pacman.d/hooks/95-homelab-limine-sync.hook
+    new=/etc/pacman.d/hooks/95-holtos-limine-sync.hook
+    [ -e "$old" ] && [ -e "$new" ] && rm -f "$old"
+    old=/usr/share/applications/homelab-install.desktop
+    new=/usr/share/applications/holtos-install.desktop
+    [ -e "$old" ] && [ -e "$new" ] && rm -f "$old"
+    return 0
+}
+
 case "${1:-}" in
 check)
     missing="$(missing_required; missing_z13; missing_drivers)"
@@ -202,6 +222,7 @@ apply)
     trim_themes
     fix_os_identity
     remove_old_logo
+    remove_old_homelab_files
     required="$(missing_required)"
     z13="$(missing_z13)"
     drivers="$(missing_drivers | tr '\n' ' ')"

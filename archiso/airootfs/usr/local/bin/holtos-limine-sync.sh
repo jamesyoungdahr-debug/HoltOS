@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Run by the homelab-limine-sync pacman hook after every kernel/initramfs
-# update. Limine loads the kernel via `boot():` (see homelab-limine-install.sh
+# Run by the holtos-limine-sync pacman hook after every kernel/initramfs
+# update. Limine loads the kernel via `boot():` (see holtos-limine-install.sh
 # for why: its ext4 driver can't read a filesystem with the orphan_file /
 # metadata_csum_seed features current mkfs.ext4 enables by default) — that
 # means the copies living on the ESP are what actually boots, not

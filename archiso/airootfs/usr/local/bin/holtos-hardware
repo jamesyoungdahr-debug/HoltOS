@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Which drivers this machine's hardware needs, from the rules in
 # /usr/share/holtos/hardware-drivers.conf (format documented there).
-# Used by the installer (homelab-detect-hardware.sh) and by every update
+# Used by the installer (holtos-detect-hardware.sh) and by every update
 # (holtos-system-extras), so both agree on what a machine needs.
 #
 #   holtos-hardware needed         packages the hardware needs, one per line:

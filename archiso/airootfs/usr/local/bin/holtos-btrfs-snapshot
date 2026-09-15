@@ -41,7 +41,7 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
-# Same ESP auto-detection as homelab-limine-install.sh / homelab-limine-sync.sh.
+# Same ESP auto-detection as holtos-limine-install.sh / holtos-limine-sync.sh.
 for candidate in /boot/efi /efi /boot; do
     if mountpoint -q "$candidate" 2>/dev/null && [ -d "$candidate/EFI" -o -w "$candidate" ]; then
         ESP="$candidate"
@@ -51,7 +51,7 @@ done
 : "${ESP:?Could not find a mounted EFI System Partition under /boot/efi, /efi, or /boot}"
 
 ROOT_UUID="$(findmnt -no UUID /)"
-# Same install-time extras homelab-limine-install.sh put on the main entry.
+# Same install-time extras holtos-limine-install.sh put on the main entry.
 CMDLINE_EXTRA="$(tr '\n' ' ' < "$(dirname "$SNAP_LOG")/kernel-cmdline-extra" 2>/dev/null || true)"
 CMDLINE_EXTRA="${CMDLINE_EXTRA% }"
 
@@ -97,14 +97,14 @@ fi
 # first. Rewritten wholesale between the two marker lines every time
 # (simpler and more robust than trying to insert/remove single entries in
 # place), leaving everything outside the markers — the main /HoltOS
-# entry, wallpaper/theme lines, see homelab-limine-install.sh — untouched.
+# entry, wallpaper/theme lines, see holtos-limine-install.sh — untouched.
 #
 # Written to BOTH copies of limine.conf (/EFI/limine/ and /EFI/BOOT/,
-# same two paths homelab-limine-install.sh writes) — confirmed live that
+# same two paths holtos-limine-install.sh writes) — confirmed live that
 # Limine only reads whichever copy sits next to the BOOTX64.EFI it was
 # actually loaded from, so letting them drift out of sync would silently
 # break snapshot boot entries on whichever path isn't the one the
-# firmware happens to use. See homelab-limine-install.sh's own comment
+# firmware happens to use. See holtos-limine-install.sh's own comment
 # for the full story on why both copies must exist at all.
 # Entries go in a collapsed "Snapshots" submenu (Limine: a /Title line
 # followed by //sub-entries), newest first, each with a comment saying
@@ -156,7 +156,7 @@ rm -f "$block"
 if [ "$updated_any" -eq 1 ]; then
     echo "==> Updated Limine's snapshot menu entries"
 else
-    echo "==> WARNING: no limine.conf with HOLTOS SNAPSHOTS markers found under ${ESP} — skipping Limine entry (was Limine installed by an older version of homelab-limine-install.sh?)" >&2
+    echo "==> WARNING: no limine.conf with HOLTOS SNAPSHOTS markers found under ${ESP} — skipping Limine entry (was Limine installed by an older version of holtos-limine-install.sh?)" >&2
 fi
 
 if [ "$REGEN_ONLY" -eq 0 ]; then

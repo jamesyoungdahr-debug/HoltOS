@@ -19,7 +19,7 @@
 # after the sed above. Replace both with what a normal `linux` package
 # install would leave, so mkinitcpio builds plain
 # /boot/initramfs-linux(.img|-fallback.img) — exactly what our own
-# homelab-limine-install.sh's limine.conf already points at.
+# holtos-limine-install.sh's limine.conf already points at.
 set -euo pipefail
 sed -i -E 's/[[:space:]]*archiso(_[a-z_]+)?//g' /etc/mkinitcpio.conf
 

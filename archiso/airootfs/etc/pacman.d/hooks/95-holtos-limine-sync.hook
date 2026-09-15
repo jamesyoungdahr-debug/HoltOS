@@ -12,4 +12,4 @@ Target = boot/initramfs-linux.img
 [Action]
 Description = Syncing kernel/initramfs to the EFI System Partition for Limine...
 When = PostTransaction
-Exec = /usr/local/bin/homelab-limine-sync.sh
+Exec = /usr/local/bin/holtos-limine-sync.sh

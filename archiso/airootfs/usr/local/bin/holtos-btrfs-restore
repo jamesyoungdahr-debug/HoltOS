@@ -46,7 +46,7 @@ fi
 arg="${1:-}"
 [ -n "$arg" ] || { sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'; exit 1; }
 
-# Same ESP auto-detection as holtos-btrfs-snapshot / homelab-limine-install.sh.
+# Same ESP auto-detection as holtos-btrfs-snapshot / holtos-limine-install.sh.
 for candidate in /boot/efi /efi /boot; do
     if mountpoint -q "$candidate" 2>/dev/null && [ -d "$candidate/EFI" -o -w "$candidate" ]; then
         ESP="$candidate"

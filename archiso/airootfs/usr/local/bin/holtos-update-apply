@@ -224,7 +224,6 @@ update_config() {
     # holtos-system-extras and holtos-apps never reached an installed Z13.
     local components=(
         'usr/local/bin/holtos-*'
-        'usr/local/bin/homelab-*.sh'
         'etc/systemd/system/holtos-*.service'
         'etc/systemd/system/holtos-*.timer'
         usr/bin/steamos-update
@@ -242,7 +241,7 @@ update_config() {
         etc/xdg/dolphinrc
         etc/xdg/plasmarc
         etc/os-release
-        'etc/pacman.d/hooks/*homelab*.hook'
+        'etc/pacman.d/hooks/*holtos*.hook'
         etc/sddm.conf.d/holtos.conf
         etc/plymouth/plymouthd.conf
         etc/systemd/zram-generator.conf
@@ -272,7 +271,7 @@ update_config() {
         return 1
     fi
     ( cd "$airootfs" && rsync -aR --itemize-changes "${present[@]}" / ) | grep -E '^[<>c]' | sed 's/^/    /' || true
-    chmod +x /usr/local/bin/holtos-* /usr/local/bin/homelab-*.sh /usr/local/bin/steamos-session-select \
+    chmod +x /usr/local/bin/holtos-* /usr/local/bin/steamos-session-select \
         /usr/bin/steamos-update /usr/bin/jupiter-biosupdate /usr/bin/steamos-polkit-helpers/* 2>/dev/null || true
     rm -rf "$src_dir"
 
@@ -307,7 +306,7 @@ update_config() {
     # regenerated from what is on disk now (best-effort, a bootloader
     # cosmetic must never fail an update).
     echo "==> Refreshing the boot menu..."
-    /usr/local/bin/homelab-limine-theme.sh 2>&1 | sed 's/^/    /' || true
+    /usr/local/bin/holtos-limine-theme.sh 2>&1 | sed 's/^/    /' || true
     /usr/local/bin/holtos-limine-other-os 2>&1 | grep -E '^==>' | sed 's/^/    /' || true
     /usr/local/bin/holtos-btrfs-snapshot --regen 2>&1 | sed 's/^/    /' || true
 

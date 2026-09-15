@@ -40,7 +40,7 @@ linux-headers
 # NOTE: deliberately NOT installing limine-mkinitcpio-hook — its pacman hook
 # auto-deploys Limine to a FAT32 ESP on every kernel/initramfs update, which
 # breaks the archiso build (no real ESP exists inside the build chroot) and
-# is redundant with our own homelab-limine-install.sh anyway.
+# is redundant with our own holtos-limine-install.sh anyway.
 limine
 limine-entry-tool
 
@@ -219,7 +219,7 @@ holtos-kwin
 holtos-plasma-workspace
 
 # Hardware support that is safe on every machine (see
-# usr/local/bin/homelab-detect-hardware.sh for the one that is not: NVIDIA).
+# usr/local/bin/holtos-detect-hardware.sh for the one that is not: NVIDIA).
 # pciutils: lspci, which that script detects with. Mesa itself comes with
 # Plasma; these add Vulkan for AMD/Intel and hardware video decode.
 pciutils
@@ -232,7 +232,7 @@ libva-mesa-driver
 # holtos-proton-ge. gamescope is the Game Mode compositor (1.2). lib32-*
 # Vulkan drivers are what 32-bit games and Proton's Wine need on
 # AMD/Intel (NVIDIA's lib32-nvidia-utils is staged with its driver and
-# installed by homelab-detect-hardware.sh only when the card is there).
+# installed by holtos-detect-hardware.sh only when the card is there).
 # gamemode + mangohud (and their lib32 halves) for the in-game
 # performance daemon and overlay. zram-generator for compressed swap
 # (etc/systemd/zram-generator.conf). xdg-desktop-portal-kde: Steam Big
@@ -254,7 +254,7 @@ lib32-vulkan-intel
 lib32-mesa
 zram-generator
 # libva-utils (vainfo) and vulkan-tools (vulkaninfo): what
-# homelab-detect-hardware.sh logs for AMD/Intel GPUs into hardware.log,
+# holtos-detect-hardware.sh logs for AMD/Intel GPUs into hardware.log,
 # and what a support check runs first on a real machine (Strix Halo).
 libva-utils
 vulkan-tools

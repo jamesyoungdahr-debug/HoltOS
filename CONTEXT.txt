@@ -3,6 +3,26 @@ HoltOS — running context file (plain text, kept current by the agent)
 Last updated: 2026-09-14 (v0.0.7d-alpha: Steam's Switch to Desktop calls SteamOS Manager on D-Bus (com.steampowered.SteamOSManager1 SessionManagement1.SwitchToDesktopMode), not a script; HoltOS's holtos-steamos-manager stand-in starts with Game Mode and runs the switch. v0.0.7c-alpha: /usr/bin/steamos-session-select wrapper, and the tray announces updates that installed on their own. v0.0.7b-alpha before it: HoltOS name in Steam, CJK fonts. The neon rebrand waits on branch neon-rebrand for the next major release)
 Read this first when resuming. Newest state at the top of each section.
 
+NEON REBRAND STATUS (branch neon-rebrand, next major release; 2026-09-14)
+-------------------------------------------------------------------------
+Done and pushed: new otter logo and derived icons; glass menu bar + neon-rim
+dock (holtos-glass Plasma style) and HoltOS Classic; only HoltOS themes ship;
+boot/login/splash/installer art from ComfyUI; brand guide; old logos removed
+on update; glass installer (`pkexec calamares -style kvantum`, QML bars stay
+opaque); hardware drivers for installer and
+updater (usr/share/holtos/hardware-drivers.conf + holtos-hardware, staged
+holtos-drivers repo on the ISO). Merged master through v0.0.7d-alpha.
+Rebrand ISO built once (out/holtos-0.0.7c-alpha-x86_64.iso, before the glass
+installer and drivers). Test VM holtos-rebrand (Hyper-V, 60 GB under
+C:\projects\holtos\vm\) is installing that ISO; Liam fills in the Users page
+(Claude must not type passwords).
+Next: rename "homelab" to HoltOS everywhere (scripts, hook, installer
+configs, [homelab] repo published under both names with a pacman.conf
+migration; old files removed by holtos-system-extras); dual boot alongside
+Windows (keep fewer snapshot kernels when the ESP is small; Fast Startup and
+BitLocker notice); rebuild the ISO and VM-test the installer drivers path;
+Liam picks the major version number.
+
 WHAT HOLTOS IS
 --------------
 Arch-based archiso + Calamares + Limine distro with KDE Plasma 6.7.

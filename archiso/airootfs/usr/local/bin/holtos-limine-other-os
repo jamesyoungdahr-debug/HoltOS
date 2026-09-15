@@ -12,7 +12,7 @@
 #
 # HoltOS' own loader directories (limine, BOOT on our ESP, holtos-*) are
 # skipped. Entries go between the HOLTOS OTHER OS markers in BOTH copies
-# of limine.conf (see homelab-limine-install.sh for why two copies), and
+# of limine.conf (see holtos-limine-install.sh for why two copies), and
 # the menu timeout is raised to 5 s when there is something to choose.
 #
 # Paths: loaders on our own ESP are addressed as boot():/..., anything
@@ -20,8 +20,8 @@
 # to a GPT partition GUID or a filesystem UUID; MBR disks have no GUID,
 # so those fall back to the FAT volume id via uuid()).
 #
-# Run at install time (homelab-limine-install.sh), after every kernel
-# update (homelab-limine-sync.sh), and on demand from the tray ("Rescan
+# Run at install time (holtos-limine-install.sh), after every kernel
+# update (holtos-limine-sync.sh), and on demand from the tray ("Rescan
 # Boot Menu"). Safe to rerun: the block is rewritten wholesale.
 set -euo pipefail
 

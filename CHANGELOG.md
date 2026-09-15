@@ -18,6 +18,10 @@ Neon rebrand (next major release):
   next login; their old panels are kept as `*.before-neon-layout`.
 - GTK apps show their menus in the top bar (`appmenu-gtk-module`).
 - **Smaller title bar buttons and dock icons** for a less cluttered look.
+- **"homelab" is now HoltOS everywhere:** the installer and boot menu scripts,
+  the kernel-update hook and the installer shortcut carry the HoltOS name.
+  Updating removes the old homelab files once the renamed ones are in place,
+  so the boot menu still refreshes exactly once per kernel update.
 - **Glass installer:** the installer window is frosted glass like the rest of
   HoltOS; its top bar and step list stay solid so they stay readable.
 - **Drivers for hardware added later:** every update checks the machine's
