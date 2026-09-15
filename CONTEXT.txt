@@ -1,7 +1,41 @@
 HoltOS — running context file (plain text, kept current by the agent)
 =====================================================================
-Last updated: 2026-09-14 (v0.0.7d-alpha: Steam's Switch to Desktop calls SteamOS Manager on D-Bus (com.steampowered.SteamOSManager1 SessionManagement1.SwitchToDesktopMode), not a script; HoltOS's holtos-steamos-manager stand-in starts with Game Mode and runs the switch. v0.0.7c-alpha: /usr/bin/steamos-session-select wrapper, and the tray announces updates that installed on their own. v0.0.7b-alpha before it: HoltOS name in Steam, CJK fonts. The neon rebrand waits on branch neon-rebrand for the next major release)
+Last updated: 2026-09-15 (v0.0.7j-alpha, the current stable release; the neon rebrand is on branch neon-rebrand as 0.1.0)
 Read this first when resuming. Newest state at the top of each section.
+
+LATEST (2026-09-15) — read this before the dated sections below, which are history
+---------------------------------------------------------------------------------
+- RELEASED on the stable channel: v0.0.7j-alpha, a bug-fix release — KRunner
+  file search is back. baloo was never a build dependency, so the file-search
+  runner was silently skipped. Package rebuilt, verified, published to the
+  "packages" release; no ISO (install via the HoltOS updater). Earlier today:
+  v0.0.7i withdrew the Z13 microphone fix (the microphones still send no sound
+  to Linux; remove holtos-acp-mic-dkms if installed), v0.0.7h fixed a kernel
+  update that left the boot copy on the EFI partition stale, so the next start
+  went to emergency mode, and v0.0.7f/0.0.7g were the two microphone attempts.
+- NEW on stable, unreleased on master: Arch's core, extra and multilib now read
+  /etc/pacman.d/holtos-mirrorlist, pinned to 2026/09/14, so a system update
+  installs only the Arch package set HoltOS tested instead of whatever Arch
+  published that morning. tools/set-arch-snapshot.sh moves the date; the config
+  update carries the file to installed systems. Move the date only after a set
+  has been tested on the dev channel.
+- Dev channel (branch neon-rebrand, version 0.1.0) carries the neon rebrand, the
+  dev update channel and the packages-dev repository, plus three fixes from
+  today: the icon theme announced sizes like Size=1616 for its 16x16 folder and
+  shipped no double-resolution art, so icons were scaled and blurry; Restart,
+  Shut Down and Log Out did nothing, because the 2026-09-14 decision to ship
+  only HoltOS themes deleted Breeze's look-and-feel packages, which had also
+  been providing the shutdown dialog; and plasma-integration fell back to that
+  same deleted Breeze theme. The dialog fix is verified on the holtos-test VM
+  (without the QML no dialog appears; with it, the dialog appears).
+- WALLPAPERS: the ten neon wallpapers were recoloured into the five-colour
+  palette; 30 candidates are in out/recolour-candidates/ with contact sheets
+  beside them. WAITING ON LIAM's pick — do not put them into dev before that.
+- The holtos-test VM is being moved to the dev channel by Liam.
+- Liam's ruling this session: every GPU job, local models and ComfyUI renders
+  alike, goes through the local-llm scheduler by hand (request_model, poll
+  task_status, work, release). Hooks do not run in the desktop app's
+  third-party mode, so nothing leases for you.
 
 WHAT HOLTOS IS
 --------------
