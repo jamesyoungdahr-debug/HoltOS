@@ -13,9 +13,9 @@ pages, panes and drawers in Kirigami apps with the solid theme colour.
 
 Every change is marked with a `HoltOS glass (G7)` comment.
 
-- `org.kde.desktop/Page.qml`: background at 60 % of the theme background.
-- `org.kde.desktop/Pane.qml`: background at 60 % of the theme background.
-- `org.kde.desktop/Drawer.qml`: background at 80 % (drawers slide over
+- `org.kde.desktop/Page.qml`: background at 40 % of the theme background.
+- `org.kde.desktop/Pane.qml`: background at 40 % of the theme background.
+- `org.kde.desktop/Drawer.qml`: background at 60 % (drawers slide over
   content, so they keep a denser tint).
 
 Buttons, text fields, list delegates and text keep their solid colours, so

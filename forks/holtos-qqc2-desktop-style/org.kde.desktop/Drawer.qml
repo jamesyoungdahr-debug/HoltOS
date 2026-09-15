@@ -29,7 +29,7 @@ T.Drawer {
 
     background: Rectangle {
         // HoltOS glass (G7): drawers slide over content, so a denser tint.
-        color: Qt.rgba(Kirigami.Theme.backgroundColor.r, Kirigami.Theme.backgroundColor.g, Kirigami.Theme.backgroundColor.b, 0.8)
+        color: Qt.rgba(Kirigami.Theme.backgroundColor.r, Kirigami.Theme.backgroundColor.g, Kirigami.Theme.backgroundColor.b, 0.6)
         Kirigami.Separator {
             readonly property bool horizontal: control.edge === Qt.LeftEdge || control.edge === Qt.RightEdge
 

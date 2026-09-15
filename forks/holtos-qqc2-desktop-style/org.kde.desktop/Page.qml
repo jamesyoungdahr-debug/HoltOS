@@ -24,7 +24,7 @@ T.Page {
 
     background: Rectangle {
         // HoltOS glass (G7): one translucent layer over KWin's blur.
-        color: Qt.rgba(Kirigami.Theme.backgroundColor.r, Kirigami.Theme.backgroundColor.g, Kirigami.Theme.backgroundColor.b, 0.6)
+        color: Qt.rgba(Kirigami.Theme.backgroundColor.r, Kirigami.Theme.backgroundColor.g, Kirigami.Theme.backgroundColor.b, 0.4)
     }
     readonly property Item __internal: StylePrivate.StyleItem {
         parent: controlRoot
