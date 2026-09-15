@@ -2,21 +2,22 @@
 # The Z13's firmware sets the AMD audio coprocessor 7's config flag to legacy
 # digital microphones only (acp-audio-config-flag 0x10), its _WOV method
 # returns 0 and the PDMC device has no acp-audio-device-type property, so
-# Linux never sets the microphones up. The legacy driver (snd_acp_pci) can be
-# forced to, but on this machine it records only garbage. This rebuilds
-# snd-pci-ps from Linux 7.2.4 with a DMI quirk for the GZ302: it takes the
-# chip despite the flag, ignores _WOV and accepts the PDMC device, and a
-# modprobe.d file keeps snd_acp_pci from claiming the chip first. Sources and
-# notes in forks/holtos-acp-mic-dkms (README-HOLTOS.md). Installed only on the
-# GZ302 through the hardware rules.
+# Linux never sets the microphones up. This rebuilds snd-pci-ps from Linux
+# 7.2.4 with a DMI quirk for the GZ302 (it takes the chip despite the flag,
+# ignores _WOV and accepts the PDMC device; a modprobe.d file keeps
+# snd_acp_pci from claiming the chip first). Version 2.1 also rebuilds
+# snd-ps-pdm-dma with microphone clock test settings and ships
+# holtos-mic-test, because the microphones still record a flat line with the
+# stock clock settings. Sources and notes in forks/holtos-acp-mic-dkms
+# (README-HOLTOS.md). Installed only on the GZ302 through the hardware rules.
 pkgname=holtos-acp-mic-dkms
-pkgver=2.0.r${HOLTOS_REV:-0}
+pkgver=2.1.r${HOLTOS_REV:-0}
 pkgrel=1
 pkgdesc="HoltOS fix for the built-in microphones of the ASUS ROG Flow Z13 (GZ302), DKMS"
 arch=(any)
 url="https://github.com/jamesyoungdahr-debug/HoltOS"
 license=(GPL-2.0-only)
-depends=(dkms)
+depends=(dkms python pipewire)
 source=("${pkgname}.tar")
 sha256sums=('SKIP')
 
@@ -24,8 +25,10 @@ package() {
     local dest="${pkgdir}/usr/src/holtos-acp-mic-${pkgver}"
     install -dm755 "${dest}"
     install -m644 "${pkgname}/src/pci-ps.c" "${pkgname}/src/ps-common.c" \
-        "${pkgname}/src/acp63.h" "${pkgname}/src/mach-config.h" \
-        "${pkgname}/src/Makefile" "${pkgname}/src/dkms.conf" "${dest}/"
+        "${pkgname}/src/ps-pdm-dma.c" "${pkgname}/src/acp63.h" \
+        "${pkgname}/src/mach-config.h" "${pkgname}/src/Makefile" \
+        "${pkgname}/src/dkms.conf" "${dest}/"
     sed -i "s/@PKGVER@/${pkgver}/" "${dest}/dkms.conf"
     install -Dm644 "${pkgname}/holtos-acp-mic.conf" "${pkgdir}/usr/lib/modprobe.d/holtos-acp-mic.conf"
+    install -Dm755 "${pkgname}/holtos-mic-test" "${pkgdir}/usr/bin/holtos-mic-test"
 }

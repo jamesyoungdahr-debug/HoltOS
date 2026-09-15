@@ -56,6 +56,26 @@ firmware flag. The package is installed only on the GZ302 through the
 hardware rules. `Makefile.upstream` is the kernel's ps/Makefile, kept for
 reference.
 
+## Version 2 on the Z13, and the 2.1 clock test
+
+Version 2 works at the driver level on the Z13 (snd_pci_ps takes the chip,
+"pdm config 1, pdm device 1", card `acp63`, the digital microphone is the
+default input) but the recording is still flat: every sample -32768 (one
+distinct value), with or without the microphone mute key. The PDM data line
+carries no microphone signal, as in the Acer Nitro AN16S-61 report. Arch's
+sof-firmware 2025.12.2 has no ACP 7.0 DSP firmware, and 7.2.4 knows a single
+PDM block, so the remaining lead is the clock: `ACP_PDM_CLKDIV` (0x2C6C) is
+never written by either driver.
+
+Version 2.1 also rebuilds `snd-ps-pdm-dma` (v7.2.4 `ps-pdm-dma.c`) with two
+test parameters read at every capture start, `holtos_clk_ctrl` (value for
+`ACP_WOV_CLK_CTRL`, -1 = the driver's 7) and `holtos_clkdiv` (value for
+`ACP_PDM_CLKDIV`, -1 = not written), and logs the register values before and
+after ("HoltOS test"). With both at -1 nothing changes. `holtos-mic-test`
+(installed to /usr/bin) runs a list of combinations, records 3 seconds each
+through PipeWire and prints how many distinct sample values arrived. Values
+are undocumented: this is trial and error. A restart resets the chip.
+
 ## Limits
 
 - DKMS builds it only for 7.2 kernels (`BUILD_EXCLUSIVE_KERNEL="^7\.2\."`),

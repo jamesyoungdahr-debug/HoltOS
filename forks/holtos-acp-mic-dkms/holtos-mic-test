@@ -1,0 +1,95 @@
+#!/bin/bash
+# HoltOS: test clock settings for the ROG Flow Z13's built-in microphones
+# (holtos-acp-mic-dkms test build, 2026-09-15).
+#
+# The Z13's microphones record a flat line with the stock clock settings.
+# The test build of snd_ps_pdm_dma has two settings, applied each time a
+# recording starts:
+#   holtos_clk_ctrl  value written to ACP_WOV_CLK_CTRL (-1 = driver default 7)
+#   holtos_clkdiv    value written to ACP_PDM_CLKDIV   (-1 = not written)
+# This tries a list of combinations, records 3 seconds for each and reports
+# how many different sample values came in: a working microphone gives
+# hundreds or thousands even in a quiet room, a dead one gives 1.
+#
+#   sudo holtos-mic-test            run the whole list (about 4 minutes)
+#   sudo holtos-mic-test CTRL DIV   try one combination
+#
+# Nothing is kept: the settings go back to -1 at the end, and a restart
+# resets the audio chip.
+set -u
+
+P=/sys/module/snd_ps_pdm_dma/parameters
+
+if [ "$(id -u)" -ne 0 ]; then
+    echo "Run it with sudo: sudo holtos-mic-test" >&2
+    exit 1
+fi
+if [ ! -w "$P/holtos_clkdiv" ] || [ ! -w "$P/holtos_clk_ctrl" ]; then
+    echo "The microphone test driver is not loaded. Install the latest holtos-acp-mic-dkms and restart first." >&2
+    exit 1
+fi
+user="${SUDO_USER:-}"
+if [ -z "$user" ] || [ "$user" = root ]; then
+    echo "Run it with sudo from your own account (PipeWire runs in your session)." >&2
+    exit 1
+fi
+uid="$(id -u "$user")"
+
+# measure FILE -> "distinct peak"
+measure() {
+    python3 - "$1" <<'PY'
+import array, sys, wave
+try:
+    w = wave.open(sys.argv[1])
+    d = array.array('h', w.readframes(w.getnframes()))
+except Exception:
+    print("0 0")
+    sys.exit()
+print(len(set(d)), max(map(abs, d)) if d else 0)
+PY
+}
+
+# try CTRL DIV -> prints one table row
+try() {
+    local ctrl="$1" div="$2" f result distinct peak verdict
+    echo "$ctrl" > "$P/holtos_clk_ctrl"
+    echo "$div" > "$P/holtos_clkdiv"
+    f="$(mktemp --suffix .wav)"
+    chmod 666 "$f"
+    runuser -u "$user" -- env XDG_RUNTIME_DIR="/run/user/$uid" \
+        timeout 3 pw-record --format s16 "$f" >/dev/null 2>&1
+    result="$(measure "$f")"
+    rm -f "$f"
+    distinct="${result% *}"
+    peak="${result#* }"
+    if [ "${distinct:-0}" -ge 100 ]; then
+        verdict="SOUND"
+    elif [ "${distinct:-0}" -le 1 ]; then
+        verdict="flat"
+    else
+        verdict="-"
+    fi
+    printf '%-9s %-9s %-9s %-7s %s\n' "$ctrl" "$div" "$distinct" "$peak" "$verdict"
+    # PipeWire keeps the device open for a few seconds after a recording;
+    # wait until it lets go so the next recording starts the clock afresh.
+    sleep 7
+}
+
+printf '%-9s %-9s %-9s %-7s %s\n' "clk_ctrl" "clkdiv" "distinct" "peak" "result"
+if [ $# -eq 2 ]; then
+    try "$1" "$2"
+else
+    for ctrl in 7 6 5 4 3 2 1 0; do
+        try "$ctrl" -1
+    done
+    for div in 0 1 2 3 4 5 6 8 10 12 16 24 32 48 64; do
+        try 7 "$div"
+    done
+fi
+echo -1 > "$P/holtos_clk_ctrl"
+echo -1 > "$P/holtos_clkdiv"
+echo
+echo "Register values the driver saw (first recording):"
+dmesg | grep "HoltOS test" | head -n 2
+echo
+echo "Done. Restart the computer to reset the audio chip."
