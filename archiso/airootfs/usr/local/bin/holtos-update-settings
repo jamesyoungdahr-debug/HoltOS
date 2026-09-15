@@ -22,6 +22,7 @@ declare -A setting=(
     [AUTO_INSTALL]=apps
     [INSTALL_WINDOW]=""
     [CHECK_AFTER_GAMEMODE]=yes
+    [SNAPSHOT_KEEP]=5
 )
 
 valid() {
@@ -30,6 +31,8 @@ valid() {
         AUTO_DOWNLOAD|CHECK_AFTER_GAMEMODE) [[ "$2" =~ ^(yes|no)$ ]] ;;
         AUTO_INSTALL) [[ "$2" =~ ^(off|apps|all)$ ]] ;;
         INSTALL_WINDOW) [[ "$2" =~ ^(([01][0-9]|2[0-3]):00)?$ ]] ;;
+        # Snapshots kept before updates (holtos-btrfs-snapshot): 2 to 10.
+        SNAPSHOT_KEEP) [[ "$2" =~ ^([2-9]|10)$ ]] ;;
         *) return 1 ;;
     esac
 }
@@ -64,7 +67,7 @@ mkdir -p "$(dirname "$CONF")"
 tmp="$(mktemp "$CONF.XXXXXX")"
 {
     echo "# HoltOS updater settings. Edit them in HoltOS Updates > Settings."
-    for key in CHECK_INTERVAL AUTO_DOWNLOAD AUTO_INSTALL INSTALL_WINDOW CHECK_AFTER_GAMEMODE; do
+    for key in CHECK_INTERVAL AUTO_DOWNLOAD AUTO_INSTALL INSTALL_WINDOW CHECK_AFTER_GAMEMODE SNAPSHOT_KEEP; do
         printf '%s=%s\n' "$key" "${setting[$key]}"
     done
 } > "$tmp"

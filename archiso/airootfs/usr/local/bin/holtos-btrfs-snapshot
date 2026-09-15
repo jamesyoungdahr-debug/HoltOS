@@ -26,6 +26,12 @@ set -euo pipefail
 # root — a booted snapshot — so it points SNAP_LOG/SNAPSHOTS_DIR at the
 # top-level Btrfs mount it holds instead of the running root's paths).
 KEEP=5
+# How many snapshots to keep: HoltOS Updates > Settings writes SNAPSHOT_KEEP
+# (2 to 10) to /etc/holtos/updates.conf. The file is parsed, never sourced.
+keep_setting="$(sed -n 's/^SNAPSHOT_KEEP=\([0-9]\+\)$/\1/p' /etc/holtos/updates.conf 2>/dev/null | tail -n 1)"
+if [ -n "$keep_setting" ] && [ "$keep_setting" -ge 2 ] && [ "$keep_setting" -le 10 ]; then
+    KEEP="$keep_setting"
+fi
 REGEN_ONLY=0
 if [ "${1:-}" = "--regen" ]; then
     REGEN_ONLY=1

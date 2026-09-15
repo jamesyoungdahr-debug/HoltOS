@@ -22,6 +22,9 @@ Neon rebrand (next major release):
   the kernel-update hook and the installer shortcut carry the HoltOS name.
   Updating removes the old homelab files once the renamed ones are in place,
   so the boot menu still refreshes exactly once per kernel update.
+- **Choose how many snapshots to keep:** HoltOS Updates > Settings > "Keep
+  before updates" (2 to 10, default 5). Older snapshots, their kernel
+  copies and boot entries are removed beyond that number.
 - **Support bundle:** tray menu > Create Support Bundle (or
   `holtos-support-bundle`) saves the logs and system facts needed for a bug
   report into one file in your home folder, with your user and computer

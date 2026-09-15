@@ -26,7 +26,7 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QApplication, QCheckBox, QComboBox, QFormLayout, QFrame, QHBoxLayout,
     QHeaderView, QLabel, QMessageBox, QProgressBar, QPushButton, QScrollArea,
-    QTableWidget, QTableWidgetItem, QTabWidget, QTimeEdit, QToolButton,
+    QSpinBox, QTableWidget, QTableWidgetItem, QTabWidget, QTimeEdit, QToolButton,
     QVBoxLayout, QWidget,
 )
 
@@ -43,6 +43,7 @@ DEFAULTS = {
     "AUTO_INSTALL": "apps",
     "INSTALL_WINDOW": "",
     "CHECK_AFTER_GAMEMODE": "yes",
+    "SNAPSHOT_KEEP": "5",
 }
 INTERVALS = [
     ("1h", "Every hour"),
@@ -525,6 +526,15 @@ class SettingsTab(QWidget):
 
         self.after_gamemode = QCheckBox("Check for updates when leaving Game Mode")
         form.addRow("", self.after_gamemode)
+
+        self.snapshot_keep = QSpinBox()
+        self.snapshot_keep.setRange(2, 10)
+        self.snapshot_keep.setSuffix(" snapshots")
+        form.addRow("Keep before updates:", self.snapshot_keep)
+        keep_note = QLabel("HoltOS takes a snapshot before every update so it can be undone. "
+                           "Older snapshots are removed beyond this number.")
+        keep_note.setWordWrap(True)
+        form.addRow("", keep_note)
         layout.addLayout(form)
 
         buttons = QHBoxLayout()
@@ -549,6 +559,8 @@ class SettingsTab(QWidget):
         self.window_time.setTime(QTime(int(hour), 0) if has_window else QTime(4, 0))
         self.window_time.setEnabled(has_window)
         self.after_gamemode.setChecked(settings["CHECK_AFTER_GAMEMODE"] != "no")
+        keep = settings["SNAPSHOT_KEEP"]
+        self.snapshot_keep.setValue(int(keep) if keep.isdigit() and 2 <= int(keep) <= 10 else 5)
 
     def save(self):
         window = f"{self.window_time.time().hour():02d}:00" if self.use_window.isChecked() else ""
@@ -558,6 +570,7 @@ class SettingsTab(QWidget):
             f"AUTO_INSTALL={self.auto_install.currentData()}",
             f"INSTALL_WINDOW={window}",
             f"CHECK_AFTER_GAMEMODE={'yes' if self.after_gamemode.isChecked() else 'no'}",
+            f"SNAPSHOT_KEEP={self.snapshot_keep.value()}",
         ]
         proc = subprocess.run(
             ["pkexec", "/usr/local/bin/holtos-update-settings", *args],

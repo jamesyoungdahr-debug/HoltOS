@@ -72,4 +72,7 @@ file_permissions=(
   ["/usr/local/bin/holtos-disk-alert"]="0:0:755"
   ["/usr/local/bin/holtos-disk-alert-notice"]="0:0:755"
   ["/usr/local/bin/holtos-rescan-bootmenu"]="0:0:755"
+  ["/usr/local/bin/holtos-hardware"]="0:0:755"
+  ["/usr/local/bin/holtos-support-bundle"]="0:0:755"
+  ["/usr/local/bin/holtos-steamos-manager"]="0:0:755"
 )
