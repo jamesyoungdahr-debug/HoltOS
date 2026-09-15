@@ -7,11 +7,15 @@
 Window.SetBackgroundTopColor(0.051, 0.043, 0.071);
 Window.SetBackgroundBottomColor(0.051, 0.043, 0.071);
 
-// Ambient glow, top-right — z below everything else.
+// Ambient glow, top-right — z below everything else. The y offset nudges the
+// glow's CENTRE just above the top edge so it bleeds in from off-screen; it
+// must not also subtract half the image height, or the sprite is pushed so
+// far up that most of it is clipped (found on 1920x1080: only 124 px of a
+// 420 px glow was on screen, which left the splash looking flat black).
 glow.image = Image("glow.png");
 glow.sprite = Sprite(glow.image);
 glow.sprite.SetPosition(Window.GetWidth() * 0.70 - glow.image.GetWidth() / 2,
-                        -Window.GetHeight() * 0.08 - glow.image.GetHeight() / 2, 100);
+                        -Window.GetHeight() * 0.08, 100);
 glow.sprite.SetOpacity(0.9);
 
 logo.image = Image("watermark.png");

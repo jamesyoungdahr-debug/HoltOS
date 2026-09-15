@@ -102,7 +102,10 @@ Item {
         Image {
             source: config.glow
             x: root.width * 0.70 - width / 2
-            y: -root.height * 0.08 - height / 2
+            // Nudge the glow's CENTRE just above the top edge so it bleeds in
+            // from off-screen. Subtracting half the image height as well pushed
+            // most of it out of frame (the same bug as the Plymouth splash).
+            y: -root.height * 0.08
             opacity: 0.9
             asynchronous: true
         }
@@ -174,11 +177,34 @@ Item {
             }
         }
 
+        // Software-rendering fallback for the "glass". A shader blur needs a
+        // GPU-backed scene graph; where Qt reports GraphicsInfo.Software the
+        // live blur above cannot run, and the card used to fall back to a FLAT
+        // opaque surface, so it read as a solid slab rather than glass (seen on
+        // the Z13's greeter, not just in a VM). Show a pre-blurred copy of the
+        // ground instead — generated to match this effect (blurMax 48,
+        // saturation 0.4) — offset so the region behind the card lines up.
+        Item {
+            anchors.fill: parent
+            clip: true
+            visible: root.softwareRendering
+
+            Image {
+                source: "ground-blur.png"
+                x: -card.x
+                y: -card.y
+                width: root.width
+                height: root.height
+                fillMode: Image.PreserveAspectCrop
+                smooth: true
+            }
+        }
+
         Rectangle {
             id: cardFace
             anchors.fill: parent
             radius: 14
-            color: root.softwareRendering ? root.surface : Qt.rgba(23 / 255, 20 / 255, 35 / 255, 0.84)
+            color: Qt.rgba(23 / 255, 20 / 255, 35 / 255, 0.84)
             border.width: 1
             border.color: root.hairlineStrong
 
