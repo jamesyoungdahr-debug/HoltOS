@@ -185,6 +185,15 @@ Each one is a small unit, built and checked before the next.
 
 ## Decisions and findings
 
+- **2026-09-15**: Kvantum leaves a `QMainWindow` opaque when its central
+  widget is a plain `QWidget` (tested in the VM with four windows: a plain
+  top-level `QWidget` and a `QMainWindow` holding a `QScrollArea` were glass;
+  `QMainWindow`s holding a plain `QWidget`, with or without a child
+  stylesheet, were solid). HoltOS Apps was opaque for this reason and is now
+  a top-level `QWidget`. Rule for HoltOS tools: use a top-level `QWidget`
+  (or `QTabWidget`), or give a `QMainWindow` a tab or scroll widget as its
+  central widget. Network Shares (central `QTabWidget`) was already glass.
+
 - **2026-09-14**: the edge-blur fix and the glass buttons live on branches
   (holtos-kwin `edge-blur-fix`, HoltOS `glass-buttons`, both pushed) until
   Liam has tested them on Liamtab. Test packages are built locally (KWin

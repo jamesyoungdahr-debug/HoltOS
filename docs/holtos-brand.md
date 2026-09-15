@@ -33,6 +33,14 @@ by scripts, and shown next to it for review.
   two small lime sparks. Render: concept C, seed 4202; app icon seed 4301.
 - **Symbolic mark:** the same head as a white one-colour glyph for the tray
   and small sizes (seed 4401).
+- **HoltOS Apps icon** (2026-09-15, Liam's pick): a rounded glass tile with
+  the magenta-to-blue neon rim, a grid of glowing app squares in purple,
+  teal, electric blue and lilac, and a long purple otter curving through the
+  grid (flat head, low ears, long body and tail), with lime sparks. Render:
+  concept B, seed 5201, image 1
+  (`docs/design-references/holtos-apps-icon-B1-seed5201.png`); icon files
+  `holtos-apps.png` from `tools/brand/derive_app_icon.py`. The store had used
+  the head mark, which reads as a teddy bear at dock size.
 - **Full-body otter**, for the login screen and illustration: standing, long
   slender body, webbed feet, long tapered tail, the same neon rim. Render:
   seed 7301 #2. Otters have wide flat heads, ears low on the sides and long

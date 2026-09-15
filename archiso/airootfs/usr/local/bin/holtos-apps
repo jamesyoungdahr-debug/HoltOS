@@ -44,7 +44,7 @@ from manage import InstalledPage, UpdatesPage
 from app_page import AppPage
 
 
-ICON_PATH = "/usr/share/icons/hicolor/256x256/apps/holtos-logo.png"
+ICON_PATH = "/usr/share/icons/hicolor/256x256/apps/holtos-apps.png"
 APP_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{2,254}$")
 FLATHUB_REPO = "https://dl.flathub.org/repo/"
 
