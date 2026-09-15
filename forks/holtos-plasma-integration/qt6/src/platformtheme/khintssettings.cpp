@@ -46,7 +46,11 @@
 #include <private/qtx11extras_p.h>
 #endif
 
-static const QString defaultLookAndFeelPackage = QStringLiteral("org.kde.breeze.desktop");
+// HoltOS ships no Breeze look-and-feel package (its 2026-09-14 decision to
+// keep only its own themes), so falling back to org.kde.breeze.desktop
+// resolves to a package that is not installed and the theme lookup fails.
+// Diverges from upstream: check this on every rebase.
+static const QString defaultLookAndFeelPackage = QStringLiteral("org.holtos.desktop");
 
 const QDBusArgument &operator>>(const QDBusArgument &argument, QMap<QString, QVariantMap> &map)
 {
