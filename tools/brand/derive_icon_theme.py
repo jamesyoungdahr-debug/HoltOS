@@ -54,6 +54,12 @@ ICONS: dict[str, tuple[str, str]] = {
 CONTEXTS: dict[str, str] = {"places": "Places", "mimetypes": "MimeTypes", "apps": "Applications"}
 
 
+# Sizes that also get a double-resolution copy (<size>x<size>@2, Scale=2):
+# a desktop at 150 % or 200 % scaling (the ROG Flow Z13) asks for these, and
+# without them it enlarges the 1x icon, which looks blurry.
+SCALED_SIZES = [16, 22, 24, 32, 48, 64]
+
+
 def index_theme() -> str:
     """Return the full text of a freedesktop index.theme for HoltOS."""
     lines: list[str] = [
@@ -64,19 +70,23 @@ def index_theme() -> str:
         "Example=folder",
     ]
 
-    dirs: list[str] = []
+    # (directory, size, scale)
+    dirs: list[tuple[str, int, int]] = []
     for size in SIZES:
         for context in sorted(CONTEXTS):
-            dirs.append(f"{size}x{size}/{context}")
-    lines.append("Directories=" + ",".join(dirs))
+            dirs.append((f"{size}x{size}/{context}", size, 1))
+    for size in SCALED_SIZES:
+        for context in sorted(CONTEXTS):
+            dirs.append((f"{size}x{size}@2/{context}", size, 2))
+    lines.append("Directories=" + ",".join(d for d, _size, _scale in dirs))
 
-    for d in dirs:
-        parts = d.split("/")
-        size_str, ctx = parts[0], parts[1]
-        size_int = int(size_str.replace("x", ""))
+    for d, size, scale in dirs:
+        ctx = d.split("/")[1]
         lines.append("")
         lines.append(f"[{d}]")
-        lines.append(f"Size={size_int}")
+        lines.append(f"Size={size}")
+        if scale != 1:
+            lines.append(f"Scale={scale}")
         lines.append(f"Context={CONTEXTS[ctx]}")
         lines.append("Type=Fixed")
 
@@ -122,8 +132,13 @@ def main() -> None:
             out = base / f"{size}x{size}" / context / f"{name}.png"
             out.parent.mkdir(parents=True, exist_ok=True)
             tile.resize((size, size), Image.LANCZOS).save(str(out))
+        # Double-resolution copies for scaled desktops (see SCALED_SIZES).
+        for size in SCALED_SIZES:
+            out = base / f"{size}x{size}@2" / context / f"{name}.png"
+            out.parent.mkdir(parents=True, exist_ok=True)
+            tile.resize((size * 2, size * 2), Image.LANCZOS).save(str(out))
         written_names.add(name)
-        print(f"{name}: {len(SIZES)} sizes from {render}")
+        print(f"{name}: {len(SIZES)} sizes + {len(SCALED_SIZES)} @2 sizes from {render}")
 
     # Write index.theme
     (base / "index.theme").write_text(index_theme(), encoding="utf-8", newline="\n")
