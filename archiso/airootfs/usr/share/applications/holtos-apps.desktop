@@ -3,7 +3,15 @@ Type=Application
 Name=HoltOS Apps
 GenericName=App Store
 Comment=Install media players, game launchers, browsers and more from Flathub
-Exec=/usr/local/bin/holtos-apps
+Exec=/usr/local/bin/holtos-apps %u
 Icon=holtos-logo
 Categories=System;PackageManager;
-Keywords=store;apps;flatpak;flathub;install;
+Keywords=store;apps;flatpak;flathub;install;update;
+# Flathub's "Install" links (appstream://) and downloaded .flatpakref files
+# open the app's page in HoltOS Apps.
+MimeType=application/vnd.flatpak.ref;x-scheme-handler/appstream;
+Actions=updates;
+
+[Desktop Action updates]
+Name=App Updates
+Exec=/usr/local/bin/holtos-apps --updates

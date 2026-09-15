@@ -118,6 +118,16 @@ Not written to disk yet -- waiting on decky-loader's own build verification firs
   Verified on the build 24 live VM (installing and removing Flatseal from
   the desktop). Updates go through HoltOS Updates. The name stays "HoltOS
   Apps" until Liam picks one.
+- **Rebuilt (2026-09-15, branch `neon-rebrand`)**: the window is split into
+  modules in `usr/share/holtos/apps/`: `flathub.py` (Flathub web API with a
+  disk cache and offline fallback, plain-English permission warnings),
+  `flatpak_helper.py` (libflatpak transactions in their own process, JSON
+  progress lines, cancel on SIGTERM), `store.py` (job queue and progress),
+  `browse.py`, `app_page.py`, `manage.py`, `workers.py`. `holtos-apps` is the
+  window: Browse (categories, HoltOS picks, Flathub collections), app pages,
+  Installed, Updates, search, `--updates`, `appstream://` and Flathub
+  `.flatpakref` handling. Kvantum leaves a QMainWindow with a plain central
+  widget opaque, so the window is a top-level QWidget.
 - **Source**: Flathub. It is what every other distro uses and where the
   media/gaming apps live (Jellyfin, Plex, Kodi, Heroic, Lutris, OBS,
   Discord, VLC, Firefox). Own repo only for HoltOS-built apps later.

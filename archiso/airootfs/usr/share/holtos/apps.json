@@ -13,7 +13,9 @@
         {"id": "com.stremio.Stremio", "name": "Stremio", "summary": "Freedom to Stream"},
         {"id": "org.videolan.VLC", "name": "VLC", "summary": "VLC media player, the open-source multimedia player"},
         {"id": "io.mpv.Mpv", "name": "mpv", "summary": "A free, open source, and cross-platform media player"},
-        {"id": "com.spotify.Client", "name": "Spotify", "summary": "Online music streaming service"}
+        {"id": "com.spotify.Client", "name": "Spotify", "summary": "Online music streaming service"},
+        {"id": "com.github.rafostar.Clapper", "name": "Clapper", "summary": "Lean back and enjoy videos"},
+        {"id": "org.jellyfin.JellyfinServer", "name": "Jellyfin Server", "summary": "Run your own media server"}
       ]
     },
     {
@@ -28,7 +30,13 @@
         {"id": "com.moonlight_stream.Moonlight", "name": "Moonlight", "summary": "Stream games and other applications from another PC running Sunshine or GeForce Experience"},
         {"id": "dev.lizardbyte.app.Sunshine", "name": "Sunshine", "summary": "GameStream host for Moonlight"},
         {"id": "org.DolphinEmu.dolphin-emu", "name": "Dolphin Emulator", "summary": "GameCube / Wii / Triforce Emulator"},
-        {"id": "org.libretro.RetroArch", "name": "RetroArch", "summary": "Frontend for emulators, game engines and media players"}
+        {"id": "org.libretro.RetroArch", "name": "RetroArch", "summary": "Frontend for emulators, game engines and media players"},
+        {"id": "com.valvesoftware.SteamLink", "name": "Steam Link", "summary": "Stream games from another computer with Steam"},
+        {"id": "com.github.Matoking.protontricks", "name": "Protontricks", "summary": "Apps and fixes for Proton games"},
+        {"id": "net.pcsx2.PCSX2", "name": "PCSX2", "summary": "PlayStation 2 emulator"},
+        {"id": "net.rpcs3.RPCS3", "name": "RPCS3", "summary": "PlayStation 3 emulator"},
+        {"id": "org.ppsspp.PPSSPP", "name": "PPSSPP", "summary": "PlayStation Portable emulator"},
+        {"id": "info.cemu.Cemu", "name": "Cemu", "summary": "Wii U emulator"}
       ]
     },
     {
@@ -37,7 +45,9 @@
       "apps": [
         {"id": "com.obsproject.Studio", "name": "OBS Studio", "summary": "Live stream and record videos"},
         {"id": "com.discordapp.Discord", "name": "Discord", "summary": "Talk, play, hang out"},
-        {"id": "dev.vencord.Vesktop", "name": "Vesktop", "summary": "Customizable Discord client"}
+        {"id": "dev.vencord.Vesktop", "name": "Vesktop", "summary": "Customizable Discord client"},
+        {"id": "org.telegram.desktop", "name": "Telegram", "summary": "Fast, cloud-based messaging"},
+        {"id": "im.riot.Riot", "name": "Element", "summary": "Secure chat on Matrix"}
       ]
     },
     {
@@ -50,12 +60,24 @@
       ]
     },
     {
+      "id": "create",
+      "title": "Create",
+      "apps": [
+        {"id": "fr.handbrake.ghb", "name": "HandBrake", "summary": "Convert videos for any device"},
+        {"id": "org.kde.kdenlive", "name": "Kdenlive", "summary": "Edit videos"},
+        {"id": "org.audacityteam.Audacity", "name": "Audacity", "summary": "Record and edit audio"}
+      ]
+    },
+    {
       "id": "tools",
       "title": "Tools",
       "apps": [
         {"id": "com.github.tchx84.Flatseal", "name": "Flatseal", "summary": "Manage Flatpak permissions"},
         {"id": "org.freedesktop.Piper", "name": "Piper", "summary": "Gaming mouse configuration utility"},
-        {"id": "io.github.ilya_zlobintsev.LACT", "name": "LACT", "summary": "Control your graphics cards"}
+        {"id": "io.github.ilya_zlobintsev.LACT", "name": "LACT", "summary": "Control your graphics cards"},
+        {"id": "org.localsend.localsend_app", "name": "LocalSend", "summary": "Share files with nearby devices"},
+        {"id": "net.nokyan.Resources", "name": "Resources", "summary": "Keep an eye on system resources"},
+        {"id": "it.mijorus.gearlever", "name": "Gear Lever", "summary": "Manage AppImages"}
       ]
     }
   ]

@@ -1,390 +1,282 @@
 #!/usr/bin/env python3
 """HoltOS Apps: the app store.
 
-A curated front page of Flathub apps picked for a media and gaming machine
-(/usr/share/holtos/apps.json), search across all of Flathub, and the apps
-already installed, each with Install, Open and Remove. Apps install
-system-wide from Flathub (/etc/flatpak/remotes.d/flathub.flatpakrepo), and
-Flatpak's own polkit rule lets the active local admin install and remove
-them without a password. Updates for these apps arrive through HoltOS
-Updates like everything else.
+Browse HoltOS's picks and Flathub's collections and categories, search
+Flathub, open an app's page (screenshots, permissions, sizes, release notes),
+and install, update and remove apps with real progress. Apps install
+system-wide from Flathub; Flatpak's polkit rules let the active local user do
+that without a password. The window's parts live in /usr/share/holtos/apps.
+
+  holtos-apps                       open the store
+  holtos-apps --updates             open the Updates page
+  holtos-apps appstream://APP_ID    open an app's page (links on flathub.org)
+  holtos-apps FILE.flatpakref|URL   open the page of the app a Flathub .flatpakref names
 """
-import html
-import json
+
 import os
+import re
 import shutil
-import subprocess
 import sys
 import urllib.parse
-import urllib.request
 
-from PySide6.QtCore import QObject, QProcess, QRunnable, Qt, QThreadPool, Signal
-from PySide6.QtGui import QIcon, QPixmap
+LIB = os.environ.get("HOLTOS_APPS_LIB", "/usr/share/holtos/apps")
+sys.path.insert(0, LIB)
+
+from PySide6.QtCore import QProcess, Qt
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
-    QApplication, QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit,
-    QMessageBox, QProgressBar, QPushButton, QScrollArea, QTabWidget,
-    QVBoxLayout, QWidget,
+    QApplication,
+    QButtonGroup,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QMessageBox,
+    QPushButton,
+    QStackedWidget,
+    QVBoxLayout,
+    QWidget,
 )
 
+import flathub
+from store import Store
+from browse import BrowsePage, ListPage
+from manage import InstalledPage, UpdatesPage
+from app_page import AppPage
+
+
 ICON_PATH = "/usr/share/icons/hicolor/256x256/apps/holtos-logo.png"
-CATALOG_PATH = "/usr/share/holtos/apps.json"
-REMOTE = "flathub"
-CACHE_DIR = os.path.join(os.path.expanduser("~"), ".cache", "holtos-apps", "icons")
-ICON_SIZE = 64
-NOT_APPS = (".Platform", ".Sdk", ".Extension", ".Locale", ".Debug", ".GL.", ".Codecs")
+APP_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{2,254}$")
+FLATHUB_REPO = "https://dl.flathub.org/repo/"
 
 
-def installed_apps():
-    proc = subprocess.run(
-        ["flatpak", "list", "--app", "--system", "--columns=application,name,version"],
-        capture_output=True, text=True,
-    )
-    apps = {}
-    if proc.returncode != 0:
-        return apps
-    for line in proc.stdout.splitlines():
-        parts = line.split("\t")
-        if len(parts) >= 2 and parts[0]:
-            version = parts[2] if len(parts) > 2 and parts[2] else ""
-            apps[parts[0]] = {
-                "id": parts[0],
-                "name": parts[1] or parts[0],
-                "summary": f"Version {version}" if version else "",
-            }
-    return apps
+def app_from_argument(arg):
+    """Returns (app_id or None, error message or None)."""
 
+    # Handle appstream://ID or appstream:ID
+    if arg.startswith("appstream://"):
+        id_ = arg[len("appstream://"):]
+        id_ = id_.lstrip("/")
+    elif arg.startswith("appstream:"):
+        id_ = arg[len("appstream:"):]
+    else:
+        # Treat as .flatpakref
+        if arg.startswith("https://"):
+            parsed = urllib.parse.urlparse(arg)
+            if parsed.hostname == "dl.flathub.org" and parsed.path.endswith(".flatpakref"):
+                basename = os.path.basename(parsed.path)
+                id_ = basename.rsplit(".flatpakref", 1)[0]
+            else:
+                return (None, "HoltOS Apps installs apps from Flathub only.")
+        else:
+            # Local path
+            local_path = arg
+            if local_path.startswith("file://"):
+                local_path = urllib.parse.unquote(local_path[len("file://"):])
 
-def search_flathub(term):
-    proc = subprocess.run(
-        ["flatpak", "search", "--system", "--columns=application,name,description", "--", term],
-        capture_output=True, text=True,
-    )
-    results = []
-    seen = set()
-    for line in proc.stdout.splitlines():
-        parts = line.split("\t")
-        if len(parts) < 3 or "." not in parts[0] or parts[0] in seen:
-            continue
-        if any(marker in parts[0] for marker in NOT_APPS):
-            continue
-        seen.add(parts[0])
-        results.append({"id": parts[0], "name": parts[1] or parts[0], "summary": parts[2]})
-    return results
-
-
-class IconSignals(QObject):
-    loaded = Signal(str, str)
-
-
-class IconJob(QRunnable):
-    """Fetches an app's icon from Flathub once and caches it on disk."""
-
-    def __init__(self, app_id, signals):
-        super().__init__()
-        self.app_id = app_id
-        self.signals = signals
-
-    def run(self):
-        path = os.path.join(CACHE_DIR, f"{self.app_id}.png")
-        if not os.path.exists(path):
             try:
-                quoted = urllib.parse.quote(self.app_id, safe=".-_")
-                with urllib.request.urlopen(f"https://flathub.org/api/v2/appstream/{quoted}", timeout=15) as response:
-                    icon_url = json.load(response).get("icon")
-                if not icon_url or not icon_url.startswith("https://"):
-                    return
-                with urllib.request.urlopen(icon_url, timeout=15) as response:
-                    data = response.read()
-                os.makedirs(CACHE_DIR, exist_ok=True)
-                partial = path + ".part"
-                with open(partial, "wb") as f:
-                    f.write(data)
-                os.replace(partial, path)
-            except (OSError, ValueError):
-                return
-        self.signals.loaded.emit(self.app_id, path)
+                with open(local_path, "r", errors="replace") as f:
+                    content = f.read(64 * 1024)
+            except OSError:
+                return (None, f"Could not read {arg}.")
+
+            name = None
+            url = None
+            in_group = False
+            for line in content.splitlines():
+                line = line.strip()
+                if line == "[Flatpak Ref]":
+                    in_group = True
+                    continue
+                elif line.startswith("["):
+                    in_group = False
+                    continue
+                if in_group and "=" in line:
+                    key, _, value = line.partition("=")
+                    key = key.strip()
+                    value = value.strip()
+                    if key == "Name":
+                        name = value
+                    elif key == "Url":
+                        url = value
+
+            if not url or not url.startswith(FLATHUB_REPO):
+                return (None, "HoltOS Apps installs apps from Flathub only.")
+            id_ = name
+
+    # Validate the app ID
+    if not id_ or not APP_ID.match(id_):
+        return (None, "That link does not name a valid app.")
+
+    return (id_, None)
 
 
-class IconCache(QObject):
-    def __init__(self):
+# A plain top-level QWidget, not a QMainWindow: Kvantum leaves a QMainWindow
+# with a plain central widget opaque, so the store would miss HoltOS glass.
+class AppsWindow(QWidget):
+
+    def __init__(self, start_updates=False, open_id=None):
         super().__init__()
-        self.pool = QThreadPool.globalInstance()
-        self.signals = IconSignals()
-        self.signals.loaded.connect(self.deliver)
-        self.waiting = {}
-        self.requested = set()
-        self.paths = {}
 
-    def request(self, app_id, callback):
-        if app_id in self.paths:
-            callback(self.paths[app_id])
-            return
-        self.waiting.setdefault(app_id, []).append(callback)
-        if app_id not in self.requested:
-            self.requested.add(app_id)
-            self.pool.start(IconJob(app_id, self.signals))
-
-    def deliver(self, app_id, path):
-        self.paths[app_id] = path
-        for callback in self.waiting.pop(app_id, []):
-            try:
-                callback(path)
-            except RuntimeError:
-                pass  # the card was closed before its icon arrived
-
-
-class Store(QObject):
-    """What is installed, and the install/remove operations in flight."""
-
-    changed = Signal()
-
-    def __init__(self):
-        super().__init__()
-        self.installed = {}
-        self.busy = {}
-        self.processes = {}
-        self.refresh()
-
-    def refresh(self):
-        self.installed = installed_apps()
-        self.changed.emit()
-
-    def run(self, app_id, action, parent):
-        if app_id in self.processes:
-            return
-        if action == "install":
-            args = ["install", "--system", "-y", "--noninteractive", REMOTE, app_id]
-        else:
-            args = ["uninstall", "--system", "-y", "--noninteractive", app_id]
-        process = QProcess(self)
-        process.setProcessChannelMode(QProcess.MergedChannels)
-        process.finished.connect(
-            lambda code, _status: self.finished(app_id, action, process, code, parent)
-        )
-        self.processes[app_id] = process
-        self.busy[app_id] = action
-        self.changed.emit()
-        process.start("flatpak", args)
-
-    def finished(self, app_id, action, process, code, parent):
-        output = bytes(process.readAll()).decode(errors="replace").strip()
-        self.processes.pop(app_id, None)
-        self.busy.pop(app_id, None)
-        self.refresh()
-        if code != 0:
-            verb = "install" if action == "install" else "remove"
-            tail = "\n".join(output.splitlines()[-6:]) or f"flatpak exited with {code}"
-            QMessageBox.warning(parent, "HoltOS Apps", f"Could not {verb} {app_id}:\n{tail}")
-
-
-class AppCard(QFrame):
-    def __init__(self, app, store, icons):
-        super().__init__()
-        self.app = app
-        self.store = store
-        self.setFrameShape(QFrame.StyledPanel)
-        self.setMinimumWidth(260)
-        layout = QHBoxLayout(self)
-
-        self.icon = QLabel()
-        self.icon.setFixedSize(ICON_SIZE, ICON_SIZE)
-        self.icon.setPixmap(QIcon.fromTheme("application-x-executable").pixmap(ICON_SIZE, ICON_SIZE))
-        layout.addWidget(self.icon, alignment=Qt.AlignTop)
-
-        text = QVBoxLayout()
-        text.addWidget(QLabel(f"<b>{html.escape(app['name'])}</b>"))
-        summary = QLabel(app.get("summary", ""))
-        summary.setTextFormat(Qt.PlainText)
-        summary.setWordWrap(True)
-        text.addWidget(summary)
-        self.status = QLabel()
-        text.addWidget(self.status)
-        self.bar = QProgressBar()
-        self.bar.setRange(0, 0)
-        self.bar.setTextVisible(False)
-        self.bar.setMaximumHeight(8)
-        text.addWidget(self.bar)
-
-        buttons = QHBoxLayout()
-        self.primary = QPushButton()
-        self.primary.clicked.connect(self.primary_clicked)
-        self.remove = QPushButton("Remove")
-        self.remove.clicked.connect(lambda: self.store.run(self.app["id"], "remove", self))
-        buttons.addWidget(self.primary)
-        buttons.addWidget(self.remove)
-        buttons.addStretch()
-        text.addLayout(buttons)
-        layout.addLayout(text, 1)
-
-        store.changed.connect(self.update_state)
-        icons.request(app["id"], self.set_icon)
-        self.update_state()
-
-    def set_icon(self, path):
-        pixmap = QPixmap(path)
-        if not pixmap.isNull():
-            self.icon.setPixmap(pixmap.scaled(ICON_SIZE, ICON_SIZE, Qt.KeepAspectRatio, Qt.SmoothTransformation))
-
-    def update_state(self):
-        app_id = self.app["id"]
-        busy = self.store.busy.get(app_id)
-        installed = app_id in self.store.installed
-        self.bar.setVisible(bool(busy))
-        self.status.setVisible(bool(busy))
-        if busy:
-            self.status.setText("Installing..." if busy == "install" else "Removing...")
-        self.primary.setEnabled(not busy)
-        self.remove.setEnabled(not busy)
-        self.primary.setText("Open" if installed else "Install")
-        self.remove.setVisible(installed)
-
-    def primary_clicked(self):
-        if self.app["id"] in self.store.installed:
-            QProcess.startDetached("flatpak", ["run", self.app["id"]])
-        else:
-            self.store.run(self.app["id"], "install", self)
-
-    def close_card(self):
-        self.store.changed.disconnect(self.update_state)
-        self.deleteLater()
-
-
-class FeaturedPage(QScrollArea):
-    def __init__(self, store, icons):
-        super().__init__()
-        self.setWidgetResizable(True)
-        host = QWidget()
-        layout = QVBoxLayout(host)
-        try:
-            with open(CATALOG_PATH) as f:
-                catalog = json.load(f)
-        except (OSError, ValueError):
-            catalog = {"categories": []}
-        for category in catalog.get("categories", []):
-            title = QLabel(category.get("title", ""))
-            title.setStyleSheet("font-size: 14pt; font-weight: 600;")
-            layout.addWidget(title)
-            grid = QGridLayout()
-            for index, app in enumerate(category.get("apps", [])):
-                grid.addWidget(AppCard(app, store, icons), index // 3, index % 3)
-            layout.addLayout(grid)
-        if not catalog.get("categories"):
-            layout.addWidget(QLabel("The HoltOS app list is missing."))
-        layout.addStretch()
-        self.setWidget(host)
-
-
-class SearchPage(QWidget):
-    def __init__(self, store, icons):
-        super().__init__()
-        self.store = store
-        self.icons = icons
-        self.cards = []
-        layout = QVBoxLayout(self)
-
-        row = QHBoxLayout()
-        self.query = QLineEdit()
-        self.query.setPlaceholderText("Search Flathub")
-        self.query.returnPressed.connect(self.search)
-        button = QPushButton("Search")
-        button.clicked.connect(self.search)
-        row.addWidget(self.query, 1)
-        row.addWidget(button)
-        layout.addLayout(row)
-
-        self.message = QLabel("Search every app on Flathub.")
-        layout.addWidget(self.message)
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        host = QWidget()
-        self.results = QVBoxLayout(host)
-        self.results.addStretch()
-        scroll.setWidget(host)
-        layout.addWidget(scroll, 1)
-
-    def search(self):
-        term = self.query.text().strip()
-        if not term:
-            return
-        for card in self.cards:
-            card.close_card()
-        self.cards = []
-        self.message.setText("Searching...")
-        QApplication.processEvents()
-        results = search_flathub(term)
-        if results:
-            self.message.setText(f"{len(results)} app(s) found" + (", showing the first 50." if len(results) > 50 else "."))
-        else:
-            self.message.setText("No apps found.")
-        for app in results[:50]:
-            card = AppCard(app, self.store, self.icons)
-            self.cards.append(card)
-            self.results.insertWidget(self.results.count() - 1, card)
-
-
-class InstalledPage(QWidget):
-    def __init__(self, store, icons):
-        super().__init__()
-        self.store = store
-        self.icons = icons
-        self.cards = {}
-        layout = QVBoxLayout(self)
-        self.message = QLabel()
-        layout.addWidget(self.message)
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        host = QWidget()
-        self.list = QVBoxLayout(host)
-        self.list.addStretch()
-        scroll.setWidget(host)
-        layout.addWidget(scroll, 1)
-        store.changed.connect(self.rebuild)
-        self.rebuild()
-
-    def rebuild(self):
-        installed = self.store.installed
-        for app_id in list(self.cards):
-            if app_id not in installed and app_id not in self.store.busy:
-                self.cards.pop(app_id).close_card()
-        for app_id in sorted(installed, key=lambda i: installed[i]["name"].lower()):
-            if app_id not in self.cards:
-                card = AppCard(installed[app_id], self.store, self.icons)
-                self.cards[app_id] = card
-                self.list.insertWidget(self.list.count() - 1, card)
-        count = len(installed)
-        if count:
-            self.message.setText(f"{count} app{'s' if count != 1 else ''} installed from Flathub.")
-        else:
-            self.message.setText("No apps installed from Flathub yet.")
-
-
-class AppsWindow(QTabWidget):
-    def __init__(self):
-        super().__init__()
         self.setWindowTitle("HoltOS Apps")
         self.setWindowIcon(QIcon(ICON_PATH))
-        self.resize(920, 700)
+        self.resize(1080, 760)
+
+        layout = QVBoxLayout(self)
+
         if shutil.which("flatpak") is None:
-            self.addTab(QLabel("Flatpak is not installed, so apps cannot be installed."), "Featured")
+            layout.addWidget(QLabel("Flatpak is not installed, so apps cannot be installed."))
+            self.store = None
             return
+
         self.store = Store()
-        self.icons = IconCache()
-        # A fresh install has no Flathub catalogue yet, so search would find
-        # nothing. Refreshing it is allowed for the active user without a
-        # password (polkit: org.freedesktop.Flatpak.appstream-update), and it
-        # also sets up Flathub from /etc/flatpak/remotes.d.
+
+        # Top bar with nav buttons and search
+        top_bar = QHBoxLayout()
+
+        self.browse_btn = QPushButton("Browse")
+        self.installed_btn = QPushButton("Installed")
+        self.updates_btn = QPushButton("Updates")
+
+        for btn in (self.browse_btn, self.installed_btn, self.updates_btn):
+            btn.setCheckable(True)
+
+        nav_group = QButtonGroup(self)
+        nav_group.setExclusive(True)
+        nav_group.addButton(self.browse_btn)
+        nav_group.addButton(self.installed_btn)
+        nav_group.addButton(self.updates_btn)
+
+        top_bar.addWidget(self.browse_btn)
+        top_bar.addWidget(self.installed_btn)
+        top_bar.addWidget(self.updates_btn)
+        top_bar.addStretch()
+
+        self.search = QLineEdit()
+        self.search.setPlaceholderText("Search Flathub")
+        self.search.setClearButtonEnabled(True)
+        self.search.setMinimumWidth(300)
+        self.search.returnPressed.connect(self.run_search)
+        top_bar.addWidget(self.search)
+
+        layout.addLayout(top_bar)
+
+        # Stacked widget for pages
+        self.stack = QStackedWidget()
+        self.history = []
+
+        # Create pages using module constructors
+        self.browse = BrowsePage(self.store, self.open_app, self.open_list)
+        self.list_page = ListPage(self.store, self.open_app, self.back)
+        self.app_page = AppPage(self.store, self.back)
+        self.installed = InstalledPage(self.store, self.open_app)
+        self.updates = UpdatesPage(self.store, self.open_app)
+
+        self.stack.addWidget(self.browse)
+        self.stack.addWidget(self.list_page)
+        self.stack.addWidget(self.app_page)
+        self.stack.addWidget(self.installed)
+        self.stack.addWidget(self.updates)
+
+        layout.addWidget(self.stack)
+
+        # Nav button actions
+        self.browse_btn.clicked.connect(lambda: self.show_root(self.browse))
+        self.installed_btn.clicked.connect(lambda: self.show_root(self.installed))
+        self.updates_btn.clicked.connect(lambda: self.show_root(self.updates))
+
+        # Listen for store changes to update counts
+        self.store.changed.connect(self.update_counts)
+        self.update_counts()
+
+        # Background appstream refresh (fresh install has no Flathub catalogue yet)
         self.appstream = QProcess(self)
         self.appstream.start("flatpak", ["update", "--system", "--appstream", "-y", "--noninteractive"])
-        self.addTab(FeaturedPage(self.store, self.icons), "Featured")
-        self.addTab(SearchPage(self.store, self.icons), "Search")
-        self.addTab(InstalledPage(self.store, self.icons), "Installed")
+
+        # Initial page
+        if start_updates:
+            self.show_root(self.updates)
+        else:
+            self.show_root(self.browse)
+
+        if open_id:
+            self.open_app({"id": open_id, "name": open_id, "summary": ""})
+
+    def show_root(self, page):
+        """Show *page* as a root (clearing history)."""
+        self.history = []
+        self.stack.setCurrentWidget(page)
+        # Check the matching nav button for browse/list/app pages
+        if page is self.browse or page is self.list_page or page is self.app_page:
+            self.browse_btn.setChecked(True)
+        elif page is self.installed:
+            self.installed_btn.setChecked(True)
+        elif page is self.updates:
+            self.updates_btn.setChecked(True)
+
+    def push(self, page):
+        """Push *page* onto the stack, remembering where we came from."""
+        current = self.stack.currentWidget()
+        if current is not page:
+            self.history.append(current)
+            self.stack.setCurrentWidget(page)
+
+    def back(self):
+        """Go back in history or to Browse root."""
+        if self.history:
+            self.stack.setCurrentWidget(self.history.pop())
+        else:
+            self.show_root(self.browse)
+
+    def open_app(self, app):
+        """Show the details page for *app*."""
+        self.app_page.show_app(app)
+        self.push(self.app_page)
+
+    def open_list(self, title, loader):
+        """Show a list page with *title*, loaded by *loader(page)* -> apps."""
+        self.list_page.show_list(title, loader)
+        self.push(self.list_page)
+
+    def run_search(self):
+        """Run a Flathub search for the current query text."""
+        q = self.search.text().strip()
+        if not q:
+            return
+        self.browse_btn.setChecked(True)
+        self.open_list(f'Results for "{q}"', lambda page, q=q: flathub.search(q) if page == 1 else [])
+
+    def update_counts(self):
+        """Update the Updates button text with the count of available updates."""
+        n = len(self.store.updates)
+        self.updates_btn.setText(f"Updates ({n})" if n else "Updates")
+
+    def keyPressEvent(self, event):
+        """Handle Escape and Alt+Left as back navigation."""
+        if event.key() == Qt.Key_Escape or (event.modifiers() & Qt.AltModifier and event.key() == Qt.Key_Left):
+            if self.history:
+                self.back()
+                return
+        super().keyPressEvent(event)
 
 
 def main():
     app = QApplication(sys.argv)
     app.setApplicationName("holtos-apps")
     app.setDesktopFileName("holtos-apps")
-    window = AppsWindow()
+
+    args = sys.argv[1:]
+    start_updates = "--updates" in args
+    open_id = None
+
+    for arg in args:
+        if arg == "--updates":
+            continue
+        open_id, error = app_from_argument(arg)
+        if error:
+            QMessageBox.warning(None, "HoltOS Apps", error)
+            break
+
+    window = AppsWindow(start_updates, open_id)
     window.show()
     sys.exit(app.exec())
 

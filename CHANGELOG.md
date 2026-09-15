@@ -22,6 +22,24 @@ Neon rebrand (next major release):
   the kernel-update hook and the installer shortcut carry the HoltOS name.
   Updating removes the old homelab files once the renamed ones are in place,
   so the boot menu still refreshes exactly once per kernel update.
+- **HoltOS Apps, rebuilt:**
+  - Every app has its own page: screenshots, description, developer and
+    verified badge, download and installed size, licence, release notes and
+    links.
+  - Before an app that asks for broad access installs (all your files, your
+    saved passwords, programs outside its sandbox), HoltOS Apps lists what it
+    wants and asks first.
+  - Browse Flathub's categories and its Popular, Trending, New and Recently
+    updated rows next to the HoltOS picks, which grow to 43 apps with a new
+    Create group (HandBrake, Kdenlive, Audacity) and more emulators.
+  - Installs, updates and removals show real progress (percent, download size
+    and speed), queue up behind each other and can be cancelled.
+  - The Installed page shows sizes, sorts by name or size, can delete an app's
+    settings and data along with it, and cleans up runtimes no app uses.
+  - The Updates page updates one app or everything.
+  - "Install" links on flathub.org and downloaded .flatpakref files open the
+    app's page in HoltOS Apps (Flathub only).
+  - The store window is HoltOS glass (it was drawn opaque before).
 - **Glass popups and tooltips:** the calendar, tray, launcher and other Plasma
   popups and all tooltips now use HoltOS glass with rounded corners instead of
   Plasma's default look, in both HoltOS and HoltOS Classic. A fix in the
