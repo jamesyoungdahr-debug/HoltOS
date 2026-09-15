@@ -49,7 +49,7 @@ what is done and what is left.
 | 13 | Backlog run (2026-09-15, Liam: everything that is not Game Mode and does not need him): support bundle, snapshot retention setting, automatic rollback after two failed boots (`holtos-boot-guard`), Network Shares LAN browsing and "Share from this computer" (`holtos-samba`), glass popups and tooltips, stacked and light lockups | Done, VM-tested (commits 879b5f0, fc57103, 6e277ff, b7f0126, 2856ed4) |
 
 | 14 | Brand completion (2026-09-15, Liam: "complete everything on our lists, then test"): title bar buttons magenta/amber/teal; otter expressions (Happy, Idle, Alert); HoltOS icon theme and cursor theme from ComfyUI renders; the store renamed Stash; The Den client and web sign-in moved to the new otter; vector otter mark traced from the render | Done, including the vector mark (`holtos-mark.svg`); not VM-tested (VM on hold) |
-| 15 | Glass for System Settings and other Kirigami apps (glass plan G7) | Research started 2026-09-15; fork build to follow |
+| 15 | Glass for System Settings and other Kirigami apps (glass plan G7) | **Built 2026-09-15**: `holtos-kirigami` 6.30.0 (transparent window, 60 % page), `holtos-qqc2-desktop-style` 6.30.0 (Page/Pane 60 %, Drawer 80 %) and `holtos-plasma-integration` 6.7.5 (alpha buffer, KWin blur and contrast, `HOLTOS_GLASS=0` off switch). All three packages build and sit in `local-repo/`; they reach installed systems through the `[holtos]` package repo, not the ISO. **Not run yet — needs a Z13 test** (System Settings and Discover) |
 
 Deliberately still open (need Liam): darker list views (would undo the
 0.0.7a clearer-glass decision), GTK rgba glass (GTK cannot ask KWin for

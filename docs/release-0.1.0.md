@@ -22,8 +22,17 @@
 
 ## 2. Publish the packages first — BEFORE flipping the URL
 
-Run `tools/publish-packages.sh` and make sure the 0.1.0 packages land in the
-**`packages`** release (the stable one), not only `packages-dev`.
+Refresh `local-repo/` from the current branch (`./build-local-repo.sh`), then
+publish with the override:
+
+```bash
+PACKAGES_RELEASE=packages tools/publish-packages.sh
+```
+
+**The override is required from this branch.** `publish-packages.sh` picks the
+target release from the branch name — `master` goes to `packages`, any other
+branch goes to `packages-dev` — so without it, a run on `neon-rebrand` lands in
+the dev repo only.
 
 > **Why this order.** `master` points its pacman config at `packages`;
 > `neon-rebrand` points at `packages-dev` and its config carries the note "back
