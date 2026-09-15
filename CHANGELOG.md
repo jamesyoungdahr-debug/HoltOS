@@ -29,10 +29,13 @@ Neon rebrand (next major release):
   "Checking...", then when it finished and how many drivers are installed.
   A check that fails says so instead of showing "None needed". A new Sound
   devices list shows the speakers and microphones HoltOS can see.
-- **Built-in microphones on AMD Strix Halo and Strix Point laptops** (such
-  as the ROG Flow Z13): Linux does not support these digital microphones
-  yet, and the Hardware tab now says so. A USB, Bluetooth or headset
-  microphone works.
+- **Built-in microphones on the ASUS ROG Flow Z13 (2025):** the Z13's
+  firmware hides its microphones from Linux. HoltOS now installs a small
+  driver fix (`holtos-acp-mic-dkms`, version 2, also in stable 0.0.7g-alpha)
+  on the Z13 that switches it to the AMD audio driver that works on similar
+  ASUS laptops; restart after it installs. On other AMD Strix Halo and Strix
+  Point laptops with the same problem the Hardware tab explains it, and a
+  USB, Bluetooth or headset microphone works.
 - **Welcome to HoltOS:** a short first-run guide for new accounts: desktop
   layout, how updates install, Stash and Network Shares, and snapshots. It
   is also in the app menu.
