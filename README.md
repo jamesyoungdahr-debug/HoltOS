@@ -5,14 +5,22 @@
 
 # HoltOS
 
-A custom Arch Linux live/install medium (archiso + Calamares + Limine) for a
-self-hosted homelab server. Boots into KDE Plasma, targets a Dell PowerEdge
-R720, and ships **The Den** — a movie/TV library manager
-([the-den](https://github.com/jamesyoungdahr-debug/the-den)) — and its
-native KDE desktop app
-([the-den-client](https://github.com/jamesyoungdahr-debug/the-den-client)),
-both installed into the image at build time so a fresh install runs them
-from first boot with no network dependency.
+An Arch Linux distribution for media and gaming at home, built as a live and
+install medium (archiso + Calamares + Limine). It boots into KDE Plasma
+dressed as glass, with a menu bar and a floating dock, and ships:
+
+- **Steam** with Proton and Proton GE, and a **Game Mode** (Steam Big
+  Picture on gamescope) that switches back to the desktop from Steam's
+  power menu;
+- **HoltOS Apps**, a store for Flathub apps;
+- **The Den**, a movie and TV library manager
+  ([the-den](https://github.com/jamesyoungdahr-debug/the-den)), and its
+  desktop app
+  ([the-den-client](https://github.com/jamesyoungdahr-debug/the-den-client)),
+  installed into the image at build time so they run from first boot;
+- drivers for the machine it is installed on, chosen by checking its
+  hardware, and **HoltOS Updates**, which keeps HoltOS, its drivers, apps
+  and firmware up to date.
 
 ## Credits
 
@@ -79,7 +87,7 @@ archiso/                      # the archiso profile passed to mkarchiso
                                # works" below)
     etc/calamares/            # Calamares config: settings.conf, branding,
                                # our custom shellprocess modules
-    usr/local/bin/homelab-*.sh  # the install/boot-time scripts
+    usr/local/bin/holtos-*.sh  # the install/boot-time scripts
     usr/local/bin/holtos-*      # the updater (tray, picker, apply, ...),
                                # snapshots
     root/customize_airootfs.sh  # runs in the image-build chroot: enables
@@ -111,19 +119,19 @@ that's only valid on the live medium (the `liveuser` account, its
 passwordless-sudo convenience, SDDM autologin, archiso-only mkinitcpio
 hooks and systemd units, the Calamares package itself) rides along onto
 every install unless something explicitly strips it out afterward. The
-`usr/local/bin/homelab-*.sh` scripts plus the matching
+`usr/local/bin/holtos-*.sh` scripts plus the matching
 `etc/calamares/modules/*.conf` shellprocess steps exist to do exactly
 that — each one chroots into the freshly-installed target and fixes up
 one specific piece:
 
-- **`homelab-fix-mkinitcpio.sh`** — strips archiso-only mkinitcpio HOOKS
+- **`holtos-fix-mkinitcpio.sh`** — strips archiso-only mkinitcpio HOOKS
   so `mkinitcpio` doesn't hard-fail building the installed initramfs.
-- **`homelab-limine-install.sh`** — installs Limine, writes
+- **`holtos-limine-install.sh`** — installs Limine, writes
   `limine.conf` to both `/EFI/limine/` and the `/EFI/BOOT/` fallback,
   copies kernel/initramfs onto the ESP (`boot():` paths), registers the
-  `HoltOS` NVRAM entry. `homelab-limine-sync.sh` + its pacman hook keep
+  `HoltOS` NVRAM entry. `holtos-limine-sync.sh` + its pacman hook keep
   the ESP copies in sync on kernel upgrades.
-- **`homelab-cleanup-live.sh`** — removes `liveuser`, its passwordless
+- **`holtos-cleanup-live.sh`** — removes `liveuser`, its passwordless
   sudo rule (replaced with a normal `%wheel` rule), SDDM autologin, the
   install launcher, the `calamares` package, and archiso's live-only
   keyring units (which would otherwise hide the installed keyring under
@@ -224,17 +232,19 @@ menu, snapshot create/boot/retention, sudo, keyring, tray, and The Den
 installing and starting on first boot — all confirmed live in a Hyper-V
 VM.
 
-## Hardware setup: Dell PowerEdge R720
+## Hardware
 
-This targets a 2012-era dual Xeon E5-2600 R720 with a PERC H710/H310 RAID
-controller and iDRAC7. None of this is automated by the image build:
+HoltOS is tested on an **ASUS ROG Flow Z13 (2025)** (Ryzen AI Max, Radeon
+8060S) and a desktop with an **NVIDIA RTX 4090**, and in a Hyper-V VM.
 
-- **PERC controller → HBA/passthrough mode.** ZFS needs raw disk access.
-  If the firmware doesn't support true HBA mode, one single-disk RAID-0
-  virtual disk per drive works but hides SMART data.
-- **iDRAC7 virtual media.** Map the ISO through Virtual Console → Virtual
-  Media to install without physical USB.
-- **Firmware.** Update BIOS/iDRAC first; boot mode must be **UEFI**.
-- **No GPU.** Software transcoding only unless a discrete GPU is added.
-
-Only move to the real R720 once the VM validation above is complete.
+- **Drivers are chosen by checking the hardware.** Graphics (Mesa with
+  Vulkan and video decode for AMD and Intel), firmware and CPU microcode
+  are in the image for everyone. Drivers only some machines need, such as
+  NVIDIA graphics, Broadcom Wi-Fi, laptop audio firmware, rotation sensors,
+  Thunderbolt and fingerprint readers, are listed in
+  `usr/share/holtos/hardware-drivers.conf`. The installer installs the
+  ones the machine needs from copies on the ISO, and every update adds any
+  that are missing, such as for a graphics card fitted later.
+- **Model extras:** the Z13 gets its RGB, fan, TDP and battery controls
+  (z13ctl and z13gui).
+- **Firmware:** boot mode must be **UEFI**.

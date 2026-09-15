@@ -6,7 +6,7 @@
 # safety net so boot-environment snapshots work out of the box, no end-
 # user setup (see BRANDING-STATUS.md for why this is hand-rolled instead
 # of depending on the one third-party tool for this, limine-btrfs: a
-# 1-star, zero-release project, too unproven for a homelab server nobody's
+# 1-star, zero-release project, too unproven for a home PC nobody's
 # babysitting).
 #
 # Called by holtos-update-apply right before update_system() (label

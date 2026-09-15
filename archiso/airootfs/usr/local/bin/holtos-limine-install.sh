@@ -28,7 +28,7 @@ mkdir -p "${ESP}/EFI/limine"
 cp /usr/share/limine/BOOTX64.EFI "${ESP}/EFI/limine/BOOTX64.EFI"
 # Also drop a copy at the removable-media fallback path — boots correctly
 # even on firmware that ignores/loses the NVRAM entry below, which matters
-# for a homelab server whose exact firmware behavior isn't fully known yet.
+# for a home PC whose exact firmware behavior isn't fully known yet.
 mkdir -p "${ESP}/EFI/BOOT"
 cp /usr/share/limine/BOOTX64.EFI "${ESP}/EFI/BOOT/BOOTX64.EFI"
 

@@ -272,9 +272,8 @@ clamp so white text keeps 4.5:1 (milestones G8 and G9 in
   only as The Den's React components and have not been rendered for the new
   mark. The old hand-drawn SVG logos are deleted from the image and removed
   from installed systems by `holtos-system-extras`.
-- **Stale positioning:** `README.md` still describes a homelab server for a Dell
-  R720, and Kvantum's comment and the look-and-feel defaults still name the old
-  pool-rings wallpaper.
+- **Stale wallpaper name:** Kvantum's comment and the look-and-feel defaults
+  still name the old pool-rings wallpaper.
 - **Not built yet:** GTK glass (G6), Kirigami and Qt Quick glass (G7), adaptive
   contrast (G8 and G9), installer glass (G11), The Den client's live blur, a
   HoltOS Plasma theme. Icons and cursor are stock Breeze.

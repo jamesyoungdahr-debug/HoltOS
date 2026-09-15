@@ -34,7 +34,7 @@ file_permissions=(
   # image — it doesn't reliably: this repo is edited on Windows/Git Bash,
   # and the archiso build reads it back through WSL2's drvfs mount
   # (/mnt/c/...), which doesn't always translate that bit the same way.
-  # homelab-*.sh above already went through file_permissions for exactly
+  # holtos-*.sh above already went through file_permissions for exactly
   # this reason; these were simply never added to the same list — real
   # bug hit live ("missing executable permissions" launching the
   # updater), not a build/packaging issue with the scripts themselves.
