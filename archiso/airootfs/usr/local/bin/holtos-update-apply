@@ -117,6 +117,32 @@ refuse_downgrade() {
     return 0
 }
 
+# Paths whose contents are baked INTO the initramfs. A release that changes
+# any of them is invisible at boot until the initramfs is rebuilt — found live
+# on 2026-09-15: the fixed boot-splash glow reached /usr/share/plymouth and the
+# splash kept drawing the old theme, because a Plymouth theme is read from the
+# initramfs and nothing in this script rebuilt one.
+#
+# Only OUR theme is fingerprinted, not the whole themes directory: this update
+# also trims the other Plymouth themes, and that must not look like a change
+# worth rebuilding for.
+INITRAMFS_PATHS=(usr/share/plymouth/themes/holtos etc/plymouth)
+
+# initramfs_hash — fingerprint the above, so a caller can compare before and
+# after applying a release. Written by hand: a false positive runs mkinitcpio
+# for nothing, and a false negative leaves a boot asset stale on disk.
+initramfs_hash() {
+    local p
+    for p in "${INITRAMFS_PATHS[@]}"; do
+        [ -e "/$p" ] || continue
+        if [ -d "/$p" ]; then
+            find "/$p" -type f -exec sha256sum {} + 2>/dev/null
+        else
+            sha256sum "/$p" 2>/dev/null
+        fi
+    done | sort | sha256sum | awk '{print $1}'
+}
+
 # update_setting <KEY> — a value from /etc/holtos/updates.conf (parsed, never
 # sourced), checked the way holtos-update-settings checks it; empty when
 # missing or invalid. Written by hand: it decides what root installs.
@@ -234,7 +260,7 @@ update_config() {
     local target_tag="${1:-}"
     local repo="jamesyoungdahr-debug/HoltOS"
     local state="/var/lib/holtos/deployed-commit"
-    local new_commit latest_tag src_dir
+    local new_commit latest_tag src_dir irfs_before
     mkdir -p "$(dirname "$state")"
 
     echo "==> Looking up the release..."
@@ -367,6 +393,10 @@ update_config() {
         rm -rf "$src_dir"
         return 1
     fi
+    # Fingerprint the boot assets BEFORE the copy, so that afterwards we can
+    # tell whether this release changed anything the initramfs holds (see
+    # initramfs_hash).
+    irfs_before="$(initramfs_hash)"
     ( cd "$airootfs" && rsync -aR --itemize-changes "${present[@]}" / ) | grep -E '^[<>c]' | sed 's/^/    /' || true
     chmod +x /usr/local/bin/holtos-* /usr/local/bin/steamos-session-select \
         /usr/bin/steamos-update /usr/bin/jupiter-biosupdate /usr/bin/steamos-polkit-helpers/* 2>/dev/null || true
@@ -451,6 +481,26 @@ update_config() {
     # separate "HoltOS components" install), so install them now.
     if [ -x /usr/local/bin/holtos-system-extras ]; then
         /usr/local/bin/holtos-system-extras apply || echo "==> WARNING: some HoltOS components could not be installed" >&2
+    fi
+
+    # Everything this release changes is in place by now, so the answer is
+    # trustworthy here. Rebuild only when a boot asset really changed —
+    # mkinitcpio -P is slow and would otherwise run on every release.
+    #
+    # A failure here is warned about but does NOT fail the update: the config
+    # itself applied fine, and the remedy is one command. It is worth being
+    # loud, though, because mkinitcpio writes into /boot and a partial image
+    # there is a boot-time problem rather than a cosmetic one.
+    if [ "$(initramfs_hash)" != "$irfs_before" ]; then
+        echo "==> A boot asset changed: rebuilding the initramfs..."
+        if mkinitcpio -P > /tmp/holtos-mkinitcpio.log 2>&1; then
+            sed 's/^/    /' /tmp/holtos-mkinitcpio.log
+            echo "    initramfs rebuilt"
+        else
+            sed 's/^/    /' /tmp/holtos-mkinitcpio.log
+            echo "==> WARNING: mkinitcpio failed. /boot may hold a partial image - re-run 'mkinitcpio -P' before rebooting." >&2
+        fi
+        rm -f /tmp/holtos-mkinitcpio.log
     fi
     progress config done 100
 }
