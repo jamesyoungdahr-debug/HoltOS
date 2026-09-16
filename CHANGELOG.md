@@ -5,6 +5,16 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 ## [Unreleased]
 
+- **Updates come from HoltOS's own server now, not GitHub.** Repositories,
+  tags and the updater's downloads moved to the internal OneDev server on
+  2026-09-15. The source fetch is a shallow git clone where it used to be a
+  GitHub release tarball, because OneDev has no equivalent archive endpoint.
+  Two things are quieter as a result: release notes and the dev changelog,
+  which came from GitHub's APIs and have no OneDev equivalent. Updates
+  themselves are unaffected — this is a change of host, not of behaviour.
+  Existing installs keep working: GitHub still serves the release that carries
+  this change.
+
 Neon rebrand (next major release):
 
 - **Boot-splash changes now actually reach the screen.** A Plymouth theme is
