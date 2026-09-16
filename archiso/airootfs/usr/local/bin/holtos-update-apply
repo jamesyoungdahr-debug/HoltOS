@@ -32,6 +32,14 @@ set -euo pipefail
 
 HISTORY=/var/lib/holtos/history.log
 
+# Where HoltOS fetches its own git repositories from. OneDev, since
+# 2026-09-15: GitHub is no longer used. Every repo helper below builds its URL
+# from this, so a future move is one line. The projects are readable without
+# credentials (anonymous access is on, and each project's default role is
+# Code Reader), which is what lets the updater run on a user's machine with no
+# login — verified 2026-09-15 with `git -c credential.helper= ls-remote`.
+GIT_BASE="http://192.168.0.92:6610"
+
 log_history() {
     mkdir -p "$(dirname "$HISTORY")"
     printf '%s\t%s\t%s\t%s\n' "$(date -u +%FT%TZ)" "$1" "$2" "$3" >> "$HISTORY"
@@ -141,18 +149,18 @@ update_setting() {
     printf '%s' "$value"
 }
 
-# resolve_dev <owner/repo> <branch> — prints "<commit>\tdev-<commit>" for the
+# resolve_dev <project> <branch> — prints "<commit>\tdev-<commit>" for the
 # newest commit of a branch (the dev update channel, Liam 2026-09-15). The
 # full commit id is the label, so a hand-over or rollback can install exactly
 # that commit again. Returns 1 if the branch is not found.
 resolve_dev() {
     local sha
-    sha="$(git ls-remote "https://github.com/$1.git" "refs/heads/$2" 2>/dev/null | awk 'NR == 1 {print $1}')"
+    sha="$(git ls-remote "$GIT_BASE/$1" "refs/heads/$2" 2>/dev/null | awk 'NR == 1 {print $1}')"
     [[ "$sha" =~ ^[0-9a-f]{40}$ ]] || return 1
     printf '%s\tdev-%s\n' "$sha" "$sha"
 }
 
-# resolve_release <owner/repo> [target_tag] — prints "<commit>\t<tag>" for
+# resolve_release <project> [target_tag] — prints "<commit>\t<tag>" for
 # either the latest v* tag (no target_tag given) or that exact tag
 # (verifying it actually exists on the remote). Returns 1 if nothing found.
 #
@@ -169,7 +177,7 @@ resolve_dev() {
 # the real commit sha; lightweight tags have no peeled line, so the plain
 # ref sha (already the commit sha) is used for those unchanged.
 resolve_release() {
-    local repo="$1" target_tag="${2:-}" url="https://github.com/$1.git" raw tag sha
+    local repo="$1" target_tag="${2:-}" url="$GIT_BASE/$1" raw tag sha
     if [ -z "$target_tag" ]; then
         raw="$(git ls-remote --tags --sort=-v:refname "$url" 'v*' 2>/dev/null)"
         [ -n "$raw" ] || return 1
@@ -187,44 +195,57 @@ resolve_release() {
     printf '%s\t%s\n' "$sha" "$tag"
 }
 
-# download_release <owner/repo> <tag> <dest_dir> [item] — extracts the
-# tag's source tarball into dest_dir (must already exist). With an item,
-# reports download progress for it: a percentage when GitHub sends the size,
-# otherwise -1 plus the bytes received so far.
+# download_release <project> <tag> <dest_dir> [item] [branch] — puts that
+# revision's source tree into dest_dir (which must already exist). With an
+# item, reports download progress for it as bytes on disk (-1 means "no
+# percentage to show").
+#
+# This used to curl a GitHub source tarball. OneDev, which HoltOS moved to on
+# 2026-09-15, serves git but has no equivalent endpoint — every /archive/...
+# path 404s — so it is a shallow clone now.
 download_release() {
-    local repo="$1" tag="$2" dest="$3" item="${4:-}" tmp_tar url total size pct pid
-    tmp_tar="$(mktemp)"
-    # A dev-channel update is a commit snapshot; a release is a tag's.
+    local repo="$1" tag="$2" dest="$3" item="${4:-}" branch="${5:-}" url pid size
+    url="$GIT_BASE/$repo"
+    [ -n "$item" ] && progress "$item" download -1 0
+
+    # A dev-channel update is a commit snapshot; a release is a tag's. A
+    # release clones the tag directly. A snapshot names a commit, and git's
+    # --branch takes a branch or a tag rather than a commit, so that case
+    # clones the branch and then confirms the tip really is that commit — the
+    # branch can move between resolving it and cloning it.
     if [[ "$tag" =~ ^dev-([0-9a-f]{40})$ ]]; then
-        url="https://github.com/$repo/archive/${BASH_REMATCH[1]}.tar.gz"
+        if [ -z "$branch" ]; then
+            echo "A dev snapshot needs the branch it came from." >&2
+            return 1
+        fi
+        git -c advice.detachedHead=false clone --quiet --depth 1 --branch "$branch" "$url" "$dest" &
     else
-        url="https://github.com/$repo/archive/refs/tags/${tag}.tar.gz"
+        git -c advice.detachedHead=false clone --quiet --depth 1 --branch "$tag" "$url" "$dest" &
     fi
-    total="$(curl -fsSIL --max-time 20 "$url" 2>/dev/null \
-        | tr -d '\r' | awk 'tolower($1)=="content-length:"{n=$2} END{print n+0}')"
-    curl -fsSL "$url" -o "$tmp_tar" &
     pid=$!
     while kill -0 "$pid" 2>/dev/null; do
         if [ -n "$item" ]; then
-            size="$(stat -c %s "$tmp_tar" 2>/dev/null || echo 0)"
-            if [ "${total:-0}" -gt 0 ]; then
-                pct=$(( size * 100 / total ))
-                [ "$pct" -gt 99 ] && pct=99
-            else
-                pct=-1
-            fi
-            progress "$item" download "$pct" "$size"
+            size="$(du -sk "$dest" 2>/dev/null | awk '{print $1 * 1024}')"
+            progress "$item" download -1 "${size:-0}"
         fi
         sleep 0.5
     done
     if ! wait "$pid"; then
-        rm -f "$tmp_tar"
         echo "Download of $repo $tag failed." >&2
         return 1
     fi
+    if [[ "$tag" =~ ^dev-([0-9a-f]{40})$ ]]; then
+        local got
+        got="$(git -C "$dest" rev-parse HEAD 2>/dev/null)"
+        if [ "$got" != "${BASH_REMATCH[1]}" ]; then
+            echo "The $branch branch is at $got, not the ${BASH_REMATCH[1]} this update resolved. Re-run the update." >&2
+            return 1
+        fi
+    fi
     [ -n "$item" ] && progress "$item" download 100
-    tar -xzf "$tmp_tar" -C "$dest" --strip-components=1
-    rm -f "$tmp_tar"
+    # The caller only reads the working tree, and this directory is copied
+    # from rather than kept, so the clone's history is dead weight.
+    rm -rf "$dest/.git"
 }
 
 # update_config [target_tag] — with no argument, updates to the latest
@@ -232,7 +253,7 @@ download_release() {
 # that tag (used by rollback_config).
 update_config() {
     local target_tag="${1:-}"
-    local repo="jamesyoungdahr-debug/HoltOS"
+    local repo="HoltOS"
     local state="/var/lib/holtos/deployed-commit"
     local new_commit latest_tag src_dir
     mkdir -p "$(dirname "$state")"
@@ -282,7 +303,7 @@ update_config() {
 
     echo "==> Downloading $latest_tag..."
     src_dir="$(mktemp -d)"
-    download_release "$repo" "$latest_tag" "$src_dir" config || { rm -rf "$src_dir"; return 1; }
+    download_release "$repo" "$latest_tag" "$src_dir" config "$dev_branch" || { rm -rf "$src_dir"; return 1; }
     progress config install -1
 
     # Every HoltOS-owned component comes from the release tarball — never
@@ -503,7 +524,7 @@ booted() { [ -d /run/systemd/system ]; }
 
 update_the_den() {
     local target_tag="${1:-}"
-    local repo="jamesyoungdahr-debug/the-den"
+    local repo="the-den"
     local new_commit latest_tag src_dir
 
     echo "==> Looking up the latest The Den release..."
@@ -744,7 +765,7 @@ the_den_url() {
 # written. It does now; switched to using the real ones.)
 update_the_den_client() {
     local target_tag="${1:-}"
-    local repo="jamesyoungdahr-debug/the-den-client"
+    local repo="the-den-client"
     local new_commit latest_tag src_dir
 
     echo "==> Looking up the latest The Den Client release..."
