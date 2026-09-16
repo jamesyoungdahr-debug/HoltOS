@@ -7,6 +7,11 @@ All notable changes to HoltOS are logged here. Format loosely follows
 
 Neon rebrand (next major release):
 
+- **Boot-splash changes now actually reach the screen.** A Plymouth theme is
+  read from the initramfs, not from disk, so a release that changed the theme
+  landed in `/usr/share/plymouth` and stayed invisible — the splash kept
+  drawing the old one. The updater now rebuilds the initramfs, but only when
+  something it holds really changed, so ordinary updates do not pay for it.
 - **KDE Partition Manager is included.** The image had only `parted` and
   `gptfdisk`, so there was no way to add a drive, resize or format anything
   from the desktop. Its library, kpmcore, was already present as a Calamares
