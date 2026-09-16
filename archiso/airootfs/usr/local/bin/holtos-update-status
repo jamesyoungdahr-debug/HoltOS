@@ -14,7 +14,11 @@ set -uo pipefail
 STATUS=/var/lib/holtos/update-status.json
 HISTORY=/var/lib/holtos/history.log
 CONF=/etc/holtos/updates.conf
-HOLTOS_REPO=jamesyoungdahr-debug/HoltOS
+# Where HoltOS fetches its own git repositories from: OneDev since
+# 2026-09-15, GitHub no longer used. Kept in step with the same variable in
+# holtos-update-apply, which explains why anonymous read is enough.
+GIT_BASE="http://192.168.0.92:6610"
+HOLTOS_REPO=HoltOS
 
 AUTO=0
 QUIET=0
@@ -80,7 +84,7 @@ fi
 # "<commit>\t<tag>" for the newest v* tag of an owner/repo.
 latest_release() {
     local raw tag sha
-    raw="$(git ls-remote --tags --sort=-v:refname "https://github.com/$1.git" 'v*' 2>/dev/null)" || return 1
+    raw="$(git ls-remote --tags --sort=-v:refname "$GIT_BASE/$1" 'v*' 2>/dev/null)" || return 1
     [ -n "$raw" ] || return 1
     tag="$(head -1 <<< "$raw" | cut -f2)"
     tag="${tag%^\{\}}"
@@ -97,9 +101,12 @@ installed_field() {
     awk -F'\t' -v it="$1" -v col="$2" '$2==it{v=$col} END{print v}' "$HISTORY" 2>/dev/null
 }
 
+# Release notes shown in the update window. GitHub's release API provided
+# these; OneDev has no equivalent endpoint, so there are none to show and this
+# returns nothing rather than reaching for GitHub. Deliberate: the update is
+# still listed and installs fine — only the blurb is missing. See HANDOFF.md.
 release_notes() {
-    curl -fsSL --max-time 15 "https://api.github.com/repos/$1/releases/tags/$2" 2>/dev/null \
-        | jq -r '.body // empty' 2>/dev/null | head -c 4000
+    :
 }
 
 updates=()
@@ -136,20 +143,17 @@ check_release() {
 # one, with the commit subjects since the installed commit as the notes.
 check_dev() {
     local sha notes=""
-    sha="$(git ls-remote "https://github.com/$1.git" "refs/heads/$2" 2>/dev/null | awk 'NR == 1 {print $1}')"
+    sha="$(git ls-remote "$GIT_BASE/$1" "refs/heads/$2" 2>/dev/null | awk 'NR == 1 {print $1}')"
     if ! [[ "$sha" =~ ^[0-9a-f]{40}$ ]]; then
         errors+=("could not find the $2 branch of HoltOS")
         return
     fi
     [ "$sha" = "$3" ] && return
-    if [[ "$3" =~ ^[0-9a-f]{40}$ ]]; then
-        notes="$(curl -fsSL --max-time 15 "https://api.github.com/repos/$1/compare/$3...$sha" 2>/dev/null \
-            | jq -r '.commits[-25:] | reverse | .[] | "- " + (.commit.message | split("\n")[0])' 2>/dev/null)"
-    fi
-    if [ -z "$notes" ]; then
-        notes="$(curl -fsSL --max-time 15 "https://api.github.com/repos/$1/commits?sha=$2&per_page=15" 2>/dev/null \
-            | jq -r '.[] | "- " + (.commit.message | split("\n")[0])' 2>/dev/null)"
-    fi
+    # Commit subjects, for the changelog in the update window. GitHub's
+    # compare/commits API provided these; OneDev has no equivalent, so the dev
+    # update is offered with no notes rather than not offered at all. See
+    # HANDOFF.md — worth revisiting if OneDev grows the endpoint.
+    notes=""
     add_update config "HoltOS (dev: $2)" holtos "${3:0:7}" "dev-${sha:0:7}" "$notes" false
 }
 
@@ -163,11 +167,11 @@ else
 fi
 
 if [ -d /opt/the-den ]; then
-    check_release the-den "The Den" app jamesyoungdahr-debug/the-den \
+    check_release the-den "The Den" app the-den \
         "$(installed_field the-den 4)" "$(installed_field the-den 3)"
 fi
 if [ -d /opt/the-den-client ]; then
-    check_release the-den-client "The Den Client" app jamesyoungdahr-debug/the-den-client \
+    check_release the-den-client "The Den Client" app the-den-client \
         "$(installed_field the-den-client 4)" "$(installed_field the-den-client 3)"
 fi
 
